@@ -6,67 +6,44 @@
     <title>Sierra Leone Football Management Platform</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #030712; color: #f3f4f6; min-h-screen; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
-
+        body { background-color: #030712; color: #f3f4f6; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
         .wrapper { width: 100%; max-width: 680px; margin: 0 auto; padding: 0 16px; flex: 1; position: relative; z-index: 1; }
         header { background-color: #111827; border-bottom: 1px solid #1f2937; padding: 14px 16px; position: sticky; top: 0; z-index: 50; }
         .header-flex { display: flex; justify-content: space-between; align-items: center; }
-        
         .title-container { display: flex; align-items: center; gap: 8px; }
         .sl-flag { width: 28px; height: 18px; border-radius: 3px; border: 1px solid #374151; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-
         h1 { font-size: 14px; font-weight: 900; color: #34d399; }
         p.sub { font-size: 11px; color: #9ca3af; }
         select { background: #1f2937; color: #34d399; border: 1px solid #374151; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; outline: none; }
-        
-        /* Navigation Tabs */
         .nav-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; background: #111827; padding: 6px; border-radius: 12px; border: 1px solid #1f2937; margin-top: 16px; }
         .nav-btn { background: transparent; border: none; color: #9ca3af; padding: 8px 2px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center; transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .nav-btn.active { background: #059669; color: #ffffff; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
-
-        /* Cards & Sections */
         .card { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; margin-top: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); position: relative; z-index: 2; }
         .card-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 12px; }
-        
-        /* Forms */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .form-group { margin-bottom: 10px; }
         label { display: block; font-size: 10px; font-weight: 600; color: #9ca3af; margin-bottom: 4px; }
         input, select.form-control { width: 100%; background: #030712; border: 1px solid #1f2937; border-radius: 8px; padding: 9px; font-size: 12px; color: #fff; outline: none; }
         input:focus, select.form-control:focus { border-color: #059669; }
-        
-        /* Buttons */
         .btn-primary { width: 100%; background: #059669; color: #fff; border: none; padding: 11px; border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 6px; }
-        .btn-primary:active { background: #047857; }
         .btn-sm { background: #059669; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
         .btn-danger { background: #991b1b; color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
         .btn-amber { background: #d97706; color: #fff; border: none; padding: 11px; border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 6px; }
         .btn-blue { background: #2563eb; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
-
-        /* List Items */
         .list-item { background: #030712; border: 1px solid #1f2937; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .item-name { font-size: 12px; font-weight: bold; color: #fff; }
         .item-sub { font-size: 10px; color: #34d399; font-family: monospace; margin-top: 2px; }
-
-        /* Scoreboard */
         .scoreboard { background: #030712; border: 1px solid #1f2937; border-radius: 12px; padding: 14px; display: flex; justify-content: space-around; align-items: center; margin: 12px 0; }
         .score-box { background: #111827; border: 1px solid #1f2937; padding: 6px 16px; border-radius: 8px; font-size: 18px; font-weight: 900; color: #34d399; letter-spacing: 2px; }
-
-        /* Commentary Ticker Box */
         .ticker-box { background: #030712; border: 1px solid #059669; border-radius: 10px; padding: 10px; font-size: 11px; color: #34d399; font-family: monospace; max-height: 90px; overflow-y: auto; margin-top: 10px; }
-
-        /* Tables */
         table { width: 100%; border-collapse: collapse; font-size: 10px; text-align: left; }
         th { background: #030712; color: #6b7280; text-transform: uppercase; font-size: 8px; padding: 6px 4px; border-bottom: 1px solid #1f2937; }
         td { padding: 8px 4px; border-bottom: 1px solid #1f2937; color: #e5e7eb; }
         .text-center { text-align: center; }
         .font-black { font-weight: 900; color: #34d399; }
-
         .hidden { display: none !important; }
         .badge { font-size: 9px; background: #064e3b; color: #34d399; padding: 2px 8px; border-radius: 99px; border: 1px solid #047857; font-family: monospace; }
         .notice-banner { background: #1e1b4b; border: 1px solid #312e81; color: #c7d2fe; padding: 10px; border-radius: 8px; font-size: 11px; margin-bottom: 12px; }
-        .ref-card { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-
         @media print {
             body { background-color: #fff; color: #000; }
             header, .nav-grid, .btn-primary, .btn-amber, .btn-blue, .btn-danger, select, input, footer { display: none !important; }
@@ -74,28 +51,23 @@
             #pdf-print-container { display: block !important; font-family: monospace; font-size: 12px; line-height: 1.5; padding: 20px; }
         }
         #pdf-print-container { display: none; }
-
         footer { text-align: center; padding: 20px 0; font-size: 11px; color: #6b7280; border-top: 1px solid #1f2937; margin-top: 30px; background: #111827; position: relative; z-index: 2; }
-        footer span { color: #34d399; font-weight: bold; }
     </style>
 </head>
 <body>
-
     <header>
         <div class="wrapper header-flex">
             <div>
                 <div class="title-container">
                     <svg class="sl-flag" viewBox="0 0 9 6" xmlns="http://www.w3.org/2000/svg">
-                        <rect fill="#1EB53A" width="9" height="2"/>
-                        <rect fill="#FFFFFF" y="2" width="9" height="2"/>
-                        <rect fill="#0072CE" y="4" width="9" height="2"/>
+                        <rect fill="#1EB53A" width="9" height="2"/><rect fill="#FFFFFF" y="2" width="9" height="2"/><rect fill="#0072CE" y="4" width="9" height="2"/>
                     </svg>
                     <h1>Leone Rock Premier League</h1>
                 </div>
                 <p class="sub">2026/2027 Official Enterprise Match Portal</p>
             </div>
             <div>
-                <select id="role-selector" onchange="promptForRolePassword(this.value)">
+                <select id="role-selector" onchange="_0x3f(this.value)">
                     <option value="VIEWER">👁️ Public Viewer</option>
                     <option value="SUPER_ADMIN">🔒 SLFA Admin</option>
                     <option value="CLUB_ADMIN">🔒 Club Admin</option>
@@ -104,28 +76,21 @@
             </div>
         </div>
     </header>
-
     <div class="wrapper">
         <div class="nav-grid">
-            <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn active">Admin</button>
-            <button onclick="switchTab('club')" id="nav-club" class="nav-btn">Clubs</button>
-            <button onclick="switchTab('fixtures')" id="nav-fixtures" class="nav-btn">Fixtures</button>
-            <button onclick="switchTab('referee')" id="nav-referee" class="nav-btn">Matchday</button>
-            <button onclick="switchTab('stats')" id="nav-stats" class="nav-btn">Stats</button>
-            <button onclick="switchTab('standings')" id="nav-standings" class="nav-btn">Table</button>
+            <button onclick="_0x4a('admin')" id="nav-admin" class="nav-btn active">Admin</button>
+            <button onclick="_0x4a('club')" id="nav-club" class="nav-btn">Clubs</button>
+            <button onclick="_0x4a('fixtures')" id="nav-fixtures" class="nav-btn">Fixtures</button>
+            <button onclick="_0x4a('referee')" id="nav-referee" class="nav-btn">Matchday</button>
+            <button onclick="_0x4a('stats')" id="nav-stats" class="nav-btn">Stats</button>
+            <button onclick="_0x4a('standings')" id="nav-standings" class="nav-btn">Table</button>
         </div>
-
-        <section id="tab-content-admin" class="card">
-            <div id="admin-view-container"></div>
-        </section>
-
+        <section id="tab-content-admin" class="card"><div id="admin-view-container"></div></section>
         <section id="tab-content-club" class="card hidden">
             <div class="card-title">Club Squad & Player Registration Portal</div>
-            <div class="notice-banner" id="club-notice" style="display:none;">
-                Notice: You are viewing as a guest. Only authorized Club Administrators can submit new player registrations.
-            </div>
+            <div class="notice-banner" id="club-notice" style="display:none;">Notice: You are viewing as a guest. Only authorized Club Administrators can submit new player registrations.</div>
             <div id="club-interactive-area">
-                <form id="player-reg-form" onsubmit="handlePlayerRegistration(event)">
+                <form id="player-reg-form" onsubmit="_0x5c(event)">
                     <div class="form-grid">
                         <div class="form-group"><label>First Name</label><input type="text" id="reg-fname" required placeholder="Musa"></div>
                         <div class="form-group"><label>Last Name</label><input type="text" id="reg-lname" required placeholder="Kamara"></div>
@@ -138,154 +103,86 @@
                         <div class="form-group">
                             <label>Position</label>
                             <select id="reg-pos" class="form-control">
-                                <option value="FWD">Forward (FWD)</option>
-                                <option value="MID">Midfielder (MID)</option>
-                                <option value="DEF">Defender (DEF)</option>
-                                <option value="GK">Goalkeeper (GK)</option>
+                                <option value="FWD">Forward (FWD)</option><option value="MID">Midfielder (MID)</option><option value="DEF">Defender (DEF)</option><option value="GK">Goalkeeper (GK)</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>Select Your Club</label>
-                            <select id="reg-club" class="form-control club-select-options"></select>
-                        </div>
+                        <div class="form-group"><label>Select Your Club</label><select id="reg-club" class="form-control club-select-options"></select></div>
                     </div>
                     <button type="submit" class="btn-primary">Submit Squad Credentials to SLFA Board</button>
                 </form>
             </div>
-
             <div style="margin-top: 20px;">
                 <div class="header-flex" style="margin-bottom: 8px;">
                     <div class="card-title" style="margin:0;">Verified Club Squads & Disciplinary Records</div>
-                    <button onclick="exportRosterCSV()" class="btn-blue">📥 Export CSV</button>
+                    <button onclick="_0x6d()" class="btn-blue">📥 Export CSV</button>
                 </div>
                 <div id="club-roster-list"></div>
             </div>
-
-            <div id="club-password-box" style="margin-top: 24px; border-top: 1px solid #1f2937; padding-top: 16px;" class="hidden">
-                <div class="card-title" style="color: #34d399;">🔑 Update Club Admin Security PIN</div>
-                <form onsubmit="updateSelfPassword(event, 'CLUB_ADMIN')">
-                    <div style="display:flex; gap:6px;">
-                        <input type="password" id="self-pass-CLUB_ADMIN" placeholder="Enter New Club PIN" required style="font-size: 11px; padding: 7px;">
-                        <button type="submit" class="btn-sm" style="white-space: nowrap;">Change PIN</button>
-                    </div>
-                </form>
-            </div>
         </section>
-
         <section id="tab-content-fixtures" class="card hidden">
-            <div class="header-flex" style="margin-bottom: 12px;">
-                <div class="card-title" style="margin:0;">📅 Matchday Fixtures & Results Calendar</div>
-                <span class="badge">2026/2027 Season</span>
-            </div>
+            <div class="header-flex" style="margin-bottom: 12px;"><div class="card-title" style="margin:0;">📅 Matchday Fixtures & Results Calendar</div><span class="badge">2026/2027 Season</span></div>
             <p style="font-size: 11px; color: #9ca3af; margin-bottom: 12px;">Browse upcoming matches or load them directly into the Referee Console.</p>
             <div id="fixtures-list-container"></div>
         </section>
-
         <section id="tab-content-referee" class="card hidden">
             <div style="text-align: center;">
                 <span class="badge" style="background: #450a0a; color: #fca5a5; border-color: #991b1b;">Matchday Governance Console</span>
-                
-                <div class="notice-banner" id="ref-notice" style="margin-top: 10px; display:none;">
-                    Restricted Access: Viewers cannot log match events. Switch to Match Referee role from the top menu.
-                </div>
-
+                <div class="notice-banner" id="ref-notice" style="margin-top: 10px; display:none;">Restricted Access: Viewers cannot log match events. Switch to Match Referee role from the top menu.</div>
                 <div class="form-group" style="text-align: left; margin-top: 10px;">
                     <label>Active Match Fixture</label>
-                    <select id="fixture-selector" class="form-control" onchange="changeActiveFixture(this.value)"></select>
+                    <select id="fixture-selector" class="form-control" onchange="_0x7e(this.value)"></select>
                 </div>
-
                 <div class="scoreboard">
                     <span id="home-team-name" style="font-size: 11px; font-weight: bold; width: 30%; text-align: right;">Kamboi Eagles FC</span>
                     <div class="score-box"><span id="match-home-score">0</span> - <span id="match-away-score">0</span></div>
                     <span id="away-team-name" style="font-size: 11px; font-weight: bold; width: 30%; text-align: left;">Bo Rangers FC</span>
                 </div>
-
                 <div id="ref-controls-area">
-                    <form onsubmit="handleRefereeMatchInput(event)" style="text-align: left;">
+                    <form onsubmit="_0x8f(event)" style="text-align: left;">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Action Team</label>
-                                <select id="event-team" class="form-control" onchange="populateActivePlayers()">
-                                    <option value="HOME" id="opt-home-label">Kamboi Eagles FC (Home)</option>
-                                    <option value="AWAY" id="opt-away-label">Bo Rangers FC (Away)</option>
+                                <select id="event-team" class="form-control" onchange="_0x9a()">
+                                    <option value="HOME" id="opt-home-label">Kamboi Eagles FC (Home)</option><option value="AWAY" id="opt-away-label">Bo Rangers FC (Away)</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>Match Minute</label>
-                                <input type="number" id="event-min" value="1" min="1" max="120" required>
-                            </div>
+                            <div class="form-group"><label>Match Minute</label><input type="number" id="event-min" value="1" min="1" max="120" required></div>
                         </div>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Event Type</label>
                                 <select id="event-type" class="form-control">
-                                    <option value="GOAL">⚽ Goal Scored (+1)</option>
-                                    <option value="YELLOW">🟨 Yellow Card</option>
-                                    <option value="RED">🟥 Red Card (Automatic Suspension)</option>
+                                    <option value="GOAL">⚽ Goal Scored (+1)</option><option value="YELLOW">🟨 Yellow Card</option><option value="RED">🟥 Red Card (Automatic Suspension)</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>Verified Licensed Player</label>
-                                <select id="event-player-select" class="form-control"></select>
-                            </div>
+                            <div class="form-group"><label>Verified Licensed Player</label><select id="event-player-select" class="form-control"></select></div>
                         </div>
                         <button type="submit" class="btn-primary">Verify Lineup & Log Official Event</button>
                     </form>
-                    <button onclick="triggerPDFPrintReport()" class="btn-amber">🖨️ Print / Save Official PDF Match Report</button>
+                    <button onclick="_0xab()" class="btn-amber">🖨️ Print / Save Official PDF Match Report</button>
                 </div>
-
                 <div style="margin-top: 15px; text-align: left;">
                     <div class="card-title">⚡ Live Commentary & Audit Ticker</div>
-                    <div id="match-ticker" class="ticker-box">
-                        [00'] Referee has whistled to kick off the match. Lineups verified against SLFA database.
-                    </div>
-                </div>
-
-                <div id="ref-password-box" style="margin-top: 24px; border-top: 1px solid #1f2937; padding-top: 16px; text-align: left;" class="hidden">
-                    <div class="card-title" style="color: #34d399;">🔑 Update Referee Security PIN</div>
-                    <form onsubmit="updateSelfPassword(event, 'MATCH_OFFICIAL')">
-                        <div style="display:flex; gap:6px;">
-                            <input type="password" id="self-pass-MATCH_OFFICIAL" placeholder="Enter New Referee PIN" required style="font-size: 11px; padding: 7px;">
-                            <button type="submit" class="btn-sm" style="white-space: nowrap;">Change PIN</button>
-                        </div>
-                    </form>
+                    <div id="match-ticker" class="ticker-box">[00'] Referee has whistled to kick off the match. Lineups verified against SLFA database.</div>
                 </div>
             </div>
         </section>
-
         <section id="tab-content-stats" class="card hidden">
             <div class="card-title">⚽ Player Statistics & Top Scorers Leaderboard</div>
             <p style="font-size: 11px; color: #9ca3af; margin-bottom: 12px;">Real-time Golden Boot race and disciplinary records.</p>
             <div id="top-scorers-list"></div>
         </section>
-
         <section id="tab-content-standings" class="card hidden" style="padding: 16px;">
             <div class="header-flex" style="margin-bottom: 12px;">
                 <div class="card-title" style="margin:0;">2026/2027 Official Standings</div>
-                <div style="display: flex; gap: 6px; align-items: center;">
-                    <button onclick="exportStandingsCSV()" class="btn-blue">📥 Export CSV</button>
-                    <span class="badge" id="standings-count-badge">18 Teams</span>
-                </div>
+                <div style="display: flex; gap: 6px; align-items: center;"><button onclick="_0xbc()" class="btn-blue">📥 Export CSV</button><span class="badge" id="standings-count-badge">18 Teams</span></div>
             </div>
-            
-            <div class="form-group" style="margin-bottom: 12px;">
-                <input type="text" id="standings-search" placeholder="🔍 Search club name (e.g. Bo Rangers)..." onkeyup="filterStandingsTable()" class="form-control">
-            </div>
-
+            <div class="form-group" style="margin-bottom: 12px;"><input type="text" id="standings-search" placeholder="🔍 Search club name..." onkeyup="_0xcd()" class="form-control"></div>
             <div style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
-                            <th class="text-center" style="width: 25px;">Pos</th>
-                            <th>Clubs & Home Grounds</th>
-                            <th class="text-center">P</th>
-                            <th class="text-center">W</th>
-                            <th class="text-center">D</th>
-                            <th class="text-center">L</th>
-                            <th class="text-center">GF</th>
-                            <th class="text-center">GA</th>
-                            <th class="text-center">GD</th>
-                            <th class="text-center">PTS</th>
+                            <th class="text-center" style="width: 25px;">Pos</th><th>Clubs & Home Grounds</th><th class="text-center">P</th><th class="text-center">W</th><th class="text-center">D</th><th class="text-center">L</th><th class="text-center">GF</th><th class="text-center">GA</th><th class="text-center">GD</th><th class="text-center">PTS</th>
                         </tr>
                     </thead>
                     <tbody id="standings-tbody"></tbody>
@@ -293,16 +190,171 @@
             </div>
         </section>
     </div>
-
     <div id="pdf-print-container"></div>
-
-    <footer>
-        Designed by Alhaji Abu Koroma
-    </footer>
-
-    <!-- Secure Obfuscated Script Engine -->
+    <footer>Designed by Alhaji Abu Koroma</footer>
     <script>
-        const _0x303472=_0x226d;(function(_0x4cc19b,_0x5a9df0){const _0x171e84=_0x226d,_0x47dab1=_0x4cc19b();while(!![]){try{const _0x68c2d0=parseInt(_0x171e84(0x1dd))/0x1*(parseInt(_0x171e84(0x1a3))/0x2)+-parseInt(_0x171e84(0x153))/0x3*(-parseInt(_0x171e84(0x18e))/0x4)+-parseInt(_0x171e84(0x14b))/0x5+parseInt(_0x171e84(0x168))/0x6+parseInt(_0x171e84(0x173))/0x7+-parseInt(_0x171e84(0x1af))/0x8*(-parseInt(_0x171e84(0x18b))/0x9)+-parseInt(_0x171e84(0x10b))/0xa*(parseInt(_0x171e84(0x1b9))/0xb);if(_0x68c2d0===_0x5a9df0)break;else _0x47dab1['push'](_0x47dab1['shift']());}catch(_0x15fb16){_0x47dab1['push'](_0x47dab1['shift']());}}}(_0x33d6,0xbd281));const STORAGE_KEY=_0x303472(0x16d),defaultDb={'role':_0x303472(0x165),'passwords':{'SUPER_ADMIN':'5555','CLUB_ADMIN':_0x303472(0x19c),'MATCH_OFFICIAL':'7777'},'players':[{'id':'1','firstName':'Musa','lastName':'Kamara','number':0xa,'nin':_0x303472(0x167),'position':_0x303472(0x163),'club':_0x303472(0x100),'status':'ACTIVE','goals':0x2,'yellowCards':0x0,'redCards':0x0},{'id':'2','firstName':_0x303472(0x1b3),'lastName':_0x303472(0x1a1),'number':0x8,'nin':_0x303472(0x1d9),'position':'MID','club':'East\x20End\x20Lions\x20FC','status':_0x303472(0xf1),'goals':0x1,'yellowCards':0x1,'redCards':0x0}],'fixtures':[{'id':'f1','home':'Kamboi\x20Eagles\x20FC','away':_0x303472(0x100),'venue':'Kenema\x20Playing\x20Field','time':_0x303472(0xf4),'score':_0x303472(0x135)},{'id':'f2','home':_0x303472(0x10f),'away':_0x303472(0x19e),'venue':_0x303472(0x126),'time':'Completed','score':_0x303472(0x11e)},{'id':'f3','home':_0x303472(0x108),'away':_0x303472(0x1d8),'venue':_0x303472(0x1d0),'time':_0x303472(0x1bd),'score':'Vs'},{'id':'f4','home':_0x303472(0x15b),'away':_0x303472(0x16b),'venue':_0x303472(0x14f),'time':_0x303472(0x13d),'score':'Vs'}],'tickerLogs':[_0x303472(0x11f)],'clubsMapData':[['Kamboi\x20Eagles\x20FC',{'name':'Kamboi\x20Eagles\x20FC','ground':_0x303472(0x105),'p':0x1,'w':0x1,'d':0x0,'l':0x0,'gf':0x3,'ga':0x0,'pts':0x3}],[_0x303472(0x100),{'name':_0x303472(0x100),'ground':_0x303472(0x15f),'p':0x1,'w':0x1,'d':0x0,'l':0x0,'gf':0x2,'ga':0x1,'pts':0x3}],[_0x303472(0x10f),{'name':_0x303472(0x10f),'ground':_0x303472(0x142),'p':0x1,'w':0x1,'d':0x0,'l':0x0,'gf':0x1,'ga':0x0,'pts':0x3}],[_0x303472(0x19e),{'name':_0x303472(0x19e),'ground':_0x303472(0x142),'p':0x1,'w':0x1,'d':0x0,'l':0x0,'gf':0x1,'ga':0x0,'pts':0x3}],[_0x303472(0x141),{'name':_0x303472(0x141),'ground':_0x303472(0x17a),'p':0x1,'w':0x0,'d':0x1,'l':0x0,'gf':0x0,'ga':0x0,'pts':0x1}],[_0x303472(0x108),{'name':_0x303472(0x108),'ground':_0x303472(0x114),'p':0x1,'w':0x0,'d':0x1,'l':0x0,'gf':0x0,'ga':0x0,'pts':0x1}],[_0x303472(0x13a),{'name':_0x303472(0x13a),'ground':_0x303472(0x142),'p':0x1,'w':0x0,'d':0x1,'l':0x0,'gf':0x0,'ga':0x0,'pts':0x1}],[_0x303472(0x16b),{'name':_0x303472(0x16b),'ground':_0x303472(0x13c),'p':0x1,'w':0x0,'d':0x1,'l':0x0,'gf':0x0,'ga':0x0,'pts':0x1}],[_0x303472(0x11d),{'name':_0x303472(0x11d),'ground':_0x303472(0x198),'p':0x0,'w':0x0,'d':0x0,'l':0x0,'gf':0x0,'ga':0x0,'pts':0x0}],['FC\x20Kallon',{'name':_0x303472(0x15b),'ground':_0x303472(0x12e),'p':0x0,'w':0x0,'d':0x0,'l':0x0,'gf':0x0,'ga':0x0,'pts':0x0}],['Old\x20Edwardians\x20FC',{'name':'Old\x20Edwardians\x20FC','ground':_0x303472(0x114),'p':0x0,'w':0x0,'d':0x0,'l':0x0,'gf':0x0,'ga':0x0,'pts':0x0}],[_0x303472(0x1c5),{'name':_0x303472(0x1c5),'ground':_0x303472(0x12e),'p':0x0,'w':0x0,'d':0x0,'l':0x0,'gf':0x0,'ga':0x0,'pts':0x0}],[_0x303472(0x158),{'name':'Bhantal\x20FC','ground':_0x303472(0x142),'p':0x1,'w':0x0,'d':0x0,'l':0x1,'gf':0x0,'ga':0x1,'pts':0x0}],[_0x303472(0x190),{'name':_0x303472(0x190),'ground':_0x303472(0x103),'p':0x1,'w':0x0,'d':0x0,'l':0x1,'gf':0x0,'ga':0x1,'pts':0x0}],[_0x303472(0x149),{'name':_0x303472(0x149),'ground':'MK\x203/10\x20Field\x20(Angola\x20Town)','p':0x1,'w':0x0,'d':0x0,'l':0x1,'gf':0x1,'ga':0x2,'pts':0x0}],[_0x303472(0x1d8),{'name':_0x303472(0x1d8),'ground':_0x303472(0x114),'p':0x1,'w':0x0,'d':0x0,'l':0x1,'gf':0x0,'ga':0x3,'pts':0x0}]],'homeScore':0x0,'awayScore':0x0,'homeTeam':'Kamboi\x20Eagles\x20FC','awayTeam':'Bo\x20Rangers\x20FC'};let savedData=localStorage[_0x303472(0x115)](STORAGE_KEY),db=savedData?JSON[_0x303472(0x157)](savedData):defaultDb;db[_0x303472(0xf0)]=new Map(db[_0x303472(0x169)]||defaultDb[_0x303472(0x169)]);function _0x33d6(){const _0x540016=['\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22card-title\x22>Club\x20Administrator\x20Control\x20Panel</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22notice-banner\x22>Authorized\x20Club\x20Session\x20Active.\x20Go\x20to\x20the\x20<strong>Clubs</strong>\x20tab\x20to\x20manage\x20squad\x20numbers.</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20','Western\x20United\x20Fc','Successfully\x20added\x20','2710440WiiuZl','\x20-\x20','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22card-title\x22>Match\x20Official\x20Control\x20Panel</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22notice-banner\x22\x20style=\x22background:\x20#064e3b;\x20border-color:\x20#047857;\x20color:\x20#a7f3d0;\x22>Authorized\x20Referee\x20Session\x20Active.</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20','event-team','MK\x203/10\x20Field','\x27)\x22\x20class=\x22btn-sm\x22>Approve\x20License</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20','set','\x22>#','90663hsnfqX','slice','forEach','entries','parse','Bhantal\x20FC','download','hidden','FC\x20Kallon','pdf-print-container','getElementById','setAttribute','Southern\x20Arena\x20(Bo)','club','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20onclick=\x22approvePlayer(\x27','goals','FWD','style','VIEWER',')</option>','NIN-SL-00123','3035250FiKXdW','clubsMapData','YELLOW','Wusum\x20Stars\x20FC','HOME','SLFA_PL_DB_2026','\x22,\x22','new-team-ground','form-add-team','find','innerHTML','5408578kMNtOR','\x20(Home)','awayScore','event-min','redCards','preventDefault','replace','New\x20Port\x20Loko\x20Field\x20(Port\x20Loko)','firstName','opt-away-label','className','Your\x20security\x20PIN\x20has\x20been\x20successfully\x20updated!','stats','Access\x20Denied:\x20Incorrect\x20Security\x20PIN.','role-selector','self-pass-','</p>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<p><strong>Final\x20Score:</strong>\x20','passwords','</div></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20onclick=\x22handleRemoveTeam(\x27','ref-password-box','pts','split','</ul><br><br><p>Certified\x20Match\x20Referee\x20Signature:\x20______________________</p><p>Designed\x20by\x20Alhaji\x20Abu\x20Koroma</p>','</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20','685494nzxrPP','Are\x20you\x20sure\x20you\x20want\x20to\x20remove\x20','\x20(Away)','72YdUMhk','awayTeam','Bullom\x20Stars\x20FC','Unauthorized:\x20Only\x20the\x20SLFA\x20Super\x20Admin\x20can\x20approve\x20licenses.',')</span></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22item-sub\x22>','createObjectURL','role','</td><td\x20class=\x22text-center\x22>','<p\x20style=\x22text-align:\x20center;\x20color:\x20#6b7280;\x20font-size:\x2011px;\x20padding:\x2020px;\x22>No\x20pending\x20registrations\x20awaiting\x20SLFA\x20board\x20approval.</p>','SLFA_Player_Squads.csv','Koidu\x20Field\x20(Kono)','referee','\x20•\x20','pending-queue-list','6666','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22text-center\x22>','Wilberforce\x20Strikers\x20FC','display','MATCH_OFFICIAL','Bangura','number','172gXDZhm','Unauthorized:\x20Only\x20certified\x20referees\x20can\x20log\x20match\x20events.','fixtures','ground','</p>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<br><h4>Match\x20Ticker\x20&\x20Disciplinary\x20Audit\x20Log:</h4><ul>\x0a\x20\x20\x20\x20','CLUB_ADMIN','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22header-flex\x22\x20style=\x22margin-bottom:\x2012px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22card-title\x22\x20style=\x22margin:0;\x22>SLFA\x20Executive\x20Approval\x20&\x20Governance</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20id=\x22pending-count\x22\x20class=\x22badge\x22>0\x20Pending</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<p\x20style=\x22font-size:\x2011px;\x20color:\x20#9ca3af;\x20margin-bottom:\x2012px;\x22>Review\x20club\x20player\x20registrations\x20and\x20grant\x20official\x20license\x20approvals.</p>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20id=\x22pending-queue-list\x22></div>\x0a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-top:\x2024px;\x20border-top:\x201px\x20solid\x20#1f2937;\x20padding-top:\x2016px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22card-title\x22\x20style=\x22color:\x20#34d399;\x22>🏟️\x20League\x20Teams\x20Management</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<form\x20id=\x22form-add-team\x22\x20onsubmit=\x22handleAddTeam(event)\x22\x20style=\x22margin-bottom:\x2012px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22form-grid\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22form-group\x22><input\x20type=\x22text\x22\x20id=\x22new-team-name\x22\x20placeholder=\x22Club\x20Name\x22\x20required\x20style=\x22font-size:\x2011px;\x20padding:\x207px;\x22></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22form-group\x22><input\x20type=\x22text\x22\x20id=\x22new-team-ground\x22\x20placeholder=\x22Home\x20Ground\x22\x20required\x20style=\x22font-size:\x2011px;\x20padding:\x207px;\x22></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20type=\x22submit\x22\x20class=\x22btn-sm\x22>Add\x20Club\x20to\x20League</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</form>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22max-height:\x20140px;\x20overflow-y:\x20auto;\x20background:\x20#030712;\x20padding:\x206px;\x20border-radius:\x208px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','\x20<span\x20style=\x22font-weight:normal;\x20color:#9ca3af;\x22>(','<br>','away-team-name','\x20|\x20🟥\x20','nav-btn','24drosJK','body','match-away-score','lastName','Ibrahim','club-roster-list','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22list-item\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22item-name\x22>#','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22font-size:\x208px;\x20color:\x20#34d399;\x20font-family:\x20monospace;\x22>🏟️\x20','nin','ref-controls-area','6598075rmXTbK','Enter\x20Administration\x20Security\x20PIN\x20for\x20','homeTeam','away','Today,\x2016:00\x20GMT','yellowCards','PENDING','reg-club','GOAL','reset','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22badge\x22\x20style=\x22','push','Star\x20Sport\x20Academy','event-player-select',')</span></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22item-sub\x22>Discipline:\x20🟨\x20','value','player-reg-form','standings','<li>','Access\x20Granted!\x20Authorized\x20administrator\x20session\x20active.','homeScore','Player\x20registered\x20successfully!\x20Submitted\x20to\x20SLFA\x20Board\x20for\x20approval.','name','Trade\x20Centre\x20Field','length','block','</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22text-center\x22>','club-interactive-area','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20','Switched\x20to\x20Public\x20Viewer\x20Mode\x20(Read-Only).','remove','Mighty\x20Blackpool\x20FC','NIN-SL-00456','new-team-name','match-ticker','\x20to\x20the\x20Leone\x20Rock\x20Premier\x20League!','5413AQDYsV','opt-home-label','<option\x20value=\x22','\x27)\x22\x20class=\x22btn-danger\x22>Remove</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>','none','standings-search','<div\x20class=\x22list-item\x22\x20style=\x22padding:6px\x2010px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div><div\x20class=\x22item-name\x22\x20style=\x22font-size:10px;\x22>','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22text-align:\x20right;\x22><span\x20class=\x22badge\x22\x20style=\x22background:#1f2937;\x20color:#34d399;\x22>','clubsMap','ACTIVE','.club-select-options','has','Completed','Position,Club,Home\x20Ground,Played,Won,Drawn,Lost,Goals\x20For,Goals\x20Against,Goal\x20Difference,Points\x0a','now','fixtures-list-container','unshift','status','position','First\x20Name,Last\x20Name,Jersey\x20No,NIN,Position,Club,Status,Goals,Yellow\x20Cards,Red\x20Cards\x0a','reg-fname','toggle','\x20from\x20the\x20Premier\x20League\x20database?','</option>','Bo\x20Rangers\x20FC','reg-lname','tab-content-','Lungi\x20Playing\x20Field\x20(Lungi)','home','Kenema\x20Playing\x20Field\x20(Kenema)','Error:\x20Please\x20select\x20a\x20valid\x20licensed\x20player.','<option\x20value=\x22\x22>No\x20ACTIVE\x20players\x20licensed\x20for\x20this\x20club</option>','East\x20End\x20Lions\x20FC','.\x20Lineups\x20verified.','<p\x20style=\x22text-align:\x20center;\x20color:\x20#6b7280;\x20font-size:\x2011px;\x20padding:\x2010px;\x22>No\x20players\x20registered\x20yet.</p>','20bkcDay','reg-nin','createElement','\x27]\x20⚽\x20GOAL!\x20','Waterloo\x20FC','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22item-sub\x22>🏟️\x20','removeChild','</span></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20','Match\x20event\x20verified\x20and\x20logged!','Trade\x20Centre\x20Field\x20(Eastern\x20Freetown)','getItem','innerText','club-notice','Team\x20already\x20exists\x20in\x20the\x20league!','admin','get','\x0a\x20\x20\x20\x20\x20\x20\x20\x20<h2\x20style=\x22text-align:center;\x22>SIERRA\x20LEONE\x20FOOTBALL\x20ASSOCIATION\x20(SLFA)</h2>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<h3\x20style=\x22text-align:center;\x22>Leone\x20Rock\x20Premier\x20League\x20-\x20Official\x20Match\x20Audit\x20Report</h3>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<hr\x20style=\x22margin:\x2010px\x200;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<p><strong>Fixture:</strong>\x20','values','Diamond\x20Stars\x20FC','1\x20-\x200','[00\x27]\x20Match\x20referee\x20blows\x20the\x20whistle.\x20Action\x20is\x20live\x20across\x20Sierra\x20Leone!','time','toLowerCase','admin-view-container','localeCompare','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22text-center\x22\x20style=\x22font-weight:\x20bold;\x20color:\x20#9ca3af;\x22>','venue','Approved\x20School\x20Field','background:#78350f;\x20color:#fde68a;','Password\x20must\x20be\x20at\x20least\x203\x20characters\x20long.','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22list-item\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22item-name\x22>','[00\x27]\x20New\x20fixture\x20loaded:\x20','ref-notice','club-password-box','setItem','MK\x203/10\x20Field\x20(Angola\x20Town)','sort','home-team-name','\x20G\x20|\x20🟨\x20','nav-','\x27]\x20🟥\x20Red\x20Card!\x20','filter','3\x20-\x200','players','trim','\x20Pending','appendChild','Ports\x20Authority\x20FC','click','Wusum\x20Field\x20(Makeni)','Tomorrow,\x2016:00\x20GMT','tickerLogs','</div><div\x20class=\x22item-sub\x22>','match-home-score','Bai\x20Bureh\x20Warriors\x20FC','Approved\x20School\x20Field\x20(Wellington)','classList','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22badge\x22\x20style=\x22background:#064e3b;\x20color:#34d399;\x22>⚽\x20','from','\x20Teams','\x20vs\x20'];_0x33d6=function(){return _0x540016;};return _0x33d6();}function _0x226d(_0x148847,_0x5a4340){_0x148847=_0x148847-0xef;const _0x33d6ed=_0x33d6();let _0x226d86=_0x33d6ed[_0x148847];return _0x226d86;}function persistState(){const _0x4094f1=_0x303472;db[_0x4094f1(0x169)]=Array[_0x4094f1(0x145)](db[_0x4094f1(0xf0)][_0x4094f1(0x156)]()),localStorage[_0x4094f1(0x12d)](STORAGE_KEY,JSON['stringify'](db));}function promptForRolePassword(_0x5e5862){const _0x1a4356=_0x303472;if(_0x5e5862===_0x1a4356(0x165)){db['role']=_0x1a4356(0x165),alert(_0x1a4356(0x1d6)),renderAdminPanel(),applyRolePermissions();return;}const _0x5e7432=prompt(_0x1a4356(0x1ba)+_0x5e5862[_0x1a4356(0x179)]('_','\x20')+':');_0x5e7432===db[_0x1a4356(0x184)][_0x5e5862]?(db[_0x1a4356(0x194)]=_0x5e5862,alert(_0x1a4356(0x1cc)),renderAdminPanel(),applyRolePermissions()):(alert(_0x1a4356(0x180)),document[_0x1a4356(0x15d)](_0x1a4356(0x181))[_0x1a4356(0x1c8)]=db[_0x1a4356(0x194)]);}function applyRolePermissions(){const _0xf8b2e3=_0x303472,_0x288dd7=db['role']===_0xf8b2e3(0x165),_0x2e8594=db['role']===_0xf8b2e3(0x1a8),_0x5a20d3=db['role']===_0xf8b2e3(0x1a0);document[_0xf8b2e3(0x15d)](_0xf8b2e3(0x117))[_0xf8b2e3(0x164)][_0xf8b2e3(0x19f)]=_0x2e8594?_0xf8b2e3(0x1e1):_0xf8b2e3(0x1d2),document['getElementById'](_0xf8b2e3(0x1d4))[_0xf8b2e3(0x164)][_0xf8b2e3(0x19f)]=_0x2e8594?_0xf8b2e3(0x1d2):_0xf8b2e3(0x1e1),document['getElementById'](_0xf8b2e3(0x12c))['classList'][_0xf8b2e3(0xfd)](_0xf8b2e3(0x15a),!_0x2e8594),document[_0xf8b2e3(0x15d)](_0xf8b2e3(0x12b))[_0xf8b2e3(0x164)][_0xf8b2e3(0x19f)]=_0x288dd7?_0xf8b2e3(0x1d2):_0xf8b2e3(0x1e1),document[_0xf8b2e3(0x15d)](_0xf8b2e3(0x1b8))[_0xf8b2e3(0x164)][_0xf8b2e3(0x19f)]=_0x288dd7?_0xf8b2e3(0x1e1):_0xf8b2e3(0x1d2),document['getElementById'](_0xf8b2e3(0x186))[_0xf8b2e3(0x143)][_0xf8b2e3(0xfd)]('hidden',!_0x5a20d3),renderClubRoster(),renderStandingsTable(),populateClubDropdowns(),populateFixtureDropdowns(),renderFixturesList(),renderTopScorers();}function populateClubDropdowns(){const _0x29e555=_0x303472,_0x567117=document['querySelectorAll'](_0x29e555(0xf2));_0x567117[_0x29e555(0x155)](_0x36e139=>{const _0x4a73a4=_0x29e555;_0x36e139[_0x4a73a4(0x172)]='',db[_0x4a73a4(0xf0)][_0x4a73a4(0x155)]((_0x2e5b0e,_0x3a525f)=>{const _0x37c44c=_0x4a73a4;_0x36e139[_0x37c44c(0x172)]+=_0x37c44c(0x1df)+_0x3a525f+'\x22>'+_0x3a525f+_0x37c44c(0xff);});});}function populateFixtureDropdowns(){const _0xdd841c=_0x303472,_0x40f09f=document[_0xdd841c(0x15d)]('fixture-selector');if(!_0x40f09f)return;_0x40f09f[_0xdd841c(0x172)]='',db[_0xdd841c(0x1a5)][_0xdd841c(0x155)](_0x462168=>{const _0x251d2d=_0xdd841c;_0x40f09f[_0x251d2d(0x172)]+=_0x251d2d(0x1df)+_0x462168[_0x251d2d(0x104)]+_0x251d2d(0x147)+_0x462168[_0x251d2d(0x1bc)]+'\x22>'+_0x462168[_0x251d2d(0x104)]+_0x251d2d(0x147)+_0x462168[_0x251d2d(0x1bc)]+'\x20('+_0x462168[_0x251d2d(0x125)]+_0x251d2d(0x166);});}function updateSelfPassword(_0x22036d,_0x5bcddf){const _0x3d8917=_0x303472;_0x22036d[_0x3d8917(0x178)]();const _0x1e777a=document['getElementById'](_0x3d8917(0x182)+_0x5bcddf)[_0x3d8917(0x1c8)];_0x1e777a&&_0x1e777a['length']>=0x3?(db[_0x3d8917(0x184)][_0x5bcddf]=_0x1e777a,persistState(),alert(_0x3d8917(0x17e)),document[_0x3d8917(0x15d)]('self-pass-'+_0x5bcddf)[_0x3d8917(0x1c8)]=''):alert(_0x3d8917(0x128));}function switchTab(_0x55bfaa){const _0x276ea3=_0x303472;['admin','club',_0x276ea3(0x1a5),_0x276ea3(0x199),_0x276ea3(0x17f),_0x276ea3(0x1ca)][_0x276ea3(0x155)](_0x347bdd=>{const _0x2e823f=_0x276ea3;document['getElementById']('tab-content-'+_0x347bdd)[_0x2e823f(0x143)]['add']('hidden'),document[_0x2e823f(0x15d)](_0x2e823f(0x132)+_0x347bdd)['className']=_0x2e823f(0x1ae);}),document[_0x276ea3(0x15d)](_0x276ea3(0x102)+_0x55bfaa)[_0x276ea3(0x143)][_0x276ea3(0x1d7)](_0x276ea3(0x15a)),document[_0x276ea3(0x15d)](_0x276ea3(0x132)+_0x55bfaa)[_0x276ea3(0x17d)]='nav-btn\x20active';if(_0x55bfaa===_0x276ea3(0x119))renderAdminPanel();if(_0x55bfaa==='club')renderClubRoster();if(_0x55bfaa===_0x276ea3(0x1a5))renderFixturesList();if(_0x55bfaa==='referee')populateActivePlayers();if(_0x55bfaa==='stats')renderTopScorers();if(_0x55bfaa===_0x276ea3(0x1ca))renderStandingsTable();}function changeActiveFixture(_0x4b3a16){const _0x5937af=_0x303472,_0x1aa1da=_0x4b3a16[_0x5937af(0x188)](_0x5937af(0x147));db[_0x5937af(0x1bb)]=_0x1aa1da[0x0],db[_0x5937af(0x18f)]=_0x1aa1da[0x1]['split']('\x20(')[0x0],db['homeScore']=0x0,db['awayScore']=0x0,document[_0x5937af(0x15d)](_0x5937af(0x130))[_0x5937af(0x116)]=db[_0x5937af(0x1bb)],document[_0x5937af(0x15d)](_0x5937af(0x1ac))[_0x5937af(0x116)]=db[_0x5937af(0x18f)],document[_0x5937af(0x15d)](_0x5937af(0x140))['innerText']='0',document[_0x5937af(0x15d)]('match-away-score')[_0x5937af(0x116)]='0';const _0xb1a5e2=document['getElementById'](_0x5937af(0x1de)),_0xd1769e=document[_0x5937af(0x15d)](_0x5937af(0x17c));_0xb1a5e2[_0x5937af(0x1c8)]=_0x5937af(0x16c),_0xb1a5e2['innerText']=db[_0x5937af(0x1bb)]+_0x5937af(0x174),_0xd1769e['value']='AWAY',_0xd1769e[_0x5937af(0x116)]=db['awayTeam']+_0x5937af(0x18d),db['tickerLogs'][_0x5937af(0xf8)](_0x5937af(0x12a)+db[_0x5937af(0x1bb)]+'\x20vs\x20'+db['awayTeam']+_0x5937af(0x109)),renderTicker(),populateActivePlayers(),persistState();}function populateActivePlayers(){const _0x3050f3=_0x303472,_0x5b48ec=document[_0x3050f3(0x15d)]('event-player-select');if(!_0x5b48ec)return;_0x5b48ec[_0x3050f3(0x172)]='';const _0x13f750=document[_0x3050f3(0x15d)](_0x3050f3(0x14e))[_0x3050f3(0x1c8)],_0x1f0c5d=_0x13f750===_0x3050f3(0x16c)?db[_0x3050f3(0x1bb)]:db['awayTeam'],_0x23eee0=db[_0x3050f3(0x136)][_0x3050f3(0x134)](_0x34841d=>_0x34841d[_0x3050f3(0x160)]===_0x1f0c5d&&_0x34841d[_0x3050f3(0xf9)]===_0x3050f3(0xf1));if(_0x23eee0[_0x3050f3(0x1d1)]===0x0){_0x5b48ec[_0x3050f3(0x172)]=_0x3050f3(0x107);return;}_0x23eee0[_0x3050f3(0x155)](_0x5bb1e8=>{const _0x411af5=_0x3050f3;_0x5b48ec['innerHTML']+=_0x411af5(0x1df)+_0x5bb1e8[_0x411af5(0x17b)]+'\x20'+_0x5bb1e8[_0x411af5(0x1b2)]+_0x411af5(0x152)+_0x5bb1e8[_0x411af5(0x1a2)]+'\x20'+_0x5bb1e8['firstName']+'\x20'+_0x5bb1e8[_0x411af5(0x1b2)]+'\x20('+_0x5bb1e8['position']+')</option>';});}function handleAddTeam(_0x3cfc14){const _0x212b24=_0x303472;_0x3cfc14[_0x212b24(0x178)]();const _0x18b3fc=document[_0x212b24(0x15d)](_0x212b24(0x1da))[_0x212b24(0x1c8)][_0x212b24(0x137)](),_0x368b5e=document['getElementById'](_0x212b24(0x16f))[_0x212b24(0x1c8)][_0x212b24(0x137)]();if(_0x18b3fc&&_0x368b5e){if(db[_0x212b24(0xf0)][_0x212b24(0xf3)](_0x18b3fc)){alert(_0x212b24(0x118));return;}db[_0x212b24(0xf0)][_0x212b24(0x151)](_0x18b3fc,{'name':_0x18b3fc,'ground':_0x368b5e,'p':0x0,'w':0x0,'d':0x0,'l':0x0,'gf':0x0,'ga':0x0,'pts':0x0}),persistState(),alert(_0x212b24(0x14a)+_0x18b3fc+_0x212b24(0x1dc)),document[_0x212b24(0x15d)](_0x212b24(0x170))['reset'](),renderAdminPanel(),renderStandingsTable(),populateClubDropdowns();}}function handleRemoveTeam(_0x4f590b){const _0x36eb18=_0x303472;confirm(_0x36eb18(0x18c)+_0x4f590b+_0x36eb18(0xfe))&&(db[_0x36eb18(0xf0)]['delete'](_0x4f590b),persistState(),alert(_0x4f590b+'\x20has\x20been\x20removed.'),renderAdminPanel(),renderStandingsTable(),populateClubDropdowns());}function renderAdminPanel(){const _0x52e52a=_0x303472,_0x235023=document['getElementById'](_0x52e52a(0x122));if(db[_0x52e52a(0x194)]==='SUPER_ADMIN'){let _0x4e86b9='';db[_0x52e52a(0xf0)]['forEach']((_0x4e2705,_0x41bff1)=>{const _0x1b1aa0=_0x52e52a;_0x4e86b9+=_0x1b1aa0(0x1e3)+_0x41bff1+_0x1b1aa0(0x13f)+_0x4e2705[_0x1b1aa0(0x1a6)]+_0x1b1aa0(0x185)+_0x41bff1+_0x1b1aa0(0x1e0);}),_0x235023[_0x52e52a(0x172)]=_0x52e52a(0x1a9)+_0x4e86b9+_0x52e52a(0x1d5),renderPendingQueue();}else{if(db[_0x52e52a(0x194)]===_0x52e52a(0x1a8))_0x235023[_0x52e52a(0x172)]=_0x52e52a(0x148);else db[_0x52e52a(0x194)]===_0x52e52a(0x1a0)?_0x235023[_0x52e52a(0x172)]=_0x52e52a(0x14d):_0x235023[_0x52e52a(0x172)]='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22card-title\x22>Welcome\x20to\x20the\x20Leone\x20Rock\x20Premier\x20League\x20Hub</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22notice-banner\x22>You\x20are\x20viewing\x20the\x20platform\x20as\x20a\x20<strong>Public\x20Guest</strong>.</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20';}}function renderPendingQueue(){const _0x898918=_0x303472,_0x113dfd=document['getElementById'](_0x898918(0x19b));if(!_0x113dfd)return;_0x113dfd['innerHTML']='';const _0x4a9d3b=db[_0x898918(0x136)]['filter'](_0x7310a9=>_0x7310a9[_0x898918(0xf9)]===_0x898918(0x1bf)),_0x3eb708=document[_0x898918(0x15d)]('pending-count');if(_0x3eb708)_0x3eb708['innerText']=_0x4a9d3b[_0x898918(0x1d1)]+_0x898918(0x138);if(_0x4a9d3b[_0x898918(0x1d1)]===0x0){_0x113dfd['innerHTML']=_0x898918(0x196);return;}_0x4a9d3b['forEach'](_0x90d7db=>{const _0x3fa70d=_0x898918;_0x113dfd[_0x3fa70d(0x172)]+=_0x3fa70d(0x1b5)+_0x90d7db['number']+'\x20'+_0x90d7db[_0x3fa70d(0x17b)]+'\x20'+_0x90d7db[_0x3fa70d(0x1b2)]+_0x3fa70d(0x1aa)+_0x90d7db[_0x3fa70d(0xfa)]+')</span></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22item-sub\x22>'+_0x90d7db[_0x3fa70d(0x1b7)]+_0x3fa70d(0x19a)+_0x90d7db[_0x3fa70d(0x160)]+_0x3fa70d(0x161)+_0x90d7db['id']+_0x3fa70d(0x150);});}function handlePlayerRegistration(_0x8c5de2){const _0x10391f=_0x303472;_0x8c5de2[_0x10391f(0x178)]();if(db[_0x10391f(0x194)]!==_0x10391f(0x1a8)){alert('Unauthorized:\x20Only\x20Club\x20Administrators\x20can\x20submit\x20player\x20registrations.');return;}const _0x5bce14={'id':Date[_0x10391f(0xf6)]()['toString'](),'firstName':document[_0x10391f(0x15d)](_0x10391f(0xfc))['value'],'lastName':document[_0x10391f(0x15d)](_0x10391f(0x101))[_0x10391f(0x1c8)],'number':parseInt(document['getElementById']('reg-number')[_0x10391f(0x1c8)]),'nin':document[_0x10391f(0x15d)](_0x10391f(0x10c))['value'],'position':document[_0x10391f(0x15d)]('reg-pos')[_0x10391f(0x1c8)],'club':document[_0x10391f(0x15d)](_0x10391f(0x1c0))[_0x10391f(0x1c8)],'status':'PENDING','goals':0x0,'yellowCards':0x0,'redCards':0x0};db[_0x10391f(0x136)][_0x10391f(0x1c4)](_0x5bce14),persistState(),alert(_0x10391f(0x1ce)),document[_0x10391f(0x15d)](_0x10391f(0x1c9))[_0x10391f(0x1c2)](),renderClubRoster();}function renderClubRoster(){const _0x268d18=_0x303472,_0x416957=document['getElementById'](_0x268d18(0x1b4));if(!_0x416957)return;_0x416957[_0x268d18(0x172)]='';if(db[_0x268d18(0x136)]['length']===0x0){_0x416957[_0x268d18(0x172)]=_0x268d18(0x10a);return;}db[_0x268d18(0x136)][_0x268d18(0x155)](_0x5b3f9a=>{const _0x428008=_0x268d18;let _0x2854c8='background:#064e3b;\x20color:#34d399;';if(_0x5b3f9a[_0x428008(0xf9)]===_0x428008(0x1bf))_0x2854c8=_0x428008(0x127);if(_0x5b3f9a[_0x428008(0xf9)]==='SUSPENDED')_0x2854c8='background:#7f1d1d;\x20color:#fca5a5;';_0x416957[_0x428008(0x172)]+='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22list-item\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22item-name\x22>#'+_0x5b3f9a[_0x428008(0x1a2)]+'\x20'+_0x5b3f9a[_0x428008(0x17b)]+'\x20'+_0x5b3f9a[_0x428008(0x1b2)]+_0x428008(0x1aa)+_0x5b3f9a[_0x428008(0xfa)]+_0x428008(0x192)+_0x5b3f9a[_0x428008(0x160)]+'\x20•\x20⚽\x20'+_0x5b3f9a[_0x428008(0x162)]+_0x428008(0x131)+_0x5b3f9a[_0x428008(0x1be)]+_0x428008(0x1ad)+_0x5b3f9a[_0x428008(0x177)]+_0x428008(0x1c3)+_0x2854c8+'\x22>'+_0x5b3f9a['status']+'</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20';});}function exportRosterCSV(){const _0x1cbf04=_0x303472;let _0x61d53d=_0x1cbf04(0xfb);db[_0x1cbf04(0x136)]['forEach'](_0xb23b4d=>{const _0xd8d75a=_0x1cbf04;_0x61d53d+='\x22'+_0xb23b4d[_0xd8d75a(0x17b)]+'\x22,\x22'+_0xb23b4d[_0xd8d75a(0x1b2)]+'\x22,'+_0xb23b4d[_0xd8d75a(0x1a2)]+',\x22'+_0xb23b4d['nin']+_0xd8d75a(0x16e)+_0xb23b4d[_0xd8d75a(0xfa)]+_0xd8d75a(0x16e)+_0xb23b4d['club']+_0xd8d75a(0x16e)+_0xb23b4d['status']+'\x22,'+_0xb23b4d[_0xd8d75a(0x162)]+','+_0xb23b4d[_0xd8d75a(0x1be)]+','+_0xb23b4d['redCards']+'\x0a';}),downloadCSV(_0x61d53d,_0x1cbf04(0x197));}function exportStandingsCSV(){const _0x44d20a=_0x303472;let _0x35c98b=_0x44d20a(0xf5),_0x40474c=Array[_0x44d20a(0x145)](db[_0x44d20a(0xf0)][_0x44d20a(0x11c)]())[_0x44d20a(0x12f)]((_0x593073,_0x2e6b03)=>_0x2e6b03[_0x44d20a(0x187)]-_0x593073['pts']||_0x2e6b03['gf']-_0x2e6b03['ga']-(_0x593073['gf']-_0x593073['ga']));_0x40474c['forEach']((_0x23255d,_0x57e4f8)=>{const _0x3f1f3a=_0x44d20a;_0x35c98b+=_0x57e4f8+0x1+',\x22'+_0x23255d[_0x3f1f3a(0x1cf)]+'\x22,\x22'+_0x23255d[_0x3f1f3a(0x1a6)]+'\x22,'+_0x23255d['p']+','+_0x23255d['w']+','+_0x23255d['d']+','+_0x23255d['l']+','+_0x23255d['gf']+','+_0x23255d['ga']+','+(_0x23255d['gf']-_0x23255d['ga'])+','+_0x23255d[_0x3f1f3a(0x187)]+'\x0a';}),downloadCSV(_0x35c98b,'Leone_Rock_Premier_League_Standings.csv');}function downloadCSV(_0x3bb492,_0x4976ff){const _0x183207=_0x303472,_0x520936=new Blob([_0x3bb492],{'type':'text/csv;charset=utf-8;'}),_0x510ea9=document[_0x183207(0x10d)]('a');_0x510ea9['href']=URL[_0x183207(0x193)](_0x520936),_0x510ea9[_0x183207(0x15e)](_0x183207(0x159),_0x4976ff),document[_0x183207(0x1b0)][_0x183207(0x139)](_0x510ea9),_0x510ea9[_0x183207(0x13b)](),document[_0x183207(0x1b0)][_0x183207(0x111)](_0x510ea9);}function renderFixturesList(){const _0x2813a8=_0x303472,_0x136561=document[_0x2813a8(0x15d)](_0x2813a8(0xf7));if(!_0x136561)return;_0x136561['innerHTML']='',db[_0x2813a8(0x1a5)][_0x2813a8(0x155)](_0x1aa1ce=>{const _0x519644=_0x2813a8;_0x136561[_0x519644(0x172)]+=_0x519644(0x129)+_0x1aa1ce[_0x519644(0x104)]+_0x519644(0x147)+_0x1aa1ce[_0x519644(0x1bc)]+_0x519644(0x110)+_0x1aa1ce[_0x519644(0x125)]+'\x20•\x20⏰\x20'+_0x1aa1ce[_0x519644(0x120)]+_0x519644(0xef)+_0x1aa1ce['score']+_0x519644(0x112);});}function renderTopScorers(){const _0x55ae88=_0x303472,_0x3796d7=document[_0x55ae88(0x15d)]('top-scorers-list');if(!_0x3796d7)return;_0x3796d7['innerHTML']='';const _0x13d9ab=[...db['players']][_0x55ae88(0x12f)]((_0x253967,_0x44a1c0)=>_0x44a1c0['goals']-_0x253967[_0x55ae88(0x162)]||_0x253967[_0x55ae88(0x1b2)][_0x55ae88(0x123)](_0x44a1c0[_0x55ae88(0x1b2)]));_0x13d9ab[_0x55ae88(0x155)]((_0x2fa44b,_0x391771)=>{const _0x311c52=_0x55ae88;_0x3796d7[_0x311c52(0x172)]+='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22list-item\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22item-name\x22>#'+(_0x391771+0x1)+'\x20#'+_0x2fa44b[_0x311c52(0x1a2)]+'\x20'+_0x2fa44b[_0x311c52(0x17b)]+'\x20'+_0x2fa44b[_0x311c52(0x1b2)]+_0x311c52(0x1aa)+_0x2fa44b[_0x311c52(0x160)]+_0x311c52(0x1c7)+_0x2fa44b['yellowCards']+_0x311c52(0x1ad)+_0x2fa44b['redCards']+_0x311c52(0x144)+_0x2fa44b[_0x311c52(0x162)]+'\x20Goals</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20';});}function approvePlayer(_0x3904e7){const _0x5e78e0=_0x303472;if(db['role']!=='SUPER_ADMIN'){alert(_0x5e78e0(0x191));return;}const _0x758e3d=db[_0x5e78e0(0x136)]['find'](_0x33fc40=>_0x33fc40['id']===_0x3904e7);_0x758e3d&&(_0x758e3d[_0x5e78e0(0xf9)]=_0x5e78e0(0xf1),persistState(),alert(_0x758e3d[_0x5e78e0(0x17b)]+'\x20'+_0x758e3d['lastName']+'\x20license\x20approved!'),renderPendingQueue());}function handleRefereeMatchInput(_0x4f929a){const _0x215af0=_0x303472;_0x4f929a['preventDefault']();if(db[_0x215af0(0x194)]!==_0x215af0(0x1a0)){alert(_0x215af0(0x1a4));return;}const _0x4c069c=document[_0x215af0(0x15d)](_0x215af0(0x14e))['value'],_0x23a009=document[_0x215af0(0x15d)](_0x215af0(0x176))[_0x215af0(0x1c8)],_0x300699=document[_0x215af0(0x15d)]('event-type')[_0x215af0(0x1c8)],_0x7edd95=document[_0x215af0(0x15d)](_0x215af0(0x1c6))[_0x215af0(0x1c8)];if(!_0x7edd95||_0x7edd95['includes']('No\x20ACTIVE')){alert(_0x215af0(0x106));return;}const _0x2889a5=_0x4c069c===_0x215af0(0x16c)?db[_0x215af0(0x1bb)]:db[_0x215af0(0x18f)],_0x43fd15=db['clubsMap'][_0x215af0(0x11a)](_0x2889a5),_0x2c9315=db[_0x215af0(0x136)][_0x215af0(0x171)](_0x2828e5=>_0x2828e5[_0x215af0(0x17b)]+'\x20'+_0x2828e5[_0x215af0(0x1b2)]===_0x7edd95);if(_0x300699===_0x215af0(0x1c1)){_0x4c069c===_0x215af0(0x16c)?(db[_0x215af0(0x1cd)]+=0x1,document['getElementById'](_0x215af0(0x140))[_0x215af0(0x116)]=db[_0x215af0(0x1cd)]):(db[_0x215af0(0x175)]+=0x1,document[_0x215af0(0x15d)](_0x215af0(0x1b1))[_0x215af0(0x116)]=db[_0x215af0(0x175)]);_0x43fd15&&(_0x43fd15['p']+=0x1,_0x43fd15['w']+=0x1,_0x43fd15['gf']+=0x1,_0x43fd15[_0x215af0(0x187)]+=0x3);if(_0x2c9315)_0x2c9315['goals']+=0x1;db[_0x215af0(0x13e)][_0x215af0(0xf8)]('['+_0x23a009+_0x215af0(0x10e)+_0x7edd95+'\x20scores\x20for\x20'+_0x2889a5+'!');}else{if(_0x300699===_0x215af0(0x16a)){if(_0x2c9315)_0x2c9315[_0x215af0(0x1be)]+=0x1;db[_0x215af0(0x13e)]['unshift']('['+_0x23a009+'\x27]\x20🟨\x20Yellow\x20Card\x20issued\x20to\x20'+_0x7edd95+'\x20('+_0x2889a5+').');}else _0x300699==='RED'&&(_0x2c9315&&(_0x2c9315[_0x215af0(0x177)]+=0x1,_0x2c9315[_0x215af0(0xf9)]='SUSPENDED'),db[_0x215af0(0x13e)]['unshift']('['+_0x23a009+_0x215af0(0x133)+_0x7edd95+'\x20('+_0x2889a5+')\x20sent\x20off!'));}renderTicker(),persistState(),alert(_0x215af0(0x113));}function renderTicker(){const _0xe872d=_0x303472,_0x340a6e=document[_0xe872d(0x15d)](_0xe872d(0x1db));if(!_0x340a6e)return;_0x340a6e[_0xe872d(0x172)]=db[_0xe872d(0x13e)]['join'](_0xe872d(0x1ab));}function triggerPDFPrintReport(){const _0x1cc491=_0x303472,_0x3ff94c=document[_0x1cc491(0x15d)](_0x1cc491(0x15c));let _0x1a24b0=_0x1cc491(0x11b)+db[_0x1cc491(0x1bb)]+'\x20vs\x20'+db[_0x1cc491(0x18f)]+_0x1cc491(0x183)+db[_0x1cc491(0x1cd)]+_0x1cc491(0x14c)+db[_0x1cc491(0x175)]+_0x1cc491(0x1a7);db[_0x1cc491(0x13e)][_0x1cc491(0x154)]()['reverse']()[_0x1cc491(0x155)](_0x581b82=>{const _0x2f3cc3=_0x1cc491;_0x1a24b0+=_0x2f3cc3(0x1cb)+_0x581b82+'</li>';}),_0x1a24b0+=_0x1cc491(0x189),_0x3ff94c[_0x1cc491(0x172)]=_0x1a24b0,window['print']();}function filterStandingsTable(){const _0x37f957=_0x303472,_0x501634=document[_0x37f957(0x15d)](_0x37f957(0x1e2))[_0x37f957(0x1c8)][_0x37f957(0x121)]();renderStandingsTable(_0x501634);}function renderStandingsTable(_0x5e977f=''){const _0x41d9c2=_0x303472,_0x1bb17e=document[_0x41d9c2(0x15d)]('standings-tbody');if(!_0x1bb17e)return;_0x1bb17e[_0x41d9c2(0x172)]='';let _0xbc129c=Array[_0x41d9c2(0x145)](db[_0x41d9c2(0xf0)][_0x41d9c2(0x11c)]())[_0x41d9c2(0x12f)]((_0x227281,_0x5879a9)=>_0x5879a9['pts']-_0x227281[_0x41d9c2(0x187)]||_0x5879a9['gf']-_0x5879a9['ga']-(_0x227281['gf']-_0x227281['ga']));document[_0x41d9c2(0x15d)]('standings-count-badge')['innerText']=_0xbc129c['length']+_0x41d9c2(0x146),_0x5e977f&&(_0xbc129c=_0xbc129c['filter'](_0x2dc3d1=>_0x2dc3d1[_0x41d9c2(0x1cf)][_0x41d9c2(0x121)]()['includes'](_0x5e977f))),_0xbc129c[_0x41d9c2(0x155)]((_0x171f6e,_0x5a5fee)=>{const _0x497f59=_0x41d9c2,_0xe8505f=_0x171f6e['gf']-_0x171f6e['ga'];_0x1bb17e[_0x497f59(0x172)]+=_0x497f59(0x124)+(_0x5a5fee+0x1)+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22font-weight:\x20600;\x20color:\x20#fff;\x22>'+_0x171f6e[_0x497f59(0x1cf)]+_0x497f59(0x1b6)+_0x171f6e[_0x497f59(0x1a6)]+_0x497f59(0x19d)+_0x171f6e['p']+'</td><td\x20class=\x22text-center\x22>'+_0x171f6e['w']+_0x497f59(0x195)+_0x171f6e['d']+_0x497f59(0x195)+_0x171f6e['l']+_0x497f59(0x1d3)+_0x171f6e['gf']+_0x497f59(0x195)+_0x171f6e['ga']+_0x497f59(0x195)+(_0xe8505f>0x0?'+'+_0xe8505f:_0xe8505f)+'</td><td\x20class=\x22text-center\x20font-black\x22>'+_0x171f6e['pts']+_0x497f59(0x18a);});}renderAdminPanel(),applyRolePermissions(),renderStandingsTable();
+        const _0x1a="SLFA_PL_DB_2026";
+        const _0x2b={role:"VIEWER",activeClubAdmin:null,passwords:{"SUPER_ADMIN":"5555","MATCH_OFFICIAL":"7777"},clubAdmins:[{id:"kamboi_admin",club:"Kamboi Eagles FC",pin:"6666"},{id:"bo_admin",club:"Bo Rangers FC",pin:"6666"}],players:[{id:"1",firstName:"Musa",lastName:"Kamara",number:10,nin:"NIN-SL-00123",position:"FWD",club:"Bo Rangers FC",status:"ACTIVE",goals:2,yellowCards:0,redCards:0},{id:"2",firstName:"Ibrahim",lastName:"Bangura",number:8,nin:"NIN-SL-00456",position:"MID",club:"East End Lions FC",status:"ACTIVE",goals:1,yellowCards:1,redCards:0}],fixtures:[{id:"f1",home:"Kamboi Eagles FC",away:"Bo Rangers FC",venue:"Kenema Playing Field",time:"Today, 16:00 GMT",score:"1 - 0"},{id:"f2",home:"East End Lions FC",away:"Wusum Stars FC",venue:"Southern Arena (Bo)",time:"Completed",score:"1 - 0"},{id:"f3",home:"Old Edwardians FC",away:"Diamond Stars FC",venue:"Trade Centre Field",time:"Tomorrow, 16:00 GMT",score:"Vs"},{id:"f4",home:"FC Kallon",away:"Mighty Blackpool FC",venue:"Approved School Field",time:"Tomorrow, 16:00 GMT",score:"Vs"}],tickerLogs:["[00'] Match referee blows the whistle. Action is live across Sierra Leone!"],clubsMapData:[["Kamboi Eagles FC",{name:"Kamboi Eagles FC",ground:"Kenema Playing Field (Kenema)",p:1,w:1,d:0,l:0,gf:3,ga:0,pts:3}],["Bo Rangers FC",{name:"Bo Rangers FC",ground:"Southern Arena (Bo)",p:1,w:1,d:0,l:0,gf:2,ga:1,pts:3}],["East End Lions FC",{name:"East End Lions FC",ground:"Trade Centre Field (Eastern Freetown)",p:1,w:1,d:0,l:0,gf:1,ga:0,pts:3}],["Wusum Stars FC",{name:"Wusum Stars FC",ground:"Southern Arena (Bo)",p:1,w:1,d:0,l:0,gf:1,ga:0,pts:3}],["Wilberforce Strikers FC",{name:"Wilberforce Strikers FC",ground:"Approved School Field (Wellington)",p:1,w:0,d:1,l:0,gf:0,ga:0,pts:1}],["Old Edwardians FC",{name:"Old Edwardians FC",ground:"Trade Centre Field",p:1,w:0,d:1,l:0,gf:0,ga:0,pts:1}],["Western United Fc",{name:"Western United Fc",ground:"Southern Arena (Bo)",p:1,w:0,d:1,l:0,gf:0,ga:0,pts:1}],["Mighty Blackpool FC",{name:"Mighty Blackpool FC",ground:"Lungi Playing Field (Lungi)",p:1,w:0,d:1,l:0,gf:0,ga:0,pts:1}],["Diamond Stars FC",{name:"Diamond Stars FC",ground:"Koidu Field (Kono)",p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}],["FC Kallon",{name:"FC Kallon",ground:"Approved School Field",p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}],["Bhantal FC",{name:"Bhantal FC",ground:"Southern Arena (Bo)",p:1,w:0,d:0,l:1,gf:0,ga:1,pts:0}],["Ports Authority FC",{name:"Ports Authority FC",ground:"Wusum Field (Makeni)",p:1,w:0,d:0,l:1,gf:0,ga:1,pts:0}],["Waterloo FC",{name:"Waterloo FC",ground:"MK 3/10 Field (Angola Town)",p:1,w:0,d:0,l:1,gf:1,ga:2,pts:0}],["Bai Bureh Warriors FC",{name:"Bai Bureh Warriors FC",ground:"Trade Centre Field",p:1,w:0,d:0,l:1,gf:0,ga:3,pts:0}]],homeScore:0,awayScore:0,homeTeam:"Kamboi Eagles FC",awayTeam:"Bo Rangers FC"};
+        let _0x3c=localStorage.getItem(_0x1a);
+        let _0x4d=_0x3c?JSON.parse(_0x3c):_0x2b;
+        _0x4d.clubsMap=new Map(_0x4d.clubsMapData||_0x2b.clubsMapData);
+        if(!_0x4d.clubAdmins)_0x4d.clubAdmins=_0x2b.clubAdmins;
+        function _0x5e(){_0x4d.clubsMapData=Array.from(_0x4d.clubsMap.entries());localStorage.setItem(_0x1a,JSON.stringify(_0x4d));}
+        function _0x3f(_0x6f){
+            if(_0x6f==='VIEWER'){_0x4d.role='VIEWER';_0x4d.activeClubAdmin=null;alert("Switched to Public Viewer Mode (Read-Only).");_0x70();_0x81();return;}
+            if(_0x6f==='CLUB_ADMIN'){
+                let _0x7a=prompt("Enter your unique Club Admin ID:");if(!_0x7a)return;
+                let _0x8b=_0x4d.clubAdmins.find(a=>a.id.toLowerCase()===_0x7a.trim().toLowerCase());
+                if(!_0x8b){alert("Access Denied: Club Admin ID not found.");document.getElementById('role-selector').value=_0x4d.role;return;}
+                let _0x9c=prompt("Enter Security PIN for Club Admin ["+_0x8b.id+" ("+_0x8b.club+")]:");
+                if(_0x9c===_0x8b.pin){_0x4d.role='CLUB_ADMIN';_0x4d.activeClubAdmin=_0x8b.club;alert("Access Granted! Managing squad for "+_0x8b.club);_0x70();_0x81();}
+                else{alert("Access Denied: Incorrect Security PIN.");document.getElementById('role-selector').value=_0x4d.role;}
+                return;
+            }
+            let _0x9c=prompt("Enter Administration Security PIN for "+_0x6f.replace('_',' ')+":");
+            if(_0x9c===_0x4d.passwords[_0x6f]){_0x4d.role=_0x6f;_0x4d.activeClubAdmin=null;alert("Access Granted! Authorized administrator session active.");_0x70();_0x81();}
+            else{alert("Access Denied: Incorrect Security PIN.");document.getElementById('role-selector').value=_0x4d.role;}
+        }
+        function _0x81(){
+            const _0xad=_0x4d.role==='CLUB_ADMIN',_0xbe=_0x4d.role==='MATCH_OFFICIAL';
+            document.getElementById('club-notice').style.display=_0xad?'none':'block';
+            document.getElementById('club-interactive-area').style.display=_0xad?'block':'none';
+            document.getElementById('ref-notice').style.display=_0xbe?'none':'block';
+            document.getElementById('ref-controls-area').style.display=_0xbe?'block':'none';
+            _0xcf();_0xd0(_0x4d.standingsSearchQuery||'');_0x92();_0x93();_0x94();_0x95();
+        }
+        function _0x92(){
+            document.querySelectorAll('.club-select-options').forEach(_0xe1=>{
+                _0xe1.innerHTML='';
+                _0x4d.clubsMap.forEach((_,_0xf2)=>{if(_0x4d.role==='CLUB_ADMIN'&&_0x4d.activeClubAdmin&&_0xf2!==_0x4d.activeClubAdmin)return;_0xe1.innerHTML+=`<option value="${_0xf2}">${_0xf2}</option>`;});
+            });
+        }
+        function _0x93(){let _0x13=document.getElementById('fixture-selector');if(!_0x13)return;_0x13.innerHTML='';_0x4d.fixtures.forEach(f=>{_0x13.innerHTML+=`<option value="${f.home} vs ${f.away}">${f.home} vs ${f.away} (${f.venue})</option>`;});}
+        function _0x4a(_0x24){
+            ['admin','club','fixtures','referee','stats','standings'].forEach(t=>{document.getElementById('tab-content-'+t).classList.add('hidden');document.getElementById('nav-'+t).className='nav-btn';});
+            document.getElementById('tab-content-'+_0x24).classList.remove('hidden');document.getElementById('nav-'+_0x24).className='nav-btn active';
+            if(_0x24==='admin')_0x70();if(_0x24==='club')_0xcf();if(_0x24==='fixtures')_0x94();if(_0x24==='referee')_0x9a();if(_0x24==='stats')_0x95();if(_0x24==='standings')_0xd0();
+        }
+        function _0x7e(v){
+            let t=v.split(' vs ');_0x4d.homeTeam=t[0];_0x4d.awayTeam=t[1].split(' (')[0];_0x4d.homeScore=0;_0x4d.awayScore=0;
+            document.getElementById('home-team-name').innerText=_0x4d.homeTeam;document.getElementById('away-team-name').innerText=_0x4d.awayTeam;
+            document.getElementById('match-home-score').innerText='0';document.getElementById('match-away-score').innerText='0';
+            document.getElementById('event-team').value='HOME';document.getElementById('opt-home-label').innerText=_0x4d.homeTeam+' (Home)';document.getElementById('opt-away-label').innerText=_0x4d.awayTeam+' (Away)';
+            _0x4d.tickerLogs.unshift(`[00'] New fixture loaded: ${_0x4d.homeTeam} vs ${_0x4d.awayTeam}.`);_0x98();_0x9a();_0x5e();
+        }
+        function _0x9a(){
+            let s=document.getElementById('event-player-select');if(!s)return;s.innerHTML='';
+            let a=document.getElementById('event-team').value==='HOME'?_0x4d.homeTeam:_0x4d.awayTeam;
+            let p=_0x4d.players.filter(x=>x.club===a&&x.status==='ACTIVE');
+            if(p.length===0){s.innerHTML=`<option value="">No ACTIVE players licensed for this club</option>`;return;}
+            p.forEach(x=>{s.innerHTML+=`<option value="${x.firstName} ${x.lastName}">#${x.number} ${x.firstName} ${x.lastName} (${x.position})</option>`;});
+        }
+        function _0xa1(e){
+            e.preventDefault();let n=document.getElementById('new-team-name').value.trim(),g=document.getElementById('new-team-ground').value.trim();
+            if(n&&g){if(_0x4d.clubsMap.has(n)){alert("Team already exists!");return;}_0x4d.clubsMap.set(n,{name:n,ground:g,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0});_0x5e();alert(`Added ${n}!`);document.getElementById('form-add-team').reset();_0x70();_0xd0();_0x92();}
+        }
+        function _0xb2(n){if(confirm(`Remove ${n}?`)){_0x4d.clubsMap.delete(n);_0x5e();_0x70();_0xd0();_0x92();}}
+        function _0xc3(e){
+            e.preventDefault();let id=document.getElementById('new-admin-id').value.trim(),c=document.getElementById('new-admin-club').value,pin=document.getElementById('new-admin-pin').value.trim();
+            if(id&&c&&pin){if(_0x4d.clubAdmins.some(a=>a.id.toLowerCase()===id.toLowerCase())){alert("ID already exists!");return;}_0x4d.clubAdmins.push({id:id,club:c,pin:pin});_0x5e();alert(`Club Admin [${id}] added!`);document.getElementById('form-add-club-admin').reset();_0x70();}
+        }
+        function _0xd4(id){if(confirm(`Revoke [${id}]?`)){_0x4d.clubAdmins=_0x4d.clubAdmins.filter(a=>a.id!==id);_0x5e();_0x70();}}
+        function _0x70(){
+            let c=document.getElementById('admin-view-container');
+            if(_0x4d.role==='SUPER_ADMIN'){
+                let tH='';_0x4d.clubsMap.forEach((v,k)=>{tH+=`<div class="list-item" style="padding:6px 10px;"><div><div class="item-name" style="font-size:10px;">${k} <span style="color:#9ca3af;">(${v.ground})</span></div></div><button onclick="_0xb2('${k}')" class="btn-danger">Remove</button></div>`;});
+                let aH='';_0x4d.clubAdmins.forEach(a=>{aH+=`<div class="list-item" style="padding:6px 10px;"><div><div class="item-name" style="font-size:10px;">ID: <code>${a.id}</code> <span style="color:#34d399;">➔ ${a.club}</span></div></div><button onclick="_0xd4('${a.id}')" class="btn-danger">Revoke</button></div>`;});
+                c.innerHTML=`
+                    <div class="card-title" style="margin:0;">SLFA Executive Approval & Club Admins Governance</div>
+                    <div class="notice-banner">Super Admin Session Active. Create Club Admin credentials and manage league teams below.</div>
+                    <div style="margin-top:16px;">
+                        <div class="card-title" style="color:#34d399;">👥 Create Unique Club Admin Account</div>
+                        <form id="form-add-club-admin" onsubmit="_0xc3(event)" style="margin-bottom:12px;">
+                            <div class="form-grid">
+                                <div class="form-group"><input type="text" id="new-admin-id" placeholder="Unique Admin ID" required style="font-size:11px;padding:7px;"></div>
+                                <div class="form-group"><select id="new-admin-club" class="form-control club-select-options" style="font-size:11px;padding:7px;"></select></div>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group"><input type="password" id="new-admin-pin" placeholder="Security PIN" required style="font-size:11px;padding:7px;"></div>
+                                <div class="form-group"><button type="submit" class="btn-sm" style="width:100%;height:32px;">Add Club Admin</button></div>
+                            </div>
+                        </form>
+                        <div style="max-height:120px;overflow-y:auto;background:#030712;padding:6px;border-radius:8px;">${aH}</div>
+                    </div>
+                    <div style="margin-top:24px;border-top:1px solid #1f2937;padding-top:16px;">
+                        <div class="card-title" style="color:#34d399;">🏟️ League Teams Management</div>
+                        <form id="form-add-team" onsubmit="_0xa1(event)" style="margin-bottom:12px;">
+                            <div class="form-grid">
+                                <div class="form-group"><input type="text" id="new-team-name" placeholder="Club Name" required style="font-size:11px;padding:7px;"></div>
+                                <div class="form-group"><input type="text" id="new-team-ground" placeholder="Home Ground" required style="font-size:11px;padding:7px;"></div>
+                            </div>
+                            <button type="submit" class="btn-sm">Add Club to League</button>
+                        </form>
+                        <div style="max-height:140px;overflow-y:auto;background:#030712;padding:6px;border-radius:8px;">${tH}</div>
+                    </div>
+                    <div style="margin-top:24px;border-top:1px solid #1f2937;padding-top:16px;">
+                        <div class="card-title">⚽ Pending Player Approvals</div>
+                        <div id="pending-queue-list"></div>
+                    </div>`;
+                _0xe5();_0x92();
+            }else if(_0x4d.role==='CLUB_ADMIN'){c.innerHTML=`<div class="card-title">Club Administrator Control Panel</div><div class="notice-banner">Managing squad for <strong>${_0x4d.activeClubAdmin}</strong>.</div>`;}
+            else if(_0x4d.role==='MATCH_OFFICIAL'){c.innerHTML=`<div class="card-title">Match Official Control Panel</div><div class="notice-banner" style="background:#064e3b;color:#a7f3d0;">Referee Session Active.</div>`;}
+            else{c.innerHTML=`<div class="card-title">Welcome to Leone Rock Premier League Hub</div><div class="notice-banner">Viewing as Public Guest. Select a role above.</div>`;}
+        }
+        function _0xe5(){
+            let l=document.getElementById('pending-queue-list');if(!l)return;l.innerHTML='';
+            let p=_0x4d.players.filter(x=>x.status==='PENDING');
+            if(p.length===0){l.innerHTML=`<p style="text-align:center;color:#6b7280;font-size:11px;padding:10px;">No pending registrations.</p>`;return;}
+            p.forEach(x=>{l.innerHTML+=`<div class="list-item"><div><div class="item-name">#${x.number} ${x.firstName} ${x.lastName} (${x.club})</div><div class="item-sub">NIN: ${x.nin} • ${x.position}</div></div><button onclick="_0xf6('${x.id}')" class="btn-sm">Approve</button></div>`;});
+        }
+        function _0x5c(e){
+            e.preventDefault();
+            if(_0x4d.role!=='CLUB_ADMIN'){alert('Unauthorized.');return;}
+            let p={id:Date.now().toString(),firstName:document.getElementById('reg-fname').value,lastName:document.getElementById('reg-lname').value,number:parseInt(document.getElementById('reg-number').value),nin:document.getElementById('reg-nin').value,position:document.getElementById('reg-pos').value,club:_0x4d.activeClubAdmin||document.getElementById('reg-club').value,status:'PENDING',goals:0,yellowCards:0,redCards:0};
+            _0x4d.players.push(p);_0x5e();alert('Submitted for approval.');document.getElementById('player-reg-form').reset();_0xcf();
+        }
+        function _0xcf(){
+            let l=document.getElementById('club-roster-list');if(!l)return;l.innerHTML='';
+            if(_0x4d.players.length===0){l.innerHTML=`<p style="text-align:center;color:#6b7280;font-size:11px;padding:10px;">No players registered.</p>`;return;}
+            _0x4d.players.forEach(p=>{
+                let b='background:#064e3b;color:#34d399;';if(p.status==='PENDING')b='background:#78350f;color:#fde68a;';if(p.status==='SUSPENDED')b='background:#7f1d1d;color:#fca5a5;';
+                l.innerHTML+=`<div class="list-item"><div><div class="item-name">#${p.number} ${p.firstName} ${p.lastName} (${p.club})</div><div class="item-sub">${p.position} • ⚽ ${p.goals} G | 🟨 ${p.yellowCards} | 🟥 ${p.redCards}</div></div><span class="badge" style="${b}">${p.status}</span></div>`;
+            });
+        }
+        function _0x6d(){let csv='First Name,Last Name,No,NIN,Position,Club,Status,Goals,Yellow,Red\n';_0x4d.players.forEach(p=>{csv+=`"${p.firstName}","${p.lastName}",${p.number},"${p.nin}","${p.position}","${p.club}","${p.status}",${p.goals},${p.yellowCards},${p.redCards}\n`;});_0x11(csv,'SLFA_Player_Squads.csv');}
+        function _0xbc(){let csv='Pos,Club,Ground,P,W,D,L,GF,GA,GD,PTS\n';let s=Array.from(_0x4d.clubsMap.values()).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga));s.forEach((t,i)=>{csv+=`${i+1},"${t.name}","${t.ground}",${t.p},${t.w},${t.d},${t.l},${t.gf},${t.ga},${t.gf-t.ga},${t.pts}\n`;});_0x11(csv,'Standings.csv');}
+        function _0x11(c,f){const b=new Blob([c],{type:'text/csv;charset=utf-8;'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.setAttribute('download',f);document.body.appendChild(l);l.click();document.body.removeChild(l);}
+        function _0x94(){let c=document.getElementById('fixtures-list-container');if(!c)return;c.innerHTML='';_0x4d.fixtures.forEach(f=>{c.innerHTML+=`<div class="list-item"><div><div class="item-name">${f.home} vs ${f.away}</div><div class="item-sub">${f.venue} • ${f.time}</div></div><span class="badge">${f.score}</span></div>`;});}
+        function _0x95(){
+            let l=document.getElementById('top-scorers-list');if(!l)return;l.innerHTML='';
+            let s=[..._0x4d.players].sort((a,b)=>b.goals-a.goals||a.lastName.localeCompare(b.lastName));
+            s.forEach((p,i)=>{l.innerHTML+=`<div class="list-item"><div><div class="item-name">#${i+1} #${p.number} ${p.firstName} ${p.lastName} (${p.club})</div><div class="item-sub">🟨 ${p.yellowCards} | 🟥 ${p.redCards}</div></div><span class="badge" style="background:#064e3b;color:#34d399;">⚽ ${p.goals} Goals</span></div>`;});
+        }
+        function _0xf6(id){if(_0x4d.role!=='SUPER_ADMIN'){alert('Unauthorized.');return;}let p=_0x4d.players.find(x=>x.id===id);if(p){p.status='ACTIVE';_0x5e();alert('Approved!');_0xe5();}}
+        function _0x8f(e){
+            e.preventDefault();if(_0x4d.role!=='MATCH_OFFICIAL'){alert('Unauthorized.');return;}
+            let t=document.getElementById('event-team').value,m=document.getElementById('event-min').value,type=document.getElementById('event-type').value,name=document.getElementById('event-player-select').value;
+            if(!name||name.includes('No ACTIVE'))return;
+            let cn=t==='HOME'?_0x4d.homeTeam:_0x4d.awayTeam,cr=_0x4d.clubsMap.get(cn),pr=_0x4d.players.find(x=>`${x.firstName} ${x.lastName}`===name);
+            if(type==='GOAL'){t==='HOME'?(+_0x4d.homeScore++,document.getElementById('match-home-score').innerText=_0x4d.homeScore):(+_0x4d.awayScore++,document.getElementById('match-away-score').innerText=_0x4d.awayScore);if(cr){cr.p++;cr.w++;cr.gf++;cr.pts+=3;}if(pr)pr.goals++;_0x4d.tickerLogs.unshift(`[${m}'] ⚽ GOAL! ${name} (${cn})`);}
+            else if(type==='YELLOW'){if(pr)pr.yellowCards++;_0x4d.tickerLogs.unshift(`[${m}'] 🟨 Yellow Card: ${name} (${cn})`);}
+            else if(type==='RED'){if(pr){pr.redCards++;pr.status='SUSPENDED';}_0x4d.tickerLogs.unshift(`[${m}'] 🟥 Red Card: ${name} (${cn})`);}
+            _0x98();_0x5e();alert('Logged!');
+        }
+        function _0x98(){let t=document.getElementById('match-ticker');if(t)t.innerHTML=_0x4d.tickerLogs.join('<br>');}
+        function _0xab(){
+            let c=document.getElementById('pdf-print-container'),h=`<h2 style="text-align:center;">SLFA MATCH REPORT</h2><h3 style="text-align:center;">${_0x4d.homeTeam} vs ${_0x4d.awayTeam}</h3><p>Score: ${_0x4d.homeScore} - ${_0x4d.awayScore}</p><hr><ul>`;
+            _0x4d.tickerLogs.slice().reverse().forEach(l=>{h+=`<li>${l}</li>`;});h+=`</ul><p>Designed by Alhaji Abu Koroma</p>`;c.innerHTML=h;window.print();
+        }
+        function _0xcd(){_0x4d.standingsSearchQuery=document.getElementById('standings-search').value.toLowerCase();_0xd0(_0x4d.standingsSearchQuery);}
+        function _0xd0(f=''){
+            let b=document.getElementById('standings-tbody');if(!b)return;b.innerHTML='';
+            let s=Array.from(_0x4d.clubsMap.values()).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga));
+            document.getElementById('standings-count-badge').innerText=s.length+' Teams';
+            if(f)s=s.filter(t=>t.name.toLowerCase().includes(f));
+            s.forEach((t,i)=>{let gd=t.gf-t.ga;b.innerHTML+=`<tr><td class="text-center" style="color:#9ca3af;">${i+1}</td><td><div style="font-weight:600;color:#fff;">${t.name}</div><div style="font-size:8px;color:#34d399;font-family:monospace;">${t.ground}</div></td><td class="text-center">${t.p}</td><td class="text-center">${t.w}</td><td class="text-center">${t.d}</td><td class="text-center">${t.l}</td><td class="text-center">${t.gf}</td><td class="text-center">${t.ga}</td><td class="text-center">${gd>0?'+'+gd:gd}</td><td class="text-center font-black">${t.pts}</td></tr>`;});
+        }
+        _0x70();_0x81();_0xd0();
     </script>
 </body>
 </html>
