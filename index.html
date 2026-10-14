@@ -96,7 +96,6 @@
 </head>
 <body data-theme="light">
 
-    <!-- Global Broadcast Banner -->
     <div class="broadcast-banner" id="globalBroadcast">
         <span id="bannerText">📢 EPL Matchday Broadcast: Premium Architecture Sync Mode Active.</span>
         <button class="close-banner" onclick="toggleBroadcast(false)">✕</button>
@@ -121,38 +120,31 @@
 
     <div class="layout-container">
         <main>
-            <!-- 1. Live Match Center & Standings Hub (Public) -->
-            <div class="premium-card">
+            <!-- Supabase Cloud Connection Panel (Placed upfront for mobile layout access) -->
+            <div class="premium-card" id="devPanel" style="border-top-color: var(--accent);">
                 <div class="card-header-toggle">
-                    <h3>🔴 Live Match Center & League Standings</h3>
-                    <span class="badge badge-live">Live Sync</span>
+                    <h3 style="color: var(--primary-light);">🔌 Supabase Cloud Cluster Endpoints</h3>
                 </div>
-                <div style="background: linear-gradient(135deg, #1b4332, #081c15); color: white; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 5px solid var(--accent);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--accent);">FEATURED MATCHDAY TALLY</span>
-                        <span class="badge badge-live" style="font-size: 0.7rem;">82' Live</span>
+                <div id="devLock" class="security-lockout">
+                    <p>🔒 Access Terminated — Master Developer Authorization Key Required</p>
+                </div>
+                <div style="background: var(--bg-body); padding: 1.25rem; border-radius: 8px;">
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Input your database URL and API public anon token to synchronize live tables data.</p>
+                    <div class="grid-2">
+                        <div class="form-group"><label>Supabase Target URL</label><input type="text" id="sbUrl" placeholder="https://supabase.co"></div>
+                        <div class="form-group"><label>Project Public Token (anon Key)</label><input type="password" id="sbKey" placeholder="Paste credential hash..."></div>
                     </div>
-                    <h2 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;" id="liveScoreDisplay">Freetown FC 2 - 1 Eastern Lions</h2>
-                    <p style="font-size: 0.8rem; color: #a8dadc; margin-top: 0.25rem;">📍 National Stadium, Freetown</p>
+                    <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn-accent" onclick="initializeSupabasePipeline()">Connect External Schema</button>
+                        <span id="syncNotice" style="font-size: 0.85rem; font-weight: 600; color: var(--success);"></span>
+                    </div>
                 </div>
 
-                <input type="text" id="tableFilter" onkeyup="searchTable()" placeholder="Search league table by club name..." style="width: 100%; margin-bottom: 1rem;">
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr><th>Rank</th><th>Club Team</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>Points</th></tr>
-                        </thead>
-                        <tbody id="standingsBody">
-                            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Awaiting Supabase authentication keys setup...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 2. Squad Registry Section (Club Admin + Developer) -->
-            <div class="premium-card" id="clubPanel">
-                <div class="security-lockout" id="clubLock">
-                    <p>🔒 Access Restrained — Club Administration Clearance Required</p>
-                </div>
-                <div class="card-header-toggle">
-                    <h3>🛡️ Club Administration & Squad Portal</h3>
+                <div style="border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-top: 1.5rem; background: rgba(0,0,0,0.01);">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem; font-weight: 700;">🎨 Workspace Appearance Configuration</h4>
+                    <div class="form-group" style="max-width: 300px;">
+                        <select id="themeSelector" onchange="changeSystemAppearance()">
+                            <option value="light">Classic Premium Forest Light</option>
+                            <option value="dark">Enterprise Dark Mode</option>
+                            <option value="midnight-emerald">SLPL Midnight Emerald Blue</option>
+                        </select>
