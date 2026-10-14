@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sierra Leone Premier League | Developer Governance Suite</title>
+    <title>SLFA Central Operations Suite | Master Developer Governance</title>
     <link rel="preconnect" href="https://googleapis.com">
     <link rel="preconnect" href="https://gstatic.com" crossorigin>
     <link href="https://googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Official Enterprise Supabase JS Library safely via UMD CDN CDN -->
+    <!-- Official Enterprise Supabase JS Library safely via UMD CDN -->
     <script src="https://jsdelivr.net"></script>
     <style>
         :root {
@@ -76,6 +76,7 @@
         
         input, select { padding: 0.65rem 0.85rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; background: var(--bg-body); color: var(--text-main); outline: none; transition: border 0.2s; }
         input:focus, select:focus { border-color: var(--primary-light); }
+        input[type="file"] { background: transparent; border: 1px dashed var(--border); padding: 0.5rem; border-radius: 6px; }
 
         button { padding: 0.65rem 1.25rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.875rem; background: var(--primary-light); color: white; transition: all 0.2s ease; width: fit-content; }
         button:hover { opacity: 0.9; transform: translateY(-1px); }
@@ -84,11 +85,17 @@
 
         table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
         th { padding: 0.75rem 1rem; color: var(--text-muted); font-weight: 700; border-bottom: 2px solid var(--border); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; background: rgba(0,0,0,0.01); }
-        td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); }
+        td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
         
         .badge { padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
         .badge-live { background: var(--danger); color: white; animation: pulse 2s infinite; }
         .badge-secure { background: rgba(82, 183, 136, 0.15); color: var(--success); }
+
+        /* Media Thumbnail & Document Link CSS definitions */
+        .asset-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; background: #cbd5e1; border: 2px solid var(--primary-light); display: block; }
+        .asset-placeholder { width: 42px; height: 42px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #64748b; }
+        .doc-link-pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-decoration: none; }
+        .doc-link-pill:hover { background: #e2e8f0; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         footer { background: #081c15; color: #a8dadc; text-align: center; padding: 2rem; margin-top: 5rem; font-size: 0.85rem; font-weight: 500; border-top: 3px solid var(--accent); }
@@ -97,22 +104,23 @@
 <body data-theme="light">
 
     <div class="broadcast-banner" id="globalBroadcast">
-        <span id="bannerText">📢 EPL Matchday Broadcast: Premium Architecture Sync Mode Active.</span>
+        <span id="bannerText">📢 SLFA Central Registry System Node Active. Deployment Mode Operational.</span>
         <button class="close-banner" onclick="toggleBroadcast(false)">✕</button>
     </div>
 
     <header>
         <div class="header-container">
             <div class="brand">
-                <h1>Sierra Leone Premier League</h1>
-                <p>Enterprise Operations Workspace Layout</p>
+                <h1>SLFA Central Operations Suite</h1>
+                <p>Universal Operational Framework Ledger</p>
             </div>
             <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                <label for="sessionRole" style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">ACTIVE PRIVILEGE LAYER:</label>
+                <label for="sessionRole" style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">ACTIVE SYSTEM PRIVILEGE:</label>
                 <select id="sessionRole" onchange="applySecurityMatrix()" style="padding: 0.4rem; font-weight: 600;">
-                    <option value="Viewer">Viewer (Read-Only)</option>
-                    <option value="Club Admin">Club Admin Role</option>
-                    <option value="Master Developer Access">Master Developer Access</option>
+                    <option value="Viewer">Public View (Read-Only)</option>
+                    <option value="Club Admin">Club Coach / Manager Workspace</option>
+                    <option value="Referee">Match Referee Profile</option>
+                    <option value="Master Developer Access">Master Access Controller</option>
                 </select>
             </div>
         </div>
@@ -120,32 +128,20 @@
 
     <div class="layout-container">
         <main>
-            <!-- Permanent Connection Studio Panel -->
+            <!-- 1. Universal Cloud Configuration Dashboard -->
             <div class="premium-card" style="border-top-color: var(--accent);">
                 <div class="card-header-toggle">
-                    <h3 style="color: var(--primary-light);">🔌 Supabase Cloud Cluster Endpoints</h3>
+                    <h3 style="color: var(--primary-light);">🔌 Supabase Cloud Infrastructure Connectivity</h3>
                 </div>
                 <div style="background: var(--bg-body); padding: 1.25rem; border-radius: 8px;">
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Input your database URL and API public anon token to synchronize live tables data.</p>
                     <div class="grid-2">
-                        <div class="form-group"><label>Supabase Target URL</label><input type="text" id="sbUrl" placeholder="https://supabase.co"></div>
-                        <div class="form-group"><label>Project Public Token (anon Key)</label><input type="password" id="sbKey" placeholder="Paste credential hash..."></div>
+                        <div class="form-group"><label>Supabase Target Endpoint URL</label><input type="text" id="sbUrl" placeholder="https://supabase.co"></div>
+                        <div class="form-group"><label>Project Public Token (anon Key)</label><input type="password" id="sbKey" placeholder="Paste credential token hash..."></div>
                     </div>
                     <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                        <button type="button" class="btn-accent" id="connectClusterBtn">Connect External Schema</button>
+                        <button type="button" class="btn-accent" id="connectClusterBtn">Link Production Schema</button>
                         <span id="syncNotice" style="font-size: 0.85rem; font-weight: 600; color: var(--success);"></span>
                     </div>
                 </div>
 
-                <div style="border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-top: 1.5rem; background: rgba(0,0,0,0.01);">
-                    <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem; font-weight: 700;">🎨 Workspace Appearance Configuration</h4>
-                    <div class="form-group" style="max-width: 300px;">
-                        <select id="themeSelector" onchange="changeSystemAppearance()">
-                            <option value="light">Classic Premium Forest Light</option>
-                            <option value="dark">Enterprise Dark Mode</option>
-                            <option value="midnight-emerald">SLPL Midnight Emerald Blue</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div style="border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-top: 1.5rem; background: rgba(239, 68, 68, 0.02);">
+                <div class="grid-2" style="margin-top: 1.5rem;">
