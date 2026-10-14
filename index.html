@@ -65,6 +65,7 @@
         .card-header-toggle { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
         .card-header-toggle h3 { font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
 
+        /* Retained only for the public squad block view controls */
         .security-lockout { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; padding: 1rem; text-align: center; }
         [data-theme="dark"] .security-lockout { background: rgba(30, 41, 59, 0.95); }
         [data-theme="midnight-emerald"] .security-lockout { background: rgba(28, 37, 65, 0.95); }
@@ -105,7 +106,7 @@
         <div class="header-container">
             <div class="brand">
                 <h1>Sierra Leone Premier League</h1>
-                <p>Enterprise Operations & Live Security Environment</p>
+                <p>Enterprise Operations Workspace Layout</p>
             </div>
             <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                 <label for="sessionRole" style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">ACTIVE PRIVILEGE LAYER:</label>
@@ -120,13 +121,10 @@
 
     <div class="layout-container">
         <main>
-            <!-- Supabase Cloud Connection Panel -->
-            <div class="premium-card" id="devPanel" style="border-top-color: var(--accent);">
+            <!-- Permanent Connection Studio Panel (Lock code has been completely stripped out) -->
+            <div class="premium-card" style="border-top-color: var(--accent);">
                 <div class="card-header-toggle">
                     <h3 style="color: var(--primary-light);">🔌 Supabase Cloud Cluster Endpoints</h3>
-                </div>
-                <div id="devLock" class="security-lockout">
-                    <p>🔒 Access Terminated — Master Developer Authorization Key Required</p>
                 </div>
                 <div style="background: var(--bg-body); padding: 1.25rem; border-radius: 8px;">
                     <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Input your database URL and API public anon token to synchronize live tables data.</p>
@@ -149,3 +147,5 @@
                             <option value="midnight-emerald">SLPL Midnight Emerald Blue</option>
                         </select>
                     </div>
+                </div>
+
