@@ -3,166 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sierra Leone Premier League Operations Suite</title>
+    <title>Sierra Leone Premier League | Developer Governance Suite</title>
     <link rel="preconnect" href="https://googleapis.com">
     <link rel="preconnect" href="https://gstatic.com" crossorigin>
-    <link href="https://googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Official Enterprise Supabase JS Library safely via CDN -->
     <script src="https://jsdelivr.net"></script>
     <style>
         :root {
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --text: #0f172a;
+            --bg-body: #f4f6f8;
+            --bg-card: #ffffff;
+            --text-main: #081c15;
             --text-muted: #64748b;
-            --primary: #0f766e;
-            --border: #e2e8f0;
-            --danger: #ef4444;
-            --success: #10b981;
+            --primary: #1b4332;
+            --primary-light: #2d6a4f;
+            --accent: #ffb703;
+            --border: #e9ecef;
+            --danger: #d90429;
+            --success: #52b788;
+            --radius: 12px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         [data-theme="dark"] {
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --text: #f8fafc;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --primary: #14b8a6;
+            --primary-light: #0d9488;
             --border: #334155;
+            --shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
-        [data-theme="midnight-blue"] {
-            --bg: #0b132b;
-            --surface: #1c2541;
-            --text: #ffffff;
+        [data-theme="midnight-emerald"] {
+            --bg-body: #0b132b;
+            --bg-card: #1c2541;
+            --text-main: #ffffff;
             --text-muted: #5bc0be;
-            --primary: #3a506b;
-            --border: #48cae4;
+            --primary: #1b4332;
+            --primary-light: #52b788;
+            --border: #3a506b;
+            --shadow: 0 4px 12px rgba(0,242,254,0.15);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem; transition: background 0.2s, color 0.2s; }
-        .layout-container { max-width: 1100px; margin: 0 auto; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); transition: all 0.25s ease; line-height: 1.6; }
+        .layout-container { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 2rem; }
+        
+        @media (min-width: 1024px) { .layout-container { grid-template-columns: 3fr 1fr; } }
 
-        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .brand h1 { font-size: 1.35rem; font-weight: 700; color: var(--text); }
-        .brand p { font-size: 0.85rem; color: var(--text-muted); }
+        .broadcast-banner { background: linear-gradient(135deg, var(--primary), #081c15); color: white; padding: 0.6rem 1.5rem; text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; border-bottom: 3px solid var(--accent); }
+        .close-banner { background: rgba(255,255,255,0.1); border: none; font-weight: bold; color: white; cursor: pointer; padding: 0.2rem 0.5rem; border-radius: 4px; }
 
-        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; position: relative; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-        .panel-title { font-size: 1rem; font-weight: 600; }
+        header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 1.5rem 2rem; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+        .header-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .brand h1 { font-size: 1.5rem; font-weight: 800; color: var(--primary-light); letter-spacing: -0.02em; }
+        .brand p { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
 
-        .security-lockout { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10; }
+        .premium-card { background: var(--bg-card); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); margin-bottom: 1.5rem; border-top: 4px solid var(--primary-light); position: relative; overflow: hidden; }
+        .card-header-toggle { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        .card-header-toggle h3 { font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+
+        .security-lockout { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; padding: 1rem; text-align: center; }
         [data-theme="dark"] .security-lockout { background: rgba(30, 41, 59, 0.95); }
-        [data-theme="midnight-blue"] .security-lockout { background: rgba(28, 37, 65, 0.95); }
-        .security-lockout p { font-size: 0.85rem; font-weight: 600; color: var(--danger); }
+        [data-theme="midnight-emerald"] .security-lockout { background: rgba(28, 37, 65, 0.95); }
+        .security-lockout p { font-size: 0.9rem; font-weight: 700; color: var(--danger); }
 
-        .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .field { display: flex; flex-direction: column; gap: 0.25rem; }
-        .field label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+        label { font-weight: 600; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+        
+        input, select { padding: 0.65rem 0.85rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; background: var(--bg-body); color: var(--text-main); outline: none; transition: border 0.2s; }
+        input:focus, select:focus { border-color: var(--primary-light); }
 
-        input, select { padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--bg); color: var(--text); }
-        input:focus, select:focus { border-color: var(--primary); }
+        button { padding: 0.65rem 1.25rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.875rem; background: var(--primary-light); color: white; transition: all 0.2s ease; width: fit-content; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-accent { background: var(--accent); color: #081c15; }
+        .btn-danger { background: var(--danger); color: white; }
 
-        button { padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: 1px solid transparent; background: var(--primary); color: white; width: fit-content; transition: opacity 0.2s ease; }
-        button:hover { opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
+        th { padding: 0.75rem 1rem; color: var(--text-muted); font-weight: 700; border-bottom: 2px solid var(--border); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; background: rgba(0,0,0,0.01); }
+        td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); }
+        
+        .badge { padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-live { background: var(--danger); color: white; animation: pulse 2s infinite; }
+        .badge-secure { background: rgba(82, 183, 136, 0.15); color: var(--success); }
 
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; margin-top: 0.5rem; }
-        th { padding: 0.5rem 0.75rem; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.02); }
-        td { padding: 0.75rem; border-bottom: 1px solid var(--border); }
-
-        .pill { padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-        .pill-public { background: #f1f5f9; color: var(--text-muted); }
-        .pill-secure { background: #ecfdf5; color: var(--success); }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        footer { background: #081c15; color: #a8dadc; text-align: center; padding: 2rem; margin-top: 5rem; font-size: 0.85rem; font-weight: 500; border-top: 3px solid var(--accent); }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
-    <div class="layout-container">
-        <header>
+    <!-- Global Broadcast Banner -->
+    <div class="broadcast-banner" id="globalBroadcast">
+        <span id="bannerText">📢 EPL Matchday Broadcast: Premium Architecture Sync Mode Active.</span>
+        <button class="close-banner" onclick="toggleBroadcast(false)">✕</button>
+    </div>
+
+    <header>
+        <div class="header-container">
             <div class="brand">
-                <h1>SLPL Operations Environment</h1>
-                <p>Enterprise Management Portal</p>
+                <h1>Sierra Leone Premier League</h1>
+                <p>Enterprise Operations & Live Security Environment</p>
             </div>
-            <div style="display: flex; gap: 0.75rem; align-items: center;">
-                <select id="sessionRole" onchange="applySecurityMatrix()" style="padding: 0.4rem; font-size: 0.8rem; font-weight: 500;">
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <label for="sessionRole" style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">ACTIVE PRIVILEGE LAYER:</label>
+                <select id="sessionRole" onchange="applySecurityMatrix()" style="padding: 0.4rem; font-weight: 600;">
                     <option value="Viewer">Viewer (Read-Only)</option>
                     <option value="Club Admin">Club Admin Role</option>
-                    <option value="Super Admin">Super Admin Privilege</option>
                     <option value="Developer">Master Developer Access</option>
                 </select>
             </div>
-        </header>
+        </div>
+    </header>
 
+    <div class="layout-container">
         <main>
-            <!-- 1. Real-Time Standings (Always Public) -->
-            <div class="panel">
-                <div class="panel-header">
-                    <h2 class="panel-title">League Table Registry</h2>
-                    <span class="pill pill-public">Live Synchronization</span>
+            <!-- 1. Live Match Center & Standings Hub (Public) -->
+            <div class="premium-card">
+                <div class="card-header-toggle">
+                    <h3>🔴 Live Match Center & League Standings</h3>
+                    <span class="badge badge-live">Live Sync</span>
                 </div>
-                <input type="text" id="tableFilter" onkeyup="searchTable()" placeholder="Filter rankings by club name..." style="width: 100%; margin-bottom: 0.75rem;">
-                <table>
-                    <thead>
-                        <tr><th>Rank</th><th>Club Team</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>Points</th></tr>
-                    </thead>
-                    <tbody id="standingsBody">
-                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Awaiting initialization parameter credentials...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- 2. Squad Registration Form (Club Admin & Above) -->
-            <div class="panel" id="clubPanel">
-                <div class="security-lockout" id="clubLock">
-                    <p>🔒 Restricted Access — Requires Club Manager Permissions</p>
-                </div>
-                <div class="panel-header">
-                    <h2 class="panel-title">Squad Member Registration</h2>
-                    <span class="pill pill-secure">Authorized Personnel Only</span>
-                </div>
-                <form id="squadForm" onsubmit="pushSquadMemberToSupabase(event)">
-                    <div class="grid-inputs">
-                        <div class="field"><label>Player Full Name</label><input type="text" id="formPlayerName" required placeholder="e.g., Musa Tombo"></div>
-                        <div class="field"><label>National ID (NIN)</label><input type="text" id="formPlayerNin" required placeholder="SL-NIN-XXXX"></div>
-                        <div class="field">
-                            <label>Position</label>
-                            <select id="formPlayerPos">
-                                <option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option>
-                            </select>
-                        </div>
+                <div style="background: linear-gradient(135deg, #1b4332, #081c15); color: white; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 5px solid var(--accent);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--accent);">FEATURED MATCHDAY TALLY</span>
+                        <span class="badge badge-live" style="font-size: 0.7rem;">82' Live</span>
                     </div>
-                    <button type="submit" id="submitFormBtn">Submit Registry File</button>
-                </form>
-            </div>
-
-            <!-- 3. Dedicated Developer Governance & Audit Panel -->
-            <div class="panel" id="devPanel">
-                <div class="security-lockout" id="devLock">
-                    <p>🔒 Access Terminated — Master Developer Key Required</p>
-                </div>
-                <div class="panel-header">
-                    <h2 class="panel-title" style="color: var(--primary);">⚙️ Dedicated Developer Control & Appearance Studio</h2>
+                    <h2 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;" id="liveScoreDisplay">Freetown FC 2 - 1 Eastern Lions</h2>
+                    <p style="font-size: 0.8rem; color: #a8dadc; margin-top: 0.25rem;">📍 National Stadium, Freetown</p>
                 </div>
 
-                <!-- Appearance Customization Studio Sub-section -->
-                <div style="border: 1px solid var(--border); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.01);">
-                    <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem;">🎨 System Appearance Engine</h4>
-                    <div class="field" style="width: 250px; margin-bottom: 0.5rem;">
-                        <label>Select Workspace Theme</label>
-                        <select id="themeSelector" onchange="changeSystemAppearance()">
-                            <option value="light">Corporate Light Minimalist</option>
-                            <option value="dark">Enterprise Dark Mode</option>
-                            <option value="midnight-blue">SLPL Midnight Emerald Blue</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Core Audit: Function Tracking Matrix -->
-                <div style="border: 1px solid var(--border); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
-                    <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem;">📋 System Active Functions Log</h4>
+                <input type="text" id="tableFilter" onkeyup="searchTable()" placeholder="Search league table by club name..." style="width: 100%; margin-bottom: 1rem;">
+                <div style="overflow-x: auto;">
                     <table>
                         <thead>
-                            <tr><th>System Function Name</th><th>Execution Target Engine</th><th>Security State</th></tr>
+                            <tr><th>Rank</th><th>Club Team</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>Points</th></tr>
                         </thead>
-                        <tbody>
-                            <tr><td><code>initializeSupabasePipeline()</code></td><td>Database Connection Manager</td><td><span class="pill pill-secure" style="color:var(--success)">Live</span></td></tr>
-                            <tr><td><code>fetchLiveStandings()</code></td><td>Asynchronous REST Data Hydration</td><td><span class="pill pill-secure" style="color:var(--success)">Live</span></td></tr>
+                        <tbody id="standingsBody">
+                            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Awaiting Supabase authentication keys setup...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 2. Squad Registry Section (Club Admin + Developer) -->
+            <div class="premium-card" id="clubPanel">
+                <div class="security-lockout" id="clubLock">
+                    <p>🔒 Access Restrained — Club Administration Clearance Required</p>
+                </div>
+                <div class="card-header-toggle">
+                    <h3>🛡️ Club Administration & Squad Portal</h3>
