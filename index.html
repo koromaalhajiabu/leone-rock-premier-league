@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://googleapis.com">
     <link rel="preconnect" href="https://gstatic.com" crossorigin>
     <link href="https://googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Official Enterprise Supabase JS Library safely via CDN with Version Locking -->
+    <!-- Official Enterprise Supabase JS Library safely via UMD CDN CDN -->
     <script src="https://jsdelivr.net"></script>
     <style>
         :root {
@@ -74,10 +74,10 @@
         .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
         label { font-weight: 600; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
         
-        input, select { padding: 0.65rem 0.85rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; background: var(--bg-body); color: var(--text-main); outline: none; transition: border 0.2s; -webkit-appearance: none; }
+        input, select { padding: 0.65rem 0.85rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; background: var(--bg-body); color: var(--text-main); outline: none; transition: border 0.2s; }
         input:focus, select:focus { border-color: var(--primary-light); }
 
-        button { padding: 0.65rem 1.25rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.875rem; background: var(--primary-light); color: white; transition: all 0.2s ease; width: fit-content; -webkit-tap-highlight-color: transparent; }
+        button { padding: 0.65rem 1.25rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.875rem; background: var(--primary-light); color: white; transition: all 0.2s ease; width: fit-content; }
         button:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-accent { background: var(--accent); color: #081c15; }
         .btn-danger { background: var(--danger); color: white; }
@@ -148,3 +148,4 @@
                     </div>
                 </div>
 
+                <div style="border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-top: 1.5rem; background: rgba(239, 68, 68, 0.02);">
