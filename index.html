@@ -3,358 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sierra Leone Football Management Platform</title>
+    <title>Sierra Leone Premier League Operations Suite</title>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://jsdelivr.net"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #030712; color: #f3f4f6; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
-        .wrapper { width: 100%; max-width: 680px; margin: 0 auto; padding: 0 16px; flex: 1; position: relative; z-index: 1; }
-        header { background-color: #111827; border-bottom: 1px solid #1f2937; padding: 14px 16px; position: sticky; top: 0; z-index: 50; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; }
-        .title-container { display: flex; align-items: center; gap: 8px; }
-        .sl-flag { width: 28px; height: 18px; border-radius: 3px; border: 1px solid #374151; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        h1 { font-size: 14px; font-weight: 900; color: #34d399; }
-        p.sub { font-size: 11px; color: #9ca3af; }
-        select { background: #1f2937; color: #34d399; border: 1px solid #374151; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; outline: none; }
-        .nav-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; background: #111827; padding: 6px; border-radius: 12px; border: 1px solid #1f2937; margin-top: 16px; }
-        .nav-btn { background: transparent; border: none; color: #9ca3af; padding: 8px 2px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center; transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .nav-btn.active { background: #059669; color: #ffffff; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
-        .card { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; margin-top: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); position: relative; z-index: 2; }
-        .card-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 12px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        .form-group { margin-bottom: 10px; }
-        label { display: block; font-size: 10px; font-weight: 600; color: #9ca3af; margin-bottom: 4px; }
-        input, select.form-control { width: 100%; background: #030712; border: 1px solid #1f2937; border-radius: 8px; padding: 9px; font-size: 12px; color: #fff; outline: none; }
-        input:focus, select.form-control:focus { border-color: #059669; }
-        .btn-primary { width: 100%; background: #059669; color: #fff; border: none; padding: 11px; border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 6px; }
-        .btn-sm { background: #059669; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
-        .btn-danger { background: #991b1b; color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
-        .btn-amber { background: #d97706; color: #fff; border: none; padding: 11px; border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 6px; }
-        .btn-blue { background: #2563eb; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
-        .list-item { background: #030712; border: 1px solid #1f2937; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .item-name { font-size: 12px; font-weight: bold; color: #fff; }
-        .item-sub { font-size: 10px; color: #34d399; font-family: monospace; margin-top: 2px; }
-        .scoreboard { background: #030712; border: 1px solid #1f2937; border-radius: 12px; padding: 14px; display: flex; justify-content: space-around; align-items: center; margin: 12px 0; }
-        .score-box { background: #111827; border: 1px solid #1f2937; padding: 6px 16px; border-radius: 8px; font-size: 18px; font-weight: 900; color: #34d399; letter-spacing: 2px; }
-        .ticker-box { background: #030712; border: 1px solid #059669; border-radius: 10px; padding: 10px; font-size: 11px; color: #34d399; font-family: monospace; max-height: 90px; overflow-y: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; text-align: left; }
-        th { background: #030712; color: #6b7280; text-transform: uppercase; font-size: 8px; padding: 6px 4px; border-bottom: 1px solid #1f2937; }
-        td { padding: 8px 4px; border-bottom: 1px solid #1f2937; color: #e5e7eb; }
-        .text-center { text-align: center; }
-        .font-black { font-weight: 900; color: #34d399; }
-        .hidden { display: none !important; }
-        .badge { font-size: 9px; background: #064e3b; color: #34d399; padding: 2px 8px; border-radius: 99px; border: 1px solid #047857; font-family: monospace; }
-        .notice-banner { background: #1e1b4b; border: 1px solid #312e81; color: #c7d2fe; padding: 10px; border-radius: 8px; font-size: 11px; margin-bottom: 12px; }
-        @media print {
-            body { background-color: #fff; color: #000; }
-            header, .nav-grid, .btn-primary, .btn-amber, .btn-blue, .btn-danger, select, input, footer { display: none !important; }
-            .card { border: none; box-shadow: none; background: #fff; color: #000; padding: 0; margin: 0; }
-            #pdf-print-container { display: block !important; font-family: monospace; font-size: 12px; line-height: 1.5; padding: 20px; }
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --primary: #0f766e;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --success: #10b981;
         }
-        #pdf-print-container { display: none; }
-        footer { text-align: center; padding: 20px 0; font-size: 11px; color: #6b7280; border-top: 1px solid #1f2937; margin-top: 30px; background: #111827; position: relative; z-index: 2; }
+
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #14b8a6;
+            --border: #334155;
+        }
+
+        [data-theme="midnight-blue"] {
+            --bg: #0b132b;
+            --surface: #1c2541;
+            --text: #ffffff;
+            --text-muted: #5bc0be;
+            --primary: #3a506b;
+            --border: #48cae4;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem; transition: background 0.2s, color 0.2s; }
+        .layout-container { max-width: 1100px; margin: 0 auto; }
+
+        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .brand h1 { font-size: 1.35rem; font-weight: 700; color: var(--text); }
+        .brand p { font-size: 0.85rem; color: var(--text-muted); }
+
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; position: relative; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+        .panel-title { font-size: 1rem; font-weight: 600; }
+
+        .security-lockout { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10; }
+        [data-theme="dark"] .security-lockout { background: rgba(30, 41, 59, 0.95); }
+        [data-theme="midnight-blue"] .security-lockout { background: rgba(28, 37, 65, 0.95); }
+        .security-lockout p { font-size: 0.85rem; font-weight: 600; color: var(--danger); }
+
+        .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .field { display: flex; flex-direction: column; gap: 0.25rem; }
+        .field label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+
+        input, select { padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--bg); color: var(--text); }
+        input:focus, select:focus { border-color: var(--primary); }
+
+        button { padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: 1px solid transparent; background: var(--primary); color: white; width: fit-content; transition: opacity 0.2s ease; }
+        button:hover { opacity: 0.9; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; margin-top: 0.5rem; }
+        th { padding: 0.5rem 0.75rem; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.02); }
+        td { padding: 0.75rem; border-bottom: 1px solid var(--border); }
+
+        .pill { padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .pill-public { background: #f1f5f9; color: var(--text-muted); }
+        .pill-secure { background: #ecfdf5; color: var(--success); }
     </style>
 </head>
 <body>
-    <header>
-        <div class="wrapper header-flex">
-            <div>
-                <div class="title-container">
-                    <svg class="sl-flag" viewBox="0 0 9 6" xmlns="http://www.w3.org/2000/svg">
-                        <rect fill="#1EB53A" width="9" height="2"/><rect fill="#FFFFFF" y="2" width="9" height="2"/><rect fill="#0072CE" y="4" width="9" height="2"/>
-                    </svg>
-                    <h1>Leone Rock Premier League</h1>
-                </div>
-                <p class="sub">2026/2027 Official Enterprise Match Portal</p>
+
+    <div class="layout-container">
+        <header>
+            <div class="brand">
+                <h1>SLPL Operations Environment</h1>
+                <p>Enterprise Management Portal</p>
             </div>
-            <div>
-                <select id="role-selector" onchange="_0x3f(this.value)">
-                    <option value="VIEWER">👁️ Public Viewer</option>
-                    <option value="SUPER_ADMIN">🔒 SLFA Admin</option>
-                    <option value="CLUB_ADMIN">🔒 Club Admin</option>
-                    <option value="MATCH_OFFICIAL">🔒 Referee</option>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <select id="sessionRole" onchange="applySecurityMatrix()" style="padding: 0.4rem; font-size: 0.8rem; font-weight: 500;">
+                    <option value="Viewer">Viewer (Read-Only)</option>
+                    <option value="Club Admin">Club Admin Role</option>
+                    <option value="Super Admin">Super Admin Privilege</option>
+                    <option value="Developer">Master Developer Access</option>
                 </select>
             </div>
-        </div>
-    </header>
-    <div class="wrapper">
-        <div class="nav-grid">
-            <button onclick="_0x4a('admin')" id="nav-admin" class="nav-btn active">Admin</button>
-            <button onclick="_0x4a('club')" id="nav-club" class="nav-btn">Clubs</button>
-            <button onclick="_0x4a('fixtures')" id="nav-fixtures" class="nav-btn">Fixtures</button>
-            <button onclick="_0x4a('referee')" id="nav-referee" class="nav-btn">Matchday</button>
-            <button onclick="_0x4a('stats')" id="nav-stats" class="nav-btn">Stats</button>
-            <button onclick="_0x4a('standings')" id="nav-standings" class="nav-btn">Table</button>
-        </div>
-        <section id="tab-content-admin" class="card"><div id="admin-view-container"></div></section>
-        <section id="tab-content-club" class="card hidden">
-            <div class="card-title">Club Squad & Player Registration Portal</div>
-            <div class="notice-banner" id="club-notice" style="display:none;">Notice: You are viewing as a guest. Only authorized Club Administrators can submit new player registrations.</div>
-            <div id="club-interactive-area">
-                <form id="player-reg-form" onsubmit="_0x5c(event)">
-                    <div class="form-grid">
-                        <div class="form-group"><label>First Name</label><input type="text" id="reg-fname" required placeholder="Musa"></div>
-                        <div class="form-group"><label>Last Name</label><input type="text" id="reg-lname" required placeholder="Kamara"></div>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Jersey Number</label><input type="number" id="reg-number" min="1" max="99" value="10" required></div>
-                        <div class="form-group"><label>National ID (NIN)</label><input type="text" id="reg-nin" required placeholder="NIN-SL-998877"></div>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Position</label>
-                            <select id="reg-pos" class="form-control">
-                                <option value="FWD">Forward (FWD)</option><option value="MID">Midfielder (MID)</option><option value="DEF">Defender (DEF)</option><option value="GK">Goalkeeper (GK)</option>
-                            </select>
-                        </div>
-                        <div class="form-group"><label>Select Your Club</label><select id="reg-club" class="form-control club-select-options"></select></div>
-                    </div>
-                    <button type="submit" class="btn-primary">Submit Squad Credentials to SLFA Board</button>
-                </form>
-            </div>
-            <div style="margin-top: 20px;">
-                <div class="header-flex" style="margin-bottom: 8px;">
-                    <div class="card-title" style="margin:0;">Verified Club Squads & Disciplinary Records</div>
-                    <button onclick="_0x6d()" class="btn-blue">📥 Export CSV</button>
+        </header>
+
+        <main>
+            <!-- 1. Real-Time Standings (Always Public) -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">League Table Registry</h2>
+                    <span class="pill pill-public">Live Synchronization</span>
                 </div>
-                <div id="club-roster-list"></div>
-            </div>
-        </section>
-        <section id="tab-content-fixtures" class="card hidden">
-            <div class="header-flex" style="margin-bottom: 12px;"><div class="card-title" style="margin:0;">📅 Matchday Fixtures & Results Calendar</div><span class="badge">2026/2027 Season</span></div>
-            <p style="font-size: 11px; color: #9ca3af; margin-bottom: 12px;">Browse upcoming matches or load them directly into the Referee Console.</p>
-            <div id="fixtures-list-container"></div>
-        </section>
-        <section id="tab-content-referee" class="card hidden">
-            <div style="text-align: center;">
-                <span class="badge" style="background: #450a0a; color: #fca5a5; border-color: #991b1b;">Matchday Governance Console</span>
-                <div class="notice-banner" id="ref-notice" style="margin-top: 10px; display:none;">Restricted Access: Viewers cannot log match events. Switch to Match Referee role from the top menu.</div>
-                <div class="form-group" style="text-align: left; margin-top: 10px;">
-                    <label>Active Match Fixture</label>
-                    <select id="fixture-selector" class="form-control" onchange="_0x7e(this.value)"></select>
-                </div>
-                <div class="scoreboard">
-                    <span id="home-team-name" style="font-size: 11px; font-weight: bold; width: 30%; text-align: right;">Kamboi Eagles FC</span>
-                    <div class="score-box"><span id="match-home-score">0</span> - <span id="match-away-score">0</span></div>
-                    <span id="away-team-name" style="font-size: 11px; font-weight: bold; width: 30%; text-align: left;">Bo Rangers FC</span>
-                </div>
-                <div id="ref-controls-area">
-                    <form onsubmit="_0x8f(event)" style="text-align: left;">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Action Team</label>
-                                <select id="event-team" class="form-control" onchange="_0x9a()">
-                                    <option value="HOME" id="opt-home-label">Kamboi Eagles FC (Home)</option><option value="AWAY" id="opt-away-label">Bo Rangers FC (Away)</option>
-                                </select>
-                            </div>
-                            <div class="form-group"><label>Match Minute</label><input type="number" id="event-min" value="1" min="1" max="120" required></div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Event Type</label>
-                                <select id="event-type" class="form-control">
-                                    <option value="GOAL">⚽ Goal Scored (+1)</option><option value="YELLOW">🟨 Yellow Card</option><option value="RED">🟥 Red Card (Automatic Suspension)</option>
-                                </select>
-                            </div>
-                            <div class="form-group"><label>Verified Licensed Player</label><select id="event-player-select" class="form-control"></select></div>
-                        </div>
-                        <button type="submit" class="btn-primary">Verify Lineup & Log Official Event</button>
-                    </form>
-                    <button onclick="_0xab()" class="btn-amber">🖨️ Print / Save Official PDF Match Report</button>
-                </div>
-                <div style="margin-top: 15px; text-align: left;">
-                    <div class="card-title">⚡ Live Commentary & Audit Ticker</div>
-                    <div id="match-ticker" class="ticker-box">[00'] Referee has whistled to kick off the match. Lineups verified against SLFA database.</div>
-                </div>
-            </div>
-        </section>
-        <section id="tab-content-stats" class="card hidden">
-            <div class="card-title">⚽ Player Statistics & Top Scorers Leaderboard</div>
-            <p style="font-size: 11px; color: #9ca3af; margin-bottom: 12px;">Real-time Golden Boot race and disciplinary records.</p>
-            <div id="top-scorers-list"></div>
-        </section>
-        <section id="tab-content-standings" class="card hidden" style="padding: 16px;">
-            <div class="header-flex" style="margin-bottom: 12px;">
-                <div class="card-title" style="margin:0;">2026/2027 Official Standings</div>
-                <div style="display: flex; gap: 6px; align-items: center;"><button onclick="_0xbc()" class="btn-blue">📥 Export CSV</button><span class="badge" id="standings-count-badge">18 Teams</span></div>
-            </div>
-            <div class="form-group" style="margin-bottom: 12px;"><input type="text" id="standings-search" placeholder="🔍 Search club name..." onkeyup="_0xcd()" class="form-control"></div>
-            <div style="overflow-x: auto;">
+                <input type="text" id="tableFilter" onkeyup="searchTable()" placeholder="Filter rankings by club name..." style="width: 100%; margin-bottom: 0.75rem;">
                 <table>
                     <thead>
-                        <tr>
-                            <th class="text-center" style="width: 25px;">Pos</th><th>Clubs & Home Grounds</th><th class="text-center">P</th><th class="text-center">W</th><th class="text-center">D</th><th class="text-center">L</th><th class="text-center">GF</th><th class="text-center">GA</th><th class="text-center">GD</th><th class="text-center">PTS</th>
-                        </tr>
+                        <tr><th>Rank</th><th>Club Team</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>Points</th></tr>
                     </thead>
-                    <tbody id="standings-tbody"></tbody>
+                    <tbody id="standingsBody">
+                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Awaiting initialization parameter credentials...</td></tr>
+                    </tbody>
                 </table>
             </div>
-        </section>
-    </div>
-    <div id="pdf-print-container"></div>
-    <footer>Designed by Alhaji Abu Koroma</footer>
-    <script>
-        const _0x1a="SLFA_PL_DB_2026";
-        const _0x2b={role:"VIEWER",activeClubAdmin:null,passwords:{"SUPER_ADMIN":"5555","MATCH_OFFICIAL":"7777"},clubAdmins:[{id:"kamboi_admin",club:"Kamboi Eagles FC",pin:"6666"},{id:"bo_admin",club:"Bo Rangers FC",pin:"6666"}],players:[{id:"1",firstName:"Musa",lastName:"Kamara",number:10,nin:"NIN-SL-00123",position:"FWD",club:"Bo Rangers FC",status:"ACTIVE",goals:2,yellowCards:0,redCards:0},{id:"2",firstName:"Ibrahim",lastName:"Bangura",number:8,nin:"NIN-SL-00456",position:"MID",club:"East End Lions FC",status:"ACTIVE",goals:1,yellowCards:1,redCards:0}],fixtures:[{id:"f1",home:"Kamboi Eagles FC",away:"Bo Rangers FC",venue:"Kenema Playing Field",time:"Today, 16:00 GMT",score:"1 - 0"},{id:"f2",home:"East End Lions FC",away:"Wusum Stars FC",venue:"Southern Arena (Bo)",time:"Completed",score:"1 - 0"},{id:"f3",home:"Old Edwardians FC",away:"Diamond Stars FC",venue:"Trade Centre Field",time:"Tomorrow, 16:00 GMT",score:"Vs"},{id:"f4",home:"FC Kallon",away:"Mighty Blackpool FC",venue:"Approved School Field",time:"Tomorrow, 16:00 GMT",score:"Vs"}],tickerLogs:["[00'] Match referee blows the whistle. Action is live across Sierra Leone!"],clubsMapData:[["Kamboi Eagles FC",{name:"Kamboi Eagles FC",ground:"Kenema Playing Field (Kenema)",p:1,w:1,d:0,l:0,gf:3,ga:0,pts:3}],["Bo Rangers FC",{name:"Bo Rangers FC",ground:"Southern Arena (Bo)",p:1,w:1,d:0,l:0,gf:2,ga:1,pts:3}],["East End Lions FC",{name:"East End Lions FC",ground:"Trade Centre Field (Eastern Freetown)",p:1,w:1,d:0,l:0,gf:1,ga:0,pts:3}],["Wusum Stars FC",{name:"Wusum Stars FC",ground:"Southern Arena (Bo)",p:1,w:1,d:0,l:0,gf:1,ga:0,pts:3}],["Wilberforce Strikers FC",{name:"Wilberforce Strikers FC",ground:"Approved School Field (Wellington)",p:1,w:0,d:1,l:0,gf:0,ga:0,pts:1}],["Old Edwardians FC",{name:"Old Edwardians FC",ground:"Trade Centre Field",p:1,w:0,d:1,l:0,gf:0,ga:0,pts:1}],["Western United Fc",{name:"Western United Fc",ground:"Southern Arena (Bo)",p:1,w:0,d:1,l:0,gf:0,ga:0,pts:1}],["Mighty Blackpool FC",{name:"Mighty Blackpool FC",ground:"Lungi Playing Field (Lungi)",p:1,w:0,d:1,l:0,gf:0,ga:0,pts:1}],["Diamond Stars FC",{name:"Diamond Stars FC",ground:"Koidu Field (Kono)",p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}],["FC Kallon",{name:"FC Kallon",ground:"Approved School Field",p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}],["Bhantal FC",{name:"Bhantal FC",ground:"Southern Arena (Bo)",p:1,w:0,d:0,l:1,gf:0,ga:1,pts:0}],["Ports Authority FC",{name:"Ports Authority FC",ground:"Wusum Field (Makeni)",p:1,w:0,d:0,l:1,gf:0,ga:1,pts:0}],["Waterloo FC",{name:"Waterloo FC",ground:"MK 3/10 Field (Angola Town)",p:1,w:0,d:0,l:1,gf:1,ga:2,pts:0}],["Bai Bureh Warriors FC",{name:"Bai Bureh Warriors FC",ground:"Trade Centre Field",p:1,w:0,d:0,l:1,gf:0,ga:3,pts:0}]],homeScore:0,awayScore:0,homeTeam:"Kamboi Eagles FC",awayTeam:"Bo Rangers FC"};
-        let _0x3c=localStorage.getItem(_0x1a);
-        let _0x4d=_0x3c?JSON.parse(_0x3c):_0x2b;
-        _0x4d.clubsMap=new Map(_0x4d.clubsMapData||_0x2b.clubsMapData);
-        if(!_0x4d.clubAdmins)_0x4d.clubAdmins=_0x2b.clubAdmins;
-        function _0x5e(){_0x4d.clubsMapData=Array.from(_0x4d.clubsMap.entries());localStorage.setItem(_0x1a,JSON.stringify(_0x4d));}
-        function _0x3f(_0x6f){
-            if(_0x6f==='VIEWER'){_0x4d.role='VIEWER';_0x4d.activeClubAdmin=null;alert("Switched to Public Viewer Mode (Read-Only).");_0x70();_0x81();return;}
-            if(_0x6f==='CLUB_ADMIN'){
-                let _0x7a=prompt("Enter your unique Club Admin ID:");if(!_0x7a)return;
-                let _0x8b=_0x4d.clubAdmins.find(a=>a.id.toLowerCase()===_0x7a.trim().toLowerCase());
-                if(!_0x8b){alert("Access Denied: Club Admin ID not found.");document.getElementById('role-selector').value=_0x4d.role;return;}
-                let _0x9c=prompt("Enter Security PIN for Club Admin ["+_0x8b.id+" ("+_0x8b.club+")]:");
-                if(_0x9c===_0x8b.pin){_0x4d.role='CLUB_ADMIN';_0x4d.activeClubAdmin=_0x8b.club;alert("Access Granted! Managing squad for "+_0x8b.club);_0x70();_0x81();}
-                else{alert("Access Denied: Incorrect Security PIN.");document.getElementById('role-selector').value=_0x4d.role;}
-                return;
-            }
-            let _0x9c=prompt("Enter Administration Security PIN for "+_0x6f.replace('_',' ')+":");
-            if(_0x9c===_0x4d.passwords[_0x6f]){_0x4d.role=_0x6f;_0x4d.activeClubAdmin=null;alert("Access Granted! Authorized administrator session active.");_0x70();_0x81();}
-            else{alert("Access Denied: Incorrect Security PIN.");document.getElementById('role-selector').value=_0x4d.role;}
-        }
-        function _0x81(){
-            const _0xad=_0x4d.role==='CLUB_ADMIN',_0xbe=_0x4d.role==='MATCH_OFFICIAL';
-            document.getElementById('club-notice').style.display=_0xad?'none':'block';
-            document.getElementById('club-interactive-area').style.display=_0xad?'block':'none';
-            document.getElementById('ref-notice').style.display=_0xbe?'none':'block';
-            document.getElementById('ref-controls-area').style.display=_0xbe?'block':'none';
-            _0xcf();_0xd0(_0x4d.standingsSearchQuery||'');_0x92();_0x93();_0x94();_0x95();
-        }
-        function _0x92(){
-            document.querySelectorAll('.club-select-options').forEach(_0xe1=>{
-                _0xe1.innerHTML='';
-                _0x4d.clubsMap.forEach((_,_0xf2)=>{if(_0x4d.role==='CLUB_ADMIN'&&_0x4d.activeClubAdmin&&_0xf2!==_0x4d.activeClubAdmin)return;_0xe1.innerHTML+=`<option value="${_0xf2}">${_0xf2}</option>`;});
-            });
-        }
-        function _0x93(){let _0x13=document.getElementById('fixture-selector');if(!_0x13)return;_0x13.innerHTML='';_0x4d.fixtures.forEach(f=>{_0x13.innerHTML+=`<option value="${f.home} vs ${f.away}">${f.home} vs ${f.away} (${f.venue})</option>`;});}
-        function _0x4a(_0x24){
-            ['admin','club','fixtures','referee','stats','standings'].forEach(t=>{document.getElementById('tab-content-'+t).classList.add('hidden');document.getElementById('nav-'+t).className='nav-btn';});
-            document.getElementById('tab-content-'+_0x24).classList.remove('hidden');document.getElementById('nav-'+_0x24).className='nav-btn active';
-            if(_0x24==='admin')_0x70();if(_0x24==='club')_0xcf();if(_0x24==='fixtures')_0x94();if(_0x24==='referee')_0x9a();if(_0x24==='stats')_0x95();if(_0x24==='standings')_0xd0();
-        }
-        function _0x7e(v){
-            let t=v.split(' vs ');_0x4d.homeTeam=t[0];_0x4d.awayTeam=t[1].split(' (')[0];_0x4d.homeScore=0;_0x4d.awayScore=0;
-            document.getElementById('home-team-name').innerText=_0x4d.homeTeam;document.getElementById('away-team-name').innerText=_0x4d.awayTeam;
-            document.getElementById('match-home-score').innerText='0';document.getElementById('match-away-score').innerText='0';
-            document.getElementById('event-team').value='HOME';document.getElementById('opt-home-label').innerText=_0x4d.homeTeam+' (Home)';document.getElementById('opt-away-label').innerText=_0x4d.awayTeam+' (Away)';
-            _0x4d.tickerLogs.unshift(`[00'] New fixture loaded: ${_0x4d.homeTeam} vs ${_0x4d.awayTeam}.`);_0x98();_0x9a();_0x5e();
-        }
-        function _0x9a(){
-            let s=document.getElementById('event-player-select');if(!s)return;s.innerHTML='';
-            let a=document.getElementById('event-team').value==='HOME'?_0x4d.homeTeam:_0x4d.awayTeam;
-            let p=_0x4d.players.filter(x=>x.club===a&&x.status==='ACTIVE');
-            if(p.length===0){s.innerHTML=`<option value="">No ACTIVE players licensed for this club</option>`;return;}
-            p.forEach(x=>{s.innerHTML+=`<option value="${x.firstName} ${x.lastName}">#${x.number} ${x.firstName} ${x.lastName} (${x.position})</option>`;});
-        }
-        function _0xa1(e){
-            e.preventDefault();let n=document.getElementById('new-team-name').value.trim(),g=document.getElementById('new-team-ground').value.trim();
-            if(n&&g){if(_0x4d.clubsMap.has(n)){alert("Team already exists!");return;}_0x4d.clubsMap.set(n,{name:n,ground:g,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0});_0x5e();alert(`Added ${n}!`);document.getElementById('form-add-team').reset();_0x70();_0xd0();_0x92();}
-        }
-        function _0xb2(n){if(confirm(`Remove ${n}?`)){_0x4d.clubsMap.delete(n);_0x5e();_0x70();_0xd0();_0x92();}}
-        function _0xc3(e){
-            e.preventDefault();let id=document.getElementById('new-admin-id').value.trim(),c=document.getElementById('new-admin-club').value,pin=document.getElementById('new-admin-pin').value.trim();
-            if(id&&c&&pin){if(_0x4d.clubAdmins.some(a=>a.id.toLowerCase()===id.toLowerCase())){alert("ID already exists!");return;}_0x4d.clubAdmins.push({id:id,club:c,pin:pin});_0x5e();alert(`Club Admin [${id}] added!`);document.getElementById('form-add-club-admin').reset();_0x70();}
-        }
-        function _0xd4(id){if(confirm(`Revoke [${id}]?`)){_0x4d.clubAdmins=_0x4d.clubAdmins.filter(a=>a.id!==id);_0x5e();_0x70();}}
-        function _0x70(){
-            let c=document.getElementById('admin-view-container');
-            if(_0x4d.role==='SUPER_ADMIN'){
-                let tH='';_0x4d.clubsMap.forEach((v,k)=>{tH+=`<div class="list-item" style="padding:6px 10px;"><div><div class="item-name" style="font-size:10px;">${k} <span style="color:#9ca3af;">(${v.ground})</span></div></div><button onclick="_0xb2('${k}')" class="btn-danger">Remove</button></div>`;});
-                let aH='';_0x4d.clubAdmins.forEach(a=>{aH+=`<div class="list-item" style="padding:6px 10px;"><div><div class="item-name" style="font-size:10px;">ID: <code>${a.id}</code> <span style="color:#34d399;">➔ ${a.club}</span></div></div><button onclick="_0xd4('${a.id}')" class="btn-danger">Revoke</button></div>`;});
-                c.innerHTML=`
-                    <div class="card-title" style="margin:0;">SLFA Executive Approval & Club Admins Governance</div>
-                    <div class="notice-banner">Super Admin Session Active. Create Club Admin credentials and manage league teams below.</div>
-                    <div style="margin-top:16px;">
-                        <div class="card-title" style="color:#34d399;">👥 Create Unique Club Admin Account</div>
-                        <form id="form-add-club-admin" onsubmit="_0xc3(event)" style="margin-bottom:12px;">
-                            <div class="form-grid">
-                                <div class="form-group"><input type="text" id="new-admin-id" placeholder="Unique Admin ID" required style="font-size:11px;padding:7px;"></div>
-                                <div class="form-group"><select id="new-admin-club" class="form-control club-select-options" style="font-size:11px;padding:7px;"></select></div>
-                            </div>
-                            <div class="form-grid">
-                                <div class="form-group"><input type="password" id="new-admin-pin" placeholder="Security PIN" required style="font-size:11px;padding:7px;"></div>
-                                <div class="form-group"><button type="submit" class="btn-sm" style="width:100%;height:32px;">Add Club Admin</button></div>
-                            </div>
-                        </form>
-                        <div style="max-height:120px;overflow-y:auto;background:#030712;padding:6px;border-radius:8px;">${aH}</div>
+
+            <!-- 2. Squad Registration Form (Club Admin & Above) -->
+            <div class="panel" id="clubPanel">
+                <div class="security-lockout" id="clubLock">
+                    <p>🔒 Restricted Access — Requires Club Manager Permissions</p>
+                </div>
+                <div class="panel-header">
+                    <h2 class="panel-title">Squad Member Registration</h2>
+                    <span class="pill pill-secure">Authorized Personnel Only</span>
+                </div>
+                <form id="squadForm" onsubmit="pushSquadMemberToSupabase(event)">
+                    <div class="grid-inputs">
+                        <div class="field"><label>Player Full Name</label><input type="text" id="formPlayerName" required placeholder="e.g., Musa Tombo"></div>
+                        <div class="field"><label>National ID (NIN)</label><input type="text" id="formPlayerNin" required placeholder="SL-NIN-XXXX"></div>
+                        <div class="field">
+                            <label>Position</label>
+                            <select id="formPlayerPos">
+                                <option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option>
+                            </select>
+                        </div>
                     </div>
-                    <div style="margin-top:24px;border-top:1px solid #1f2937;padding-top:16px;">
-                        <div class="card-title" style="color:#34d399;">🏟️ League Teams Management</div>
-                        <form id="form-add-team" onsubmit="_0xa1(event)" style="margin-bottom:12px;">
-                            <div class="form-grid">
-                                <div class="form-group"><input type="text" id="new-team-name" placeholder="Club Name" required style="font-size:11px;padding:7px;"></div>
-                                <div class="form-group"><input type="text" id="new-team-ground" placeholder="Home Ground" required style="font-size:11px;padding:7px;"></div>
-                            </div>
-                            <button type="submit" class="btn-sm">Add Club to League</button>
-                        </form>
-                        <div style="max-height:140px;overflow-y:auto;background:#030712;padding:6px;border-radius:8px;">${tH}</div>
+                    <button type="submit" id="submitFormBtn">Submit Registry File</button>
+                </form>
+            </div>
+
+            <!-- 3. Dedicated Developer Governance & Audit Panel -->
+            <div class="panel" id="devPanel">
+                <div class="security-lockout" id="devLock">
+                    <p>🔒 Access Terminated — Master Developer Key Required</p>
+                </div>
+                <div class="panel-header">
+                    <h2 class="panel-title" style="color: var(--primary);">⚙️ Dedicated Developer Control & Appearance Studio</h2>
+                </div>
+
+                <!-- Appearance Customization Studio Sub-section -->
+                <div style="border: 1px solid var(--border); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.01);">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem;">🎨 System Appearance Engine</h4>
+                    <div class="field" style="width: 250px; margin-bottom: 0.5rem;">
+                        <label>Select Workspace Theme</label>
+                        <select id="themeSelector" onchange="changeSystemAppearance()">
+                            <option value="light">Corporate Light Minimalist</option>
+                            <option value="dark">Enterprise Dark Mode</option>
+                            <option value="midnight-blue">SLPL Midnight Emerald Blue</option>
+                        </select>
                     </div>
-                    <div style="margin-top:24px;border-top:1px solid #1f2937;padding-top:16px;">
-                        <div class="card-title">⚽ Pending Player Approvals</div>
-                        <div id="pending-queue-list"></div>
-                    </div>`;
-                _0xe5();_0x92();
-            }else if(_0x4d.role==='CLUB_ADMIN'){c.innerHTML=`<div class="card-title">Club Administrator Control Panel</div><div class="notice-banner">Managing squad for <strong>${_0x4d.activeClubAdmin}</strong>.</div>`;}
-            else if(_0x4d.role==='MATCH_OFFICIAL'){c.innerHTML=`<div class="card-title">Match Official Control Panel</div><div class="notice-banner" style="background:#064e3b;color:#a7f3d0;">Referee Session Active.</div>`;}
-            else{c.innerHTML=`<div class="card-title">Welcome to Leone Rock Premier League Hub</div><div class="notice-banner">Viewing as Public Guest. Select a role above.</div>`;}
-        }
-        function _0xe5(){
-            let l=document.getElementById('pending-queue-list');if(!l)return;l.innerHTML='';
-            let p=_0x4d.players.filter(x=>x.status==='PENDING');
-            if(p.length===0){l.innerHTML=`<p style="text-align:center;color:#6b7280;font-size:11px;padding:10px;">No pending registrations.</p>`;return;}
-            p.forEach(x=>{l.innerHTML+=`<div class="list-item"><div><div class="item-name">#${x.number} ${x.firstName} ${x.lastName} (${x.club})</div><div class="item-sub">NIN: ${x.nin} • ${x.position}</div></div><button onclick="_0xf6('${x.id}')" class="btn-sm">Approve</button></div>`;});
-        }
-        function _0x5c(e){
-            e.preventDefault();
-            if(_0x4d.role!=='CLUB_ADMIN'){alert('Unauthorized.');return;}
-            let p={id:Date.now().toString(),firstName:document.getElementById('reg-fname').value,lastName:document.getElementById('reg-lname').value,number:parseInt(document.getElementById('reg-number').value),nin:document.getElementById('reg-nin').value,position:document.getElementById('reg-pos').value,club:_0x4d.activeClubAdmin||document.getElementById('reg-club').value,status:'PENDING',goals:0,yellowCards:0,redCards:0};
-            _0x4d.players.push(p);_0x5e();alert('Submitted for approval.');document.getElementById('player-reg-form').reset();_0xcf();
-        }
-        function _0xcf(){
-            let l=document.getElementById('club-roster-list');if(!l)return;l.innerHTML='';
-            if(_0x4d.players.length===0){l.innerHTML=`<p style="text-align:center;color:#6b7280;font-size:11px;padding:10px;">No players registered.</p>`;return;}
-            _0x4d.players.forEach(p=>{
-                let b='background:#064e3b;color:#34d399;';if(p.status==='PENDING')b='background:#78350f;color:#fde68a;';if(p.status==='SUSPENDED')b='background:#7f1d1d;color:#fca5a5;';
-                l.innerHTML+=`<div class="list-item"><div><div class="item-name">#${p.number} ${p.firstName} ${p.lastName} (${p.club})</div><div class="item-sub">${p.position} • ⚽ ${p.goals} G | 🟨 ${p.yellowCards} | 🟥 ${p.redCards}</div></div><span class="badge" style="${b}">${p.status}</span></div>`;
-            });
-        }
-        function _0x6d(){let csv='First Name,Last Name,No,NIN,Position,Club,Status,Goals,Yellow,Red\n';_0x4d.players.forEach(p=>{csv+=`"${p.firstName}","${p.lastName}",${p.number},"${p.nin}","${p.position}","${p.club}","${p.status}",${p.goals},${p.yellowCards},${p.redCards}\n`;});_0x11(csv,'SLFA_Player_Squads.csv');}
-        function _0xbc(){let csv='Pos,Club,Ground,P,W,D,L,GF,GA,GD,PTS\n';let s=Array.from(_0x4d.clubsMap.values()).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga));s.forEach((t,i)=>{csv+=`${i+1},"${t.name}","${t.ground}",${t.p},${t.w},${t.d},${t.l},${t.gf},${t.ga},${t.gf-t.ga},${t.pts}\n`;});_0x11(csv,'Standings.csv');}
-        function _0x11(c,f){const b=new Blob([c],{type:'text/csv;charset=utf-8;'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.setAttribute('download',f);document.body.appendChild(l);l.click();document.body.removeChild(l);}
-        function _0x94(){let c=document.getElementById('fixtures-list-container');if(!c)return;c.innerHTML='';_0x4d.fixtures.forEach(f=>{c.innerHTML+=`<div class="list-item"><div><div class="item-name">${f.home} vs ${f.away}</div><div class="item-sub">${f.venue} • ${f.time}</div></div><span class="badge">${f.score}</span></div>`;});}
-        function _0x95(){
-            let l=document.getElementById('top-scorers-list');if(!l)return;l.innerHTML='';
-            let s=[..._0x4d.players].sort((a,b)=>b.goals-a.goals||a.lastName.localeCompare(b.lastName));
-            s.forEach((p,i)=>{l.innerHTML+=`<div class="list-item"><div><div class="item-name">#${i+1} #${p.number} ${p.firstName} ${p.lastName} (${p.club})</div><div class="item-sub">🟨 ${p.yellowCards} | 🟥 ${p.redCards}</div></div><span class="badge" style="background:#064e3b;color:#34d399;">⚽ ${p.goals} Goals</span></div>`;});
-        }
-        function _0xf6(id){if(_0x4d.role!=='SUPER_ADMIN'){alert('Unauthorized.');return;}let p=_0x4d.players.find(x=>x.id===id);if(p){p.status='ACTIVE';_0x5e();alert('Approved!');_0xe5();}}
-        function _0x8f(e){
-            e.preventDefault();if(_0x4d.role!=='MATCH_OFFICIAL'){alert('Unauthorized.');return;}
-            let t=document.getElementById('event-team').value,m=document.getElementById('event-min').value,type=document.getElementById('event-type').value,name=document.getElementById('event-player-select').value;
-            if(!name||name.includes('No ACTIVE'))return;
-            let cn=t==='HOME'?_0x4d.homeTeam:_0x4d.awayTeam,cr=_0x4d.clubsMap.get(cn),pr=_0x4d.players.find(x=>`${x.firstName} ${x.lastName}`===name);
-            if(type==='GOAL'){t==='HOME'?(+_0x4d.homeScore++,document.getElementById('match-home-score').innerText=_0x4d.homeScore):(+_0x4d.awayScore++,document.getElementById('match-away-score').innerText=_0x4d.awayScore);if(cr){cr.p++;cr.w++;cr.gf++;cr.pts+=3;}if(pr)pr.goals++;_0x4d.tickerLogs.unshift(`[${m}'] ⚽ GOAL! ${name} (${cn})`);}
-            else if(type==='YELLOW'){if(pr)pr.yellowCards++;_0x4d.tickerLogs.unshift(`[${m}'] 🟨 Yellow Card: ${name} (${cn})`);}
-            else if(type==='RED'){if(pr){pr.redCards++;pr.status='SUSPENDED';}_0x4d.tickerLogs.unshift(`[${m}'] 🟥 Red Card: ${name} (${cn})`);}
-            _0x98();_0x5e();alert('Logged!');
-        }
-        function _0x98(){let t=document.getElementById('match-ticker');if(t)t.innerHTML=_0x4d.tickerLogs.join('<br>');}
-        function _0xab(){
-            let c=document.getElementById('pdf-print-container'),h=`<h2 style="text-align:center;">SLFA MATCH REPORT</h2><h3 style="text-align:center;">${_0x4d.homeTeam} vs ${_0x4d.awayTeam}</h3><p>Score: ${_0x4d.homeScore} - ${_0x4d.awayScore}</p><hr><ul>`;
-            _0x4d.tickerLogs.slice().reverse().forEach(l=>{h+=`<li>${l}</li>`;});h+=`</ul><p>Designed by Alhaji Abu Koroma</p>`;c.innerHTML=h;window.print();
-        }
-        function _0xcd(){_0x4d.standingsSearchQuery=document.getElementById('standings-search').value.toLowerCase();_0xd0(_0x4d.standingsSearchQuery);}
-        function _0xd0(f=''){
-            let b=document.getElementById('standings-tbody');if(!b)return;b.innerHTML='';
-            let s=Array.from(_0x4d.clubsMap.values()).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga));
-            document.getElementById('standings-count-badge').innerText=s.length+' Teams';
-            if(f)s=s.filter(t=>t.name.toLowerCase().includes(f));
-            s.forEach((t,i)=>{let gd=t.gf-t.ga;b.innerHTML+=`<tr><td class="text-center" style="color:#9ca3af;">${i+1}</td><td><div style="font-weight:600;color:#fff;">${t.name}</div><div style="font-size:8px;color:#34d399;font-family:monospace;">${t.ground}</div></td><td class="text-center">${t.p}</td><td class="text-center">${t.w}</td><td class="text-center">${t.d}</td><td class="text-center">${t.l}</td><td class="text-center">${t.gf}</td><td class="text-center">${t.ga}</td><td class="text-center">${gd>0?'+'+gd:gd}</td><td class="text-center font-black">${t.pts}</td></tr>`;});
-        }
-        _0x70();_0x81();_0xd0();
-    </script>
-</body>
-</html>
+                </div>
+
+                <!-- Core Audit: Function Tracking Matrix -->
+                <div style="border: 1px solid var(--border); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem;">📋 System Active Functions Log</h4>
+                    <table>
+                        <thead>
+                            <tr><th>System Function Name</th><th>Execution Target Engine</th><th>Security State</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>initializeSupabasePipeline()</code></td><td>Database Connection Manager</td><td><span class="pill pill-secure" style="color:var(--success)">Live</span></td></tr>
+                            <tr><td><code>fetchLiveStandings()</code></td><td>Asynchronous REST Data Hydration</td><td><span class="pill pill-secure" style="color:var(--success)">Live</span></td></tr>
