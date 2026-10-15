@@ -155,6 +155,8 @@
         .db-ok { background: #D7F2DF; color: #0B5A28; }
         .db-warn { background: #FDE8C8; color: #8A3B07; }
         .db-off { background: #FBD9D5; color: #8E1F15; }
+        .readonly-notice { display: flex; width: fit-content; max-width: 100%; align-items: center; gap: 8px; margin-top: 12px; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; line-height: 1.35; background: rgba(255,255,255,0.12); color: #EAF4EC; border: 1px solid rgba(255,255,255,0.24); }
+        .readonly-notice svg { flex-shrink: 0; }
 
         .scoreboard {
             position: relative; background: #061F15; border: 1px solid rgba(255,255,255,0.1);
@@ -448,6 +450,10 @@
                     <button type="button" class="btn btn-ghost" onclick="openAuthModal('signin')">Staff sign in</button>
                 </div>
                 <span id="dbStatus" class="db-status hidden" role="status"></span>
+                <div id="readOnlyNotice" class="readonly-notice hidden" role="status">
+                    <svg width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9V6.5a4 4 0 1 1 8 0V9M5 9h10v8H5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span id="readOnlyText"></span>
+                </div>
             </div>
             <div class="scoreboard">
                 <div class="sb-status"><span class="live-dot"></span> 82' live at the National Stadium</div>
@@ -703,7 +709,7 @@
                                 <option value="SUPER_ADMIN">Super Admin</option>
                                 <option value="CLUB_ADMIN">Club Admin</option>
                                 <option value="REFEREE">Referee</option>
-                                <option value="STAFF">Staff</option>
+                                <option value="STAFF">Staff (read-only)</option>
                                 <option value="VIEWER">Viewer (no portal access)</option>
                             </select>
                         </label>
@@ -860,6 +866,61 @@
             db = createOfflineDb();
         }
 
+        // ------------------------------------------------------------------
+        // READ-ONLY MODE: visitors who are signed out, and accounts with the Viewer role
+        // (the default for every new sign-up) or the Staff role, can look but never change anything.
+        // The database enforces this too; this is a second lock inside the page.
+        // ------------------------------------------------------------------
+        const READ_ONLY_MESSAGE = 'Read-only access: this account cannot change league data.';
+
+        function isReadOnly() {
+            const role = getRole();
+            return !role || role === 'VIEWER' || role === 'STAFF';
+        }
+
+        function guardWrites(client) {
+            // Chainable on purpose: code like .update(x).eq(...).select() must end in the error, not a crash.
+            const refused = { data: null, error: { message: READ_ONLY_MESSAGE } };
+            const chain = new Proxy(function () {}, {
+                get(_target, prop) {
+                    if (prop === 'then') return (resolve, reject) => Promise.resolve(refused).then(resolve, reject);
+                    return chain;
+                },
+                apply() { return chain; }
+            });
+            const blocked = () => chain;
+            const rawFrom = client.from.bind(client);
+            client.from = (table) => {
+                const builder = rawFrom(table);
+                if (!isReadOnly()) return builder;
+                return new Proxy(builder, {
+                    get(target, prop) {
+                        if (prop === 'insert' || prop === 'update' || prop === 'upsert' || prop === 'delete') return blocked;
+                        const value = target[prop];
+                        return typeof value === 'function' ? value.bind(target) : value;
+                    }
+                });
+            };
+            const rawRpc = client.rpc ? client.rpc.bind(client) : null;
+            if (rawRpc) client.rpc = (...args) => (isReadOnly() ? blocked() : rawRpc(...args));
+            if (client.storage && client.storage.from) {
+                const rawBucket = client.storage.from.bind(client.storage);
+                client.storage.from = (bucket) => {
+                    const api = rawBucket(bucket);
+                    if (!isReadOnly()) return api;
+                    return new Proxy(api, {
+                        get(target, prop) {
+                            if (prop === 'upload' || prop === 'remove' || prop === 'update' || prop === 'move' || prop === 'copy') return blocked;
+                            const value = target[prop];
+                            return typeof value === 'function' ? value.bind(target) : value;
+                        }
+                    });
+                };
+            }
+            return client;
+        }
+        guardWrites(db);
+
         // Escape any text before putting it into HTML
         function esc(value) {
             return String(value === null || value === undefined ? '' : value)
@@ -1004,7 +1065,7 @@
             SUPER_ADMIN: 'Super Admin',
             CLUB_ADMIN: 'Club Manager',
             REFEREE: 'Match Official',
-            STAFF: 'Staff',
+            STAFF: 'Staff (read-only)',
             VIEWER: 'Viewer'
         };
         const ASSIGNABLE_ROLES = ['SUPER_ADMIN', 'CLUB_ADMIN', 'REFEREE', 'STAFF', 'VIEWER'];
@@ -1158,7 +1219,8 @@
             show('refereePanelContainer', isDev || role === 'REFEREE');
             show('staffActionControls', isDev || isAdmin);
             if (!(isDev || isAdmin)) show('staffFormPanel', false);
-            show('menuPhoto', !!currentUser && !!role);
+            show('menuPhoto', !!currentUser && !isReadOnly());
+            renderReadOnlyNotice();
             show('logoutBtn', !!currentUser);
             show('menuSignIn', !currentUser);
             show('menuSignUp', !currentUser);
@@ -1170,6 +1232,20 @@
             if (isDev || role === 'CLUB_ADMIN') loadClubRoster();
             if (isDev || role === 'REFEREE') loadMatchEvents();
             renderDbStatus();
+        }
+
+        function renderReadOnlyNotice() {
+            const box = document.getElementById('readOnlyNotice');
+            const text = document.getElementById('readOnlyText');
+            if (!box || !text) return;
+            if (!isReadOnly()) { box.classList.add('hidden'); return; }
+            let message;
+            if (!currentUser) message = 'You are viewing in read-only mode. Staff and officials sign in to manage the league.';
+            else if (currentProfile && currentProfile.status === 'Suspended') message = 'This account is suspended. You have read-only access.';
+            else if (currentProfile && currentProfile.system_role === 'STAFF') message = 'Staff accounts have read-only access. You can view all league information but not change it.';
+            else message = 'Read-only access. A Developer must assign your role before you can make changes.';
+            text.textContent = message;
+            box.classList.remove('hidden');
         }
 
         function renderSessionInfo() {
@@ -1659,265 +1735,4 @@
                 squadCache = data || [];
                 if (data && data.length > 0) {
                     let html = '';
-                    data.forEach(p => {
-                        const id = Number(p.id);
-                        html += `<tr><td><span class="person">${avatarHtml(p.photo_url, p.player_name, 'avatar-sm')}<strong>${esc(p.player_name)}</strong></span></td><td><code style="font-size:13px; background:#F3F6F2; padding:2px 8px; border-radius:6px; border:1px solid var(--line);">${esc(p.player_nin || 'N/A')}</code></td><td><span class="badge badge-role">${esc(p.position)}</span></td><td><span class="badge badge-success">${esc(p.status || 'Active')}</span></td><td class="r"><label class="btn btn-outline btn-sm photo-btn">${p.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${p.photo_url ? 'Change' : 'Add'} photo for ${esc(p.player_name)}" onchange="changeClubPlayerPhoto(${id}, this)"></label> <button type="button" onclick="deleteClubPlayer(${id})" class="btn btn-outline btn-sm text-danger">Remove</button></td></tr>`;
-                    });
-                    tbody.innerHTML = html;
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="5" class="muted-cell">No players registered yet. Use the form above to add the first one.</td></tr>`;
-                }
-            } catch (err) { tbody.innerHTML = `<tr><td colspan="5" class="muted-cell">The squad roster could not be loaded.</td></tr>`; }
-        }
-
-        async function changeClubPlayerPhoto(id, input) {
-            if (!currentUser) return;
-            let url = null;
-            try {
-                const blob = await prepareImage(input.files && input.files[0]);
-                if (!blob) return;
-                url = await uploadPhotoBlob('squad/' + currentUser.id, blob);
-                const { error } = await db.from('club_squad').update({ photo_url: url }).eq('id', id);
-                if (error) throw error;
-                const old = squadCache.find(p => Number(p.id) === Number(id));
-                if (old) removePhotoByUrl(old.photo_url);
-                loadClubRoster();
-            } catch (err) {
-                if (url) removePhotoByUrl(url);
-                alert("Could not save the photo: " + friendlyError(err));
-            } finally {
-                input.value = '';
-            }
-        }
-
-        async function deleteClubPlayer(id) {
-            if (confirm("Remove this player from the roster?")) {
-                const old = squadCache.find(p => Number(p.id) === Number(id));
-                const { error } = await db.from('club_squad').delete().eq('id', id);
-                if (error) alert("Could not remove this player: " + friendlyError(error));
-                else if (old) removePhotoByUrl(old.photo_url);
-                loadClubRoster();
-            }
-        }
-
-        // ------------------------------------------------------------------
-        // DEVELOPER CONTROLS
-        // ------------------------------------------------------------------
-        async function upsertLeagueStanding() {
-            const club = document.getElementById('standingClubName').value.trim();
-            const mp = parseInt(document.getElementById('standingMP').value) || 0;
-            const w = parseInt(document.getElementById('standingW').value) || 0;
-            const d = parseInt(document.getElementById('standingD').value) || 0;
-            const l = parseInt(document.getElementById('standingL').value) || 0;
-            const gf = parseInt(document.getElementById('standingGF').value) || 0;
-            const ga = parseInt(document.getElementById('standingGA').value) || 0;
-            if (!club) { alert("Enter the club name."); return; }
-            const pts = (w * 3) + (d * 1);
-            const { error } = await db.from('league_standings').upsert([{ club, mp, w, d, l, gf, ga, pts, updated_at: new Date() }], { onConflict: 'club' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Standing saved for ${club}.`); loadLeagueStandings(); }
-        }
-
-        async function upsertTopScorer() {
-            const player = document.getElementById('scorerPlayerName').value.trim();
-            const club = document.getElementById('scorerClubName').value.trim();
-            const goals = parseInt(document.getElementById('scorerGoalsCount').value) || 0;
-            if (!player || !club) { alert("Enter the player and the club."); return; }
-            const { error } = await db.from('top_scorers').upsert([{ player, club, goals, updated_at: new Date() }], { onConflict: 'player' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Goals saved for ${player}.`); loadTopScorers(); }
-        }
-
-        async function upsertTopAssist() {
-            const player = document.getElementById('assistPlayerName').value.trim();
-            const club = document.getElementById('assistClubName').value.trim();
-            const assists = parseInt(document.getElementById('assistCount').value) || 0;
-            if (!player || !club) { alert("Enter the player and the club."); return; }
-            const { error } = await db.from('top_assists').upsert([{ player, club, assists, updated_at: new Date() }], { onConflict: 'player' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Assists saved for ${player}.`); loadTopAssists(); }
-        }
-
-        async function upsertCleanSheet() {
-            const goalkeeper = document.getElementById('gkPlayerName').value.trim();
-            const club = document.getElementById('gkClubName').value.trim();
-            const clean_sheets = parseInt(document.getElementById('gkCleanSheetsCount').value) || 0;
-            if (!goalkeeper || !club) { alert("Enter the goalkeeper and the club."); return; }
-            const { error } = await db.from('clean_sheets').upsert([{ goalkeeper, club, clean_sheets, updated_at: new Date() }], { onConflict: 'goalkeeper' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Clean sheets saved for ${goalkeeper}.`); loadCleanSheets(); }
-        }
-
-        // ------------------------------------------------------------------
-        // USER ACCOUNTS (roles live in the database; only a Developer can change them)
-        // ------------------------------------------------------------------
-        let userCache = [];
-
-        async function fetchMasterUserDirectory() {
-            const tbody = document.getElementById('masterUserTableBody');
-            if (!tbody) return;
-            try {
-                const { data, error } = await db.from('user_profiles').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-                userCache = data || [];
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="muted-cell">No accounts yet.</td></tr>`;
-                    return;
-                }
-                let html = '';
-                data.forEach(u => {
-                    const isSuspended = u.status === 'Suspended';
-                    const nextStatus = isSuspended ? 'Active' : 'Suspended';
-                    const isSelf = currentUser && u.id === currentUser.id;
-                    const displayName = u.full_name || u.email || '';
-
-                    let roleCell;
-                    let actionCell;
-                    if (isSelf || u.system_role === 'DEVELOPER') {
-                        roleCell = `<span class="badge badge-role">${esc(ROLE_LABELS[u.system_role] || u.system_role)}</span>`;
-                        actionCell = `<span style="color:var(--muted); font-size:13px;">${isSelf ? 'You' : 'Protected'}</span>`;
-                    } else {
-                        const options = ASSIGNABLE_ROLES.map(r => `<option value="${r}"${r === u.system_role ? ' selected' : ''}>${esc(ROLE_LABELS[r])}</option>`).join('');
-                        roleCell = `<select data-id="${esc(u.id)}" onchange="updateUserRole(this.dataset.id, this.value)" aria-label="Role for ${esc(u.email)}" style="height:34px; font-size:13px; min-width:150px;">${options}</select>`;
-                        actionCell = `<button type="button" data-id="${esc(u.id)}" data-status="${nextStatus}" onclick="toggleAccountStatus(this.dataset.id, this.dataset.status)" class="btn btn-outline btn-sm ${isSuspended ? 'text-success' : 'text-danger'}">${isSuspended ? 'Activate' : 'Suspend'}</button>`;
-                    }
-                    const photoBtn = `<label class="btn btn-outline btn-sm photo-btn">${u.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" data-id="${esc(u.id)}" aria-label="${u.photo_url ? 'Change' : 'Add'} photo for ${esc(displayName)}" onchange="changeUserPhoto(this.dataset.id, this)"></label>`;
-
-                    html += `<tr><td style="font-weight:600;">${esc(u.unique_user_id || '—')}</td><td><span class="person">${avatarHtml(u.photo_url, displayName, 'avatar-sm')}<strong>${esc(u.full_name || '—')}</strong></span></td><td style="font-size:13px;">${esc(u.email || '')}</td><td>${roleCell}</td><td><span class="badge ${isSuspended ? 'badge-danger' : 'badge-success'}">${esc(u.status || 'Active')}</span></td><td class="r">${actionCell} ${photoBtn}</td></tr>`;
-                });
-                tbody.innerHTML = html;
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="6" class="muted-cell">The account list could not be loaded.</td></tr>`;
-            }
-        }
-
-        async function assignRoleByEmail() {
-            const email = document.getElementById('newAccountEmail').value.trim().toLowerCase();
-            const uniqueId = document.getElementById('newAccountID').value.trim();
-            const role = document.getElementById('newAccountRole').value;
-            if (!email) { alert("Enter the email the person used to create their account."); return; }
-            const patch = { system_role: role };
-            if (uniqueId) patch.unique_user_id = uniqueId;
-            const { data, error } = await db.from('user_profiles').update(patch).eq('email', email).select();
-            if (error) { alert("Could not assign the role: " + friendlyError(error)); return; }
-            if (!data || data.length === 0) { alert("No account found for that email. The person must use \"Create account\" first."); return; }
-
-            let photoNote = '';
-            const blob = photoDrafts.assignPhotoInput;
-            if (blob) {
-                let url = null;
-                try {
-                    url = await uploadPhotoBlob('profiles/' + data[0].id, blob);
-                    const { error: photoError } = await db.from('user_profiles').update({ photo_url: url }).eq('id', data[0].id);
-                    if (photoError) throw photoError;
-                    removePhotoByUrl(data[0].photo_url);
-                } catch (err) {
-                    if (url) removePhotoByUrl(url);
-                    photoNote = " The photo could not be saved: " + friendlyError(err);
-                }
-            }
-            alert("Role assigned." + photoNote);
-            document.getElementById('newAccountEmail').value = '';
-            document.getElementById('newAccountID').value = '';
-            resetPhotoField('assignPhotoInput', 'assignPhotoPreview');
-            fetchMasterUserDirectory();
-        }
-
-        async function changeUserPhoto(userId, input) {
-            let url = null;
-            try {
-                const blob = await prepareImage(input.files && input.files[0]);
-                if (!blob) return;
-                url = await uploadPhotoBlob('profiles/' + userId, blob);
-                const { error } = await db.from('user_profiles').update({ photo_url: url }).eq('id', userId);
-                if (error) throw error;
-                const old = userCache.find(u => u.id === userId);
-                if (old) removePhotoByUrl(old.photo_url);
-                if (currentUser && userId === currentUser.id && currentProfile) { currentProfile.photo_url = url; renderSessionInfo(); }
-                fetchMasterUserDirectory();
-            } catch (err) {
-                if (url) removePhotoByUrl(url);
-                alert("Could not save the photo: " + friendlyError(err));
-            } finally {
-                input.value = '';
-            }
-        }
-
-        async function updateUserRole(userId, newRole) {
-            const { error } = await db.from('user_profiles').update({ system_role: newRole }).eq('id', userId);
-            if (error) alert("Could not change the role: " + error.message);
-            fetchMasterUserDirectory();
-        }
-
-        async function toggleAccountStatus(userId, newStatus) {
-            const { error } = await db.from('user_profiles').update({ status: newStatus }).eq('id', userId);
-            if (error) alert("Could not change the status: " + error.message);
-            fetchMasterUserDirectory();
-        }
-
-        // ------------------------------------------------------------------
-        // GLOBAL BROADCAST BANNER
-        // ------------------------------------------------------------------
-        async function loadSystemBanner() {
-            try {
-                const { data } = await db.from('app_settings').select('value').eq('key', 'banner_config').single();
-                if (data && data.value && data.value.active) {
-                    document.getElementById('bannerTextContent').innerText = data.value.message;
-                    document.getElementById('systemNotificationBanner').classList.remove('hidden');
-                }
-            } catch (err) {}
-        }
-
-        async function updateSystemBanner() {
-            const message = document.getElementById('bannerInputText').value.trim();
-            if (!message) return;
-            const { error } = await db.from('app_settings').upsert({ key: 'banner_config', value: { active: true, message } }, { onConflict: 'key' });
-            if (error) { alert("Could not publish the notice: " + error.message); return; }
-            loadSystemBanner();
-            alert("Notice published.");
-        }
-
-        async function toggleBannerVisibility(active) {
-            const { error } = await db.from('app_settings').upsert({ key: 'banner_config', value: { active, message: "" } }, { onConflict: 'key' });
-            if (error) { alert("Could not remove the notice: " + error.message); return; }
-            document.getElementById('systemNotificationBanner').classList.add('hidden');
-        }
-
-        function dismissBanner() { document.getElementById('systemNotificationBanner').classList.add('hidden'); }
-
-        // ------------------------------------------------------------------
-        // MATCH INCIDENTS
-        // ------------------------------------------------------------------
-        async function submitMatchIncident() {
-            const event_type = document.getElementById('refEventType').value;
-            const team_name = document.getElementById('refTeamName').value.trim();
-            const player_name = document.getElementById('refPlayerName').value.trim();
-            const minute = document.getElementById('refMinute').value;
-            if (!team_name || !player_name || !minute) { alert("Complete all incident fields."); return; }
-            const recorded_by = (currentProfile && (currentProfile.full_name || currentProfile.email)) || 'Match Official';
-            const { error } = await db.from('match_events').insert([{ match_id: 'match_01', event_type, team_name, player_name, minute: parseInt(minute), recorded_by }]);
-            if (error) { alert("Could not record the incident: " + error.message); return; }
-            alert("Incident recorded.");
-            loadMatchEvents();
-        }
-
-        async function loadMatchEvents() {
-            const tbody = document.getElementById('publicMatchEventsBody');
-            const refTbody = document.getElementById('refereeEventsLogBody');
-            try {
-                const { data } = await db.from('match_events').select('*').order('created_at', { ascending: false });
-                let html = '';
-                if (data && data.length > 0) {
-                    data.forEach(e => {
-                        html += `<tr><td><strong>${esc(e.minute)}'</strong></td><td>${eventBadge(e.event_type)}</td><td>${esc(e.team_name)}</td><td>${esc(e.player_name)}</td><td style="color:var(--muted); font-size:13px;">${esc(e.recorded_by)}</td></tr>`;
-                    });
-                } else {
-                    html = `<tr><td colspan="5" class="muted-cell">No incidents recorded yet.</td></tr>`;
-                }
-                if (tbody) tbody.innerHTML = html;
-                if (refTbody) refTbody.innerHTML = html;
-            } catch (err) {}
-        }
-    </script>
-</body>
-</html>
+        
