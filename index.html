@@ -207,6 +207,9 @@
         .section-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
         .section-hint { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
         .block { margin-bottom: 28px; }
+        .section-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; color: var(--muted); font-size: 14px; }
+        .section-toolbar-actions { display: flex; gap: 8px; }
+        .accordion-card { scroll-margin-top: 84px; }
         .board-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px; margin-bottom: 28px; }
         .board { border: 1px solid var(--line); border-radius: var(--radius-panel); overflow: hidden; background: #fff; }
         .board-head { padding: 14px 16px 12px; }
@@ -475,88 +478,132 @@
 
     <main class="app-shell">
 
-        <!-- 1. Public league hub -->
-        <section class="accordion-card" id="standings" style="--accent: var(--green);">
-            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="viewerHubContent" onclick="toggleAccordion('viewerHubContent', this)" onkeydown="accordionKey(event, 'viewerHubContent', this)">
+        <!-- 1. Public league sections: each has its own dropdown -->
+        <div class="section-toolbar" id="publicSectionControls">
+            <span>Tap a heading to open or close that section.</span>
+            <div class="section-toolbar-actions">
+                <button type="button" class="btn btn-outline btn-sm" onclick="setPublicSections(true)">Open all</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="setPublicSections(false)">Close all</button>
+            </div>
+        </div>
+
+        <section id="standings" class="accordion-card" style="--accent: var(--green);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="standingsContent" onclick="toggleAccordion('standingsContent', this)" onkeydown="accordionKey(event, 'standingsContent', this)">
                 <div>
-                    <h2>League hub</h2>
-                    <p>Standings, top scorers, assists, clean sheets and match updates</p>
+                    <h2>League standings</h2>
+                    <p>Points table for every club</p>
                 </div>
                 <div class="card-meta">
-                    <span class="badge badge-success">Open to everyone</span>
+                    <span class="badge badge-success">Open to everyone</span><svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="standingsContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="c" style="width:56px;">Pos</th>
+                                <th>Club</th>
+                                <th class="c">MP</th>
+                                <th class="c">W</th>
+                                <th class="c">D</th>
+                                <th class="c">L</th>
+                                <th class="c">GD</th>
+                                <th class="c">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leagueStandingsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="golden-boot" class="accordion-card" style="--accent: var(--amber);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="goldenBootContent" onclick="toggleAccordion('goldenBootContent', this)" onkeydown="accordionKey(event, 'goldenBootContent', this)">
+                <div>
+                    <h2>Golden Boot</h2>
+                    <p>Top goalscorers</p>
+                </div>
+                <div class="card-meta">
                     <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
             </div>
-            <div id="viewerHubContent" class="accordion-content">
-                <div class="block">
-                    <h3 class="section-title">League standings</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th class="c" style="width:56px;">Pos</th>
-                                    <th>Club</th>
-                                    <th class="c">MP</th>
-                                    <th class="c">W</th>
-                                    <th class="c">D</th>
-                                    <th class="c">L</th>
-                                    <th class="c">GD</th>
-                                    <th class="c">Pts</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leagueStandingsTableBody"></tbody>
-                        </table>
-                    </div>
+            <div id="goldenBootContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th class="c" style="width:56px;">Rank</th><th>Player</th><th class="r">Goals</th></tr></thead>
+                        <tbody id="topScorersTableBody"></tbody>
+                    </table>
                 </div>
+            </div>
+        </section>
 
-                <div class="board-grid">
-                    <div class="board">
-                        <div class="board-head"><h3>Golden Boot</h3><p>Top goalscorers</p></div>
-                        <div class="table-container">
-                            <table>
-                                <thead><tr><th class="c" style="width:48px;">Rank</th><th>Player</th><th class="r">Goals</th></tr></thead>
-                                <tbody id="topScorersTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="board">
-                        <div class="board-head"><h3>Playmakers</h3><p>Most assists</p></div>
-                        <div class="table-container">
-                            <table>
-                                <thead><tr><th class="c" style="width:48px;">Rank</th><th>Player</th><th class="r">Assists</th></tr></thead>
-                                <tbody id="topAssistsTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="board">
-                        <div class="board-head"><h3>Golden Glove</h3><p>Goalkeepers with the most clean sheets</p></div>
-                        <div class="table-container">
-                            <table>
-                                <thead><tr><th class="c" style="width:48px;">Rank</th><th>Goalkeeper</th><th class="r">Clean sheets</th></tr></thead>
-                                <tbody id="cleanSheetsTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
+        <section id="playmakers" class="accordion-card" style="--accent: var(--blue);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="playmakersContent" onclick="toggleAccordion('playmakersContent', this)" onkeydown="accordionKey(event, 'playmakersContent', this)">
                 <div>
-                    <h3 class="section-title">Recent match incidents</h3>
-                    <div class="table-container" style="margin-top:10px;">
-                        <table>
-                            <thead>
-                                <tr><th>Minute</th><th>Incident</th><th>Team</th><th>Player</th><th>Logged by</th></tr>
-                            </thead>
-                            <tbody id="publicMatchEventsBody">
-                                <tr><td colspan="5" class="muted-cell">Loading match incidents...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <h2>Playmakers</h2>
+                    <p>Most assists</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="playmakersContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th class="c" style="width:56px;">Rank</th><th>Player</th><th class="r">Assists</th></tr></thead>
+                        <tbody id="topAssistsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="golden-glove" class="accordion-card" style="--accent: var(--green-bright);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="goldenGloveContent" onclick="toggleAccordion('goldenGloveContent', this)" onkeydown="accordionKey(event, 'goldenGloveContent', this)">
+                <div>
+                    <h2>Golden Glove</h2>
+                    <p>Goalkeepers with the most clean sheets</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="goldenGloveContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th class="c" style="width:56px;">Rank</th><th>Goalkeeper</th><th class="r">Clean sheets</th></tr></thead>
+                        <tbody id="cleanSheetsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="incidents" class="accordion-card" style="--accent: var(--danger);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="incidentsContent" onclick="toggleAccordion('incidentsContent', this)" onkeydown="accordionKey(event, 'incidentsContent', this)">
+                <div>
+                    <h2>Recent match incidents</h2>
+                    <p>Goals, cards and substitutions as they are recorded</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="incidentsContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Minute</th><th>Incident</th><th>Team</th><th>Player</th><th>Logged by</th></tr>
+                        </thead>
+                        <tbody id="publicMatchEventsBody">
+                            <tr><td colspan="5" class="muted-cell">Loading match incidents...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
 
         <!-- 2. Executive staff directory -->
-        <section class="accordion-card" style="--accent: var(--blue);">
+        <section id="staff-directory" class="accordion-card" style="--accent: var(--blue);">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="staffAccordionContent" onclick="toggleAccordion('staffAccordionContent', this)" onkeydown="accordionKey(event, 'staffAccordionContent', this)">
                 <div>
                     <h2>Executive and staff directory</h2>
@@ -1132,6 +1179,23 @@
             }
         }
 
+        // Open or close every public section at once (standings, Golden Boot, Playmakers,
+        // Golden Glove, incidents and the staff directory).
+        const PUBLIC_SECTIONS = ['standingsContent', 'goldenBootContent', 'playmakersContent', 'goldenGloveContent', 'incidentsContent', 'staffAccordionContent'];
+
+        function setPublicSections(open) {
+            PUBLIC_SECTIONS.forEach(id => {
+                const content = document.getElementById(id);
+                if (!content) return;
+                content.classList.toggle('collapsed', !open);
+                const header = document.querySelector('[aria-controls="' + id + '"]');
+                if (header) {
+                    header.classList.toggle('collapsed', !open);
+                    header.setAttribute('aria-expanded', String(open));
+                }
+            });
+        }
+
         function accordionKey(event, contentId, headerEl) {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
@@ -1655,84 +1719,4 @@
 
         const defaultTopAssists = [
             { player: "Musa Kamara", club: "Bo Rangers FC", assists: 8 },
-            { player: "Alpha Jalloh", club: "Freetown FC", assists: 7 },
-            { player: "Mohamed Bangura", club: "Bo Rangers FC", assists: 6 },
-            { player: "Ibrahim Conteh", club: "Eastern Lions", assists: 5 }
-        ];
-
-        async function loadTopAssists() {
-            const tbody = document.getElementById('topAssistsTableBody');
-            if (!tbody) return;
-            let assistsToRender = defaultTopAssists;
-            try {
-                const { data } = await db.from('top_assists').select('*').order('assists', { ascending: false });
-                if (data && data.length > 0) assistsToRender = data;
-            } catch (err) {}
-            tbody.innerHTML = leaderboardRows(assistsToRender, 'player', 'assists');
-        }
-
-        const defaultCleanSheets = [
-            { goalkeeper: "Mohamed Kamara", club: "Bo Rangers FC", clean_sheets: 6 },
-            { goalkeeper: "Donald Wellington", club: "Freetown FC", clean_sheets: 5 },
-            { goalkeeper: "Unisa Conteh", club: "Eastern Lions", clean_sheets: 4 },
-            { goalkeeper: "Prince Koroma", club: "Mighty Blackpool", clean_sheets: 3 }
-        ];
-
-        async function loadCleanSheets() {
-            const tbody = document.getElementById('cleanSheetsTableBody');
-            if (!tbody) return;
-            let sheetsToRender = defaultCleanSheets;
-            try {
-                const { data } = await db.from('clean_sheets').select('*').order('clean_sheets', { ascending: false });
-                if (data && data.length > 0) sheetsToRender = data;
-            } catch (err) {}
-            tbody.innerHTML = leaderboardRows(sheetsToRender, 'goalkeeper', 'clean_sheets');
-        }
-
-        // ------------------------------------------------------------------
-        // CLUB SQUAD ROSTER (with NIN) - the database only returns the rows you may see
-        // ------------------------------------------------------------------
-        let squadCache = [];
-
-        async function submitClubPlayer() {
-            const name = document.getElementById('clubPlayerName').value.trim();
-            const nin = document.getElementById('clubPlayerNIN').value.trim();
-            const position = document.getElementById('clubPlayerPosition').value.trim();
-            if (!name || !nin || !position) { alert("Complete all player fields, including the NIN."); return; }
-            if (!currentUser) { alert("Sign in first."); return; }
-
-            const btn = document.getElementById('clubSubmitBtn');
-            btn.disabled = true;
-            let photoUrl = null;
-            try {
-                const blob = photoDrafts.clubPlayerPhotoInput;
-                if (blob) photoUrl = await uploadPhotoBlob('squad/' + currentUser.id, blob);
-                const { error } = await db.from('club_squad').insert([{ player_name: name, player_nin: nin, position: position, status: 'Active', photo_url: photoUrl }]);
-                if (error) {
-                    if (error.code === '23505') throw new Error('A player with this NIN is already registered.');
-                    throw error;
-                }
-                alert("Player registered.");
-                document.getElementById('clubPlayerName').value = '';
-                document.getElementById('clubPlayerNIN').value = '';
-                document.getElementById('clubPlayerPosition').value = '';
-                resetPhotoField('clubPlayerPhotoInput', 'clubPlayerPhotoPreview');
-                loadClubRoster();
-            } catch (err) {
-                if (photoUrl) removePhotoByUrl(photoUrl);
-                alert("Could not register this player: " + friendlyError(err));
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        async function loadClubRoster() {
-            const tbody = document.getElementById('clubRosterTableBody');
-            if (!tbody) return;
-            try {
-                const { data, error } = await db.from('club_squad').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-                squadCache = data || [];
-                if (data && data.length > 0) {
-                    let html = '';
-        
+            { player: "Alpha Jalloh", club: "Freetown FC", assists
