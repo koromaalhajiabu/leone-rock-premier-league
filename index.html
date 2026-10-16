@@ -1539,14 +1539,28 @@
         // ------------------------------------------------------------------
         async function initAuth() {
             try {
-                const { data } = await db.auth.getSession();
+                // Reuse the recovered client if the initial CDN failed; do not let
+                // a later initialisation overwrite the working auth client.
+                if (window.__leagueSupabaseClient && window.__leagueSupabaseClient.auth &&
+                    typeof window.__leagueSupabaseClient.auth.getSession === 'function' &&
+                    db !== window.__leagueSupabaseClient) {
+                    db = window.__leagueSupabaseClient;
+                    dbOnline = true;
+                }
+                const { data, error } = await db.auth.getSession();
+                if (error) throw error;
                 await applySession(data && data.session);
-                db.auth.onAuthStateChange((event, session) => {
-                    if (event === 'INITIAL_SESSION') return;
-                    // Run outside the callback so Supabase calls inside it cannot deadlock
-                    setTimeout(() => applySession(session), 0);
-                });
+                if (!window.__leagueAuthListenerBound) {
+                    window.__leagueAuthListenerBound = true;
+                    db.auth.onAuthStateChange((event, session) => {
+                        if (event === 'INITIAL_SESSION') return;
+                        // Run outside the callback so Supabase calls inside it cannot deadlock
+                        setTimeout(() => applySession(session), 0);
+                    });
+                }
             } catch (err) {
+                console.error('League auth initialisation failed:', err);
+                window.__profileLoadMessage = 'Authentication initialisation failed: ' + (err.message || 'unknown error');
                 await applySession(null);
             }
         }
@@ -1731,10 +1745,16 @@
         function openAuthModal(mode) {
             closeAdminDropdown();
             setAuthMode(mode || 'signin');
+            const modal = document.getElementById('authModal');
+            if (!modal) return;
             document.getElementById('authPassword').value = '';
-            document.getElementById('authModal').classList.remove('hidden');
-            const first = document.getElementById(authMode === 'signup' ? 'authFullName' : 'authEmail');
-            if (first) first.focus();
+            modal.classList.remove('hidden');
+            // On mobile, avoid focusing an input during modal animation; this can
+            // interrupt the first tap and make Staff sign in appear unresponsive.
+            window.setTimeout(() => {
+                const first = document.getElementById(authMode === 'signup' ? 'authFullName' : 'authEmail');
+                if (first) first.focus({ preventScroll: true });
+            }, 120);
         }
 
         function closeAuthModal() {
