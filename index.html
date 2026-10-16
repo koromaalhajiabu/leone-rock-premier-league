@@ -957,7 +957,7 @@ th{font-weight:800}
         </div>
         <section id="adminQuickMenu" class="accordion-card admin-quick-menu hidden" aria-label="Administrator task menu">
           <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="adminQuickMenuContent" onclick="toggleAccordion('adminQuickMenuContent',this)" onkeydown="accordionKey(event,'adminQuickMenuContent',this)">
-            <div><h2>My role & tasks</h2><p>Choose a task available to your signed-in role.</p></div>
+            <div><h2>Workspace shortcuts</h2><p>Quick access to the tools available to your account.</p></div>
             <div class="card-meta"><span class="badge badge-info">Quick menu</span></div>
           </div>
           <div id="adminQuickMenuContent" class="accordion-content">
@@ -965,7 +965,7 @@ th{font-weight:800}
             <select id="adminTaskSelect" onchange="navigateAdminTask(this.value)">
               <option value="">Select a task…</option>
             </select>
-            <p id="adminTaskHint" class="section-hint" role="status">Only tasks available to your current role are listed.</p>
+            <p id="adminTaskHint" class="section-hint" role="status">Only tools authorised for your account are listed.</p>
           </div>
         </section>
         <section id="generalOverseerCommandCentre" class="accordion-card hidden" style="--accent: var(--gold);border:1px solid var(--gold-soft);">
@@ -3799,26 +3799,9 @@ th{font-weight:800}
             }
         });
 
-        const ROLE_RESPONSIBILITIES_FALLBACK = [
-          {role_code:'LEAGUE_PRESIDENT',role_title:'League President / Chairperson',responsibilities:'Provides strategic leadership; chairs official meetings; represents the league in authorised engagements; supports governance and ensures decisions follow approved regulations.',authority_scope:'Governance and representation; does not override SLFA rules or independently alter match results.',reports_to:'SLFA / competent league governing body'},
-          {role_code:'VICE_PRESIDENT',role_title:'Vice President / Deputy Chairperson',responsibilities:'Supports the President; coordinates delegated assignments; acts for the President only when formally authorised.',authority_scope:'Delegated governance duties only.',reports_to:'League President / governing body'},
-          {role_code:'GENERAL_SECRETARY',role_title:'General Secretary',responsibilities:'Maintains official correspondence, minutes, resolutions, notices, registrations and the league administrative record; tracks deadlines and decisions.',authority_scope:'Official records and administration under approved policy.',reports_to:'League leadership / SLFA as applicable'},
-          {role_code:'COMPETITIONS_MANAGER',role_title:'Competitions / League Manager',responsibilities:'Coordinates season calendar, fixtures, venues, postponements, competition regulations, club communications and matchday readiness.',authority_scope:'Competition operations within approved rules; exceptional changes require authorised approval.',reports_to:'League leadership / SLFA competition authority'},
-          {role_code:'TECHNICAL_DIRECTOR',role_title:'Technical Director / Technical Committee',responsibilities:'Oversees technical standards, competition format, player eligibility matters referred to the technical unit, and technical reports.',authority_scope:'Technical recommendations and approved technical decisions.',reports_to:'League governing body / SLFA technical authority'},
-          {role_code:'REFEREES_APPOINTMENTS',role_title:'Referees Appointments Officer',responsibilities:'Assigns qualified match officials, checks availability and conflicts, communicates appointments and records changes.',authority_scope:'Appointments only under the authorised referee/competition framework.',reports_to:'Authorised referee committee / SLFA'},
-          {role_code:'REFEREE',role_title:'Match Referee',responsibilities:'Controls the match under the Laws of the Game; records scores, cautions, dismissals, substitutions and incidents; submits accurate match reports promptly.',authority_scope:'On-field decisions under the Laws of the Game; cannot edit unrelated league records.',reports_to:'Authorised referee committee / competition authority'},
-          {role_code:'MATCH_COMMISSIONER',role_title:'Match Commissioner / Delegate',responsibilities:'Checks match organisation, safety and protocol; documents incidents and submits a neutral match report.',authority_scope:'Observation and reporting; no unauthorised changes to match outcomes.',reports_to:'Competition authority / SLFA'},
-          {role_code:'DISCIPLINARY_OFFICER',role_title:'Disciplinary / Ethics Officer',responsibilities:'Reviews referred reports, manages disciplinary case records, applies due process and communicates decisions through authorised channels.',authority_scope:'Only powers granted by competition regulations; conflicts must be declared.',reports_to:'Disciplinary committee / governing body'},
-          {role_code:'FINANCE_OFFICER',role_title:'Finance Officer / Treasurer',responsibilities:'Maintains budgets, approved income and expenditure records, reconciliations, supporting documents and periodic financial reports.',authority_scope:'Financial records and approved transactions; payments require designated approvals.',reports_to:'League leadership / finance committee'},
-          {role_code:'CLUB_ADMIN',role_title:'Club Administrator',responsibilities:'Maintains the assigned club profile, squad/player information and club submissions; verifies accuracy and responds to official requests.',authority_scope:'Own club only; no access to other clubs’ private data or league-wide settings.',reports_to:'Club leadership and league administration'},
-          {role_code:'MEDIA_OFFICER',role_title:'Media / Communications Officer',responsibilities:'Publishes approved announcements, fixture information, results and media updates; checks names, scores and permissions before publication.',authority_scope:'Public communications; no confidential disciplinary, financial or personal data unless authorised.',reports_to:'League communications lead / governing body'},
-          {role_code:'DATA_REGISTRAR',role_title:'Registration / Data Registrar',responsibilities:'Checks player and club registration records, duplicate entries, eligibility documentation and controlled corrections with an audit trail.',authority_scope:'Registration records under policy; no unauthorised deletion or eligibility approval.',reports_to:'Competitions / registration authority'},
-          {role_code:'SECURITY_AUDITOR',role_title:'System Security / Audit Officer',responsibilities:'Reviews access, audit trails, backup status and reported incidents; recommends corrective actions and protects confidential data.',authority_scope:'Read/review access as authorised; no silent alteration of competition records.',reports_to:'System owner / authorised governing body'},
-          {role_code:'DEVELOPER',role_title:'Master Developer / Technical Lead',responsibilities:'Maintains application code, deployment, integrations, database structure, technical support, backups and system health; documents changes and helps authorised users.',authority_scope:'Technical oversight. Operational decisions remain with SLFA/league authorities; access to sensitive records must be authorised and auditable.',reports_to:'System ownership arrangement and authorised league governance'},
-          {role_code:'SUPER_ADMIN',role_title:'League Super Administrator',responsibilities:'Manages approved league configuration, staff directory and authorised administrative workflows; reviews user access and escalates sensitive decisions.',authority_scope:'Administrative tools within granted database permissions; cannot override SLFA regulations or grant itself unapproved authority.',reports_to:'SLFA / designated league governing body'},
-          {role_code:'CLUB_ADMIN_APP',role_title:'Club Admin (System Account)',responsibilities:'Uses the platform to manage only the assigned club’s permitted roster and profile information and submit requested club data.',authority_scope:'Assigned club only, enforced by database permissions.',reports_to:'Club leadership / league administration'},
-          {role_code:'REFEREE_APP',role_title:'Referee (System Account)',responsibilities:'Views assigned fixtures and submits match events, score reports and incidents for assigned matches, subject to the implemented workflow.',authority_scope:'Assigned match workflow only; no user administration or unrelated club editing.',reports_to:'Referees appointments / competition authority'}
-        ];
+        // Public-facing role/responsibility directory removed for a cleaner, professional interface.
+        // Operational access roles remain managed separately by the secure role system.
+
         function renderRoleResponsibilities(rows) {
           const target = document.getElementById('roleResponsibilitiesList');
           if (!target) return;
