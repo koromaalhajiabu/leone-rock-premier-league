@@ -1030,7 +1030,8 @@
                     <button type="button" id="staffFormToggle" onclick="toggleStaffForm()" class="btn btn-primary btn-sm" aria-expanded="false" aria-controls="staffFormPanel">Add personnel</button>
                 </div>
                 <div id="staffFormPanel" class="form-panel hidden" style="margin-top:12px;">
-                    <h3>Add a staff member</h3>
+                    <h3 id="staffFormHeading">Add a staff member</h3>
+                    <input type="hidden" id="staffEditId" value="">
                     <p class="section-hint">Choose the department so the person appears in the right group of the directory.</p>
                     <div class="grid-2">
                         <label class="field"><span>Full name</span><input type="text" id="staffName" placeholder="e.g., Dr. Brima Kamara" autocomplete="off"></label>
@@ -2330,6 +2331,7 @@
             const badge = `<span class="badge badge-success">${esc(m.status || 'Active')}</span>`;
             const foot = canEdit
                 ? `<div class="staff-foot has-actions">${badge}<div class="staff-actions">
+                        <button type="button" onclick="editStaffMember(${id})" class="btn btn-outline btn-sm">Edit</button>
                         <label class="btn btn-outline btn-sm photo-btn">${m.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${m.photo_url ? 'Change' : 'Add'} photo for ${esc(m.name)}" onchange="changeStaffPhoto(${id}, this)"></label>
                         <button type="button" onclick="deleteStaffMember(${id}, this.dataset.name)" data-name="${esc(m.name)}" class="btn btn-outline btn-sm text-danger">Remove</button>
                    </div></div>`
@@ -2380,6 +2382,9 @@
                 const first = document.getElementById('staffName');
                 if (first) first.focus();
             } else {
+                document.getElementById('staffEditId').value = '';
+                document.getElementById('staffFormHeading').textContent = 'Add a staff member';
+                document.getElementById('staffSaveBtn').textContent = 'Save staff member';
                 document.getElementById('staffName').value = '';
                 document.getElementById('staffTitle').value = '';
                 resetPhotoField('staffPhotoInput', 'staffPhotoPreview');
@@ -2390,6 +2395,7 @@
             const name = document.getElementById('staffName').value.trim();
             const title = document.getElementById('staffTitle').value.trim();
             const department = document.getElementById('staffDepartment').value;
+            const editId = document.getElementById('staffEditId').value;
             if (!name || !title) { alert("Enter the person's full name and job title."); return; }
 
             const btn = document.getElementById('staffSaveBtn');
@@ -2398,9 +2404,20 @@
             try {
                 const blob = photoDrafts.staffPhotoInput;
                 if (blob) photoUrl = await uploadPhotoBlob('staff', blob);
-                const { error } = await db.from('staff_registry').insert([{ name, role: title, department, status: 'Active', photo_url: photoUrl }]);
-                if (error) throw error;
-                alert(`${name} was added to the directory.`);
+                let result;
+                if (editId) {
+                    const existing = staffCache.find(m => String(m.id) === String(editId));
+                    const payload = { name, role: title, department };
+                    if (blob) payload.photo_url = photoUrl;
+                    result = await db.from('staff_registry').update(payload).eq('id', editId);
+                    if (result.error) throw result.error;
+                    if (blob && existing && existing.photo_url) removePhotoByUrl(existing.photo_url);
+                    alert(`${name} was updated.`);
+                } else {
+                    result = await db.from('staff_registry').insert([{ name, role: title, department, status: 'Active', photo_url: photoUrl }]);
+                    if (result.error) throw result.error;
+                    alert(`${name} was added to the directory.`);
+                }
                 toggleStaffForm(false);
                 loadStaffData();
             } catch (err) {
@@ -2409,6 +2426,27 @@
             } finally {
                 btn.disabled = false;
             }
+        }
+
+        async function editStaffMember(id) {
+            const m = staffCache.find(row => Number(row.id) === Number(id));
+            if (!m) return alert('This record is not editable from the current list. Refresh and try again.');
+            const role = realRole();
+            if (!['DEVELOPER', 'SUPER_ADMIN'].includes(role)) return alert('Developer or Super Admin access is required to edit personnel.');
+            await populateDepartments();
+            document.getElementById('staffEditId').value = String(m.id);
+            document.getElementById('staffName').value = m.name || '';
+            document.getElementById('staffTitle').value = m.role || '';
+            const department = document.getElementById('staffDepartment');
+            if (![...department.options].some(option => option.value === (m.department || 'Administration'))) {
+                department.add(new Option(m.department || 'Administration', m.department || 'Administration'));
+            }
+            department.value = m.department || 'Administration';
+            document.getElementById('staffFormHeading').textContent = 'Edit staff member';
+            document.getElementById('staffSaveBtn').textContent = 'Save changes';
+            resetPhotoField('staffPhotoInput', 'staffPhotoPreview');
+            toggleStaffForm(true);
+            document.getElementById('staffName').focus();
         }
 
         async function changeStaffPhoto(id, input) {
