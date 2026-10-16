@@ -459,7 +459,93 @@ th{font-weight:800}
 .admin-quick-menu label{display:block;margin-bottom:8px;color:var(--ui-ink,#14213d)}
 .admin-quick-menu select{width:100%;max-width:100%;background:#fff}
 
-</style>
+
+        /* Premium Leone Rock visual refresh — layout and existing permissions unchanged */
+        :root {
+            --pitch:#061735;
+            --pitch-2:#0A2448;
+            --green:#087A52;
+            --green-bright:#16A56A;
+            --blue:#0B4F9C;
+            --blue-dark:#07366F;
+            --gold:#D7A936;
+            --gold-soft:#F7E6B2;
+            --chalk:#EDF3FA;
+            --paper:#FFFFFF;
+            --ink:#10223D;
+            --muted:#5B6D82;
+            --line:#D5DFEC;
+            --line-soft:#E8EEF6;
+            --radius-card:18px;
+            --radius-panel:14px;
+            --radius-field:10px;
+            --shadow-card:0 12px 34px -20px rgba(4,20,48,.38);
+        }
+        body { background:linear-gradient(180deg,#EAF1FA 0%,#F7F9FC 38%,#EAF1FA 100%); color:var(--ink); }
+        .topbar { background:linear-gradient(110deg,#04132D 0%,#08264E 65%,#0A1B3D 100%); border-bottom:3px solid var(--gold); box-shadow:0 8px 24px rgba(4,19,45,.18); }
+        .topbar-inner { max-width:1440px; min-height:76px; padding:12px clamp(14px,3vw,34px); }
+        .brand-name { font-size:clamp(16px,2vw,21px); letter-spacing:.015em; }
+        .app-shell { width:min(1440px,100%); margin:0 auto; padding:clamp(12px,2.2vw,28px); }
+        .accordion-card, .board-manager-card, .form-panel, .dashboard-card, .stat-card {
+            border:1px solid rgba(146,164,189,.45); border-radius:var(--radius-card);
+            box-shadow:var(--shadow-card); overflow:hidden; background:var(--paper);
+        }
+        .accordion-card { margin:0 0 18px; }
+        .accordion-header { padding:clamp(15px,2vw,22px); gap:14px; background:linear-gradient(115deg,#fff 0%,#F5F8FC 100%); }
+        .accordion-header h2 { font-size:clamp(17px,2vw,21px); line-height:1.25; color:#0B2346; }
+        .accordion-header p { margin-top:5px; color:#64758A; font-size:13px; }
+        .accordion-header:hover { background:#F0F5FC; }
+        .accordion-content { padding:clamp(14px,2vw,22px); }
+        .accordion-card[style*="--accent"] { border-top:0; }
+        .board-manager-card { padding:18px; }
+        .badge { border-radius:999px; font-weight:700; letter-spacing:.01em; }
+        .btn-primary { background:linear-gradient(135deg,#0D5DB6,#073D80); box-shadow:0 4px 12px rgba(11,79,156,.18); }
+        .btn-primary:hover { background:#062F67; }
+        .btn-outline { background:#fff; border-color:#CBD7E6; color:#183454; }
+        .btn-outline:hover { background:#F1F6FC; border-color:#9EB4D0; }
+        input, select, textarea { border-color:#C9D6E6 !important; border-radius:10px !important; }
+        input:focus, select:focus, textarea:focus { border-color:#286FC0 !important; box-shadow:0 0 0 3px rgba(40,111,192,.13); outline:0; }
+        table { border-collapse:separate; border-spacing:0; }
+        thead th { background:#EEF3FA; color:#183454; font-weight:700; }
+        tbody tr:hover { background:#F4F8FD; }
+        .section-toolbar { border:1px solid #D5DFEC; border-radius:14px; padding:12px 14px; margin-bottom:16px; background:rgba(255,255,255,.82); }
+        #publicLeagueBoards, #roleResponsibilitiesSection { max-width:1100px; margin-left:auto; margin-right:auto; }
+        #roleResponsibilitiesSection .accordion-content > .section-hint { max-width:900px; line-height:1.65; }
+        #roleResponsibilitiesList { gap:12px; }
+        #roleResponsibilitiesList details, .role-responsibility-dropdown { border:1px solid #D5DFEC; border-radius:12px; background:#fff; overflow:hidden; }
+        #roleResponsibilitiesList summary, .role-responsibility-dropdown summary { padding:14px 16px; font-weight:700; color:#102A4D; cursor:pointer; }
+        #roleResponsibilitiesList details[open] summary, .role-responsibility-dropdown[open] summary { background:#F0F5FC; border-bottom:1px solid #D5DFEC; }
+        footer, .footer { background:#04152F !important; color:#F5F8FC !important; border-top:3px solid var(--gold); }
+        .admin-quick-menu { border:1px solid #D7B24E; background:linear-gradient(120deg,#fff,#FFFDF7); }
+        .admin-quick-menu .accordion-header { background:linear-gradient(110deg,#FFF9E8,#FFFFFF); }
+        #adminTaskSelect { width:100%; min-height:44px; }
+        .hidden { display:none !important; }
+        @media (min-width:1000px) {
+            #workspaceArea { display:grid; grid-template-columns:minmax(0,1fr); gap:2px; }
+            #workspaceArea > .accordion-card { width:100%; }
+        }
+        @media (max-width:700px) {
+            .topbar-inner { gap:8px; padding:10px 12px; }
+            .brand { gap:8px; }
+            .brand-name { white-space:normal; line-height:1.12; max-width:155px; }
+            .topbar-actions { gap:6px; }
+            .app-shell { padding:12px 10px 22px; }
+            .accordion-card { border-radius:15px; margin-bottom:13px; }
+            .accordion-header { padding:15px 14px; align-items:flex-start; }
+            .accordion-content { padding:13px; }
+            .card-meta { flex-wrap:wrap; justify-content:flex-end; }
+            .section-toolbar { display:flex; flex-direction:column; align-items:stretch; gap:10px; }
+            .section-toolbar-actions { display:flex; gap:8px; }
+            .section-toolbar-actions .btn { flex:1; justify-content:center; }
+            .table-container { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+            table { min-width:620px; }
+            #roleResponsibilitiesList { grid-template-columns:minmax(0,1fr) !important; }
+        }
+        @media (prefers-reduced-motion:reduce) {
+            *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
+        }
+
+    </style>
 </head>
 <body>
 
