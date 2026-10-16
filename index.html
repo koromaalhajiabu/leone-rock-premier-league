@@ -2382,29 +2382,60 @@
         // ------------------------------------------------------------------
         // PUBLIC LEADERBOARDS
         // ------------------------------------------------------------------
-        const defaultLeagueStandings = [
-            { pos: 1, club: "Bo Rangers FC", mp: 10, w: 7, d: 2, l: 1, gf: 18, ga: 6, pts: 23 },
-            { pos: 2, club: "Freetown FC", mp: 10, w: 6, d: 3, l: 1, gf: 15, ga: 8, pts: 21 },
-            { pos: 3, club: "Eastern Lions", mp: 10, w: 5, d: 4, l: 1, gf: 14, ga: 7, pts: 19 },
-            { pos: 4, club: "Mighty Blackpool", mp: 10, w: 4, d: 3, l: 3, gf: 11, ga: 10, pts: 15 },
-            { pos: 5, club: "Diamond Stars", mp: 10, w: 3, d: 4, l: 3, gf: 9, ga: 9, pts: 13 }
+        // Official 2026/2027 Leone Rock Premier League participants.
+        // These are zeroed placeholders only: real results from Supabase override them.
+        const registeredLeagueClubs = [
+            "Bai Bureh Warriors FC", "Bhantal FC", "Bo Rangers FC", "Bullom Stars FC",
+            "Diamond Stars FC", "East End Lions FC", "FC Kallon", "Kamboi Eagles FC",
+            "Mighty Blackpool FC", "Old Edwardians FC", "Ports Authority FC", "Star SA",
+            "Waterloo FC", "Western United FC", "Wilberforce Strikers FC", "Wusum Stars FC"
         ];
+        const defaultLeagueStandings = registeredLeagueClubs.map(club => ({
+            club, mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0
+        }));
 
         async function loadLeagueStandings() {
             const tbody = document.getElementById('leagueStandingsTableBody');
             if (!tbody) return;
             let standingsToRender = defaultLeagueStandings;
             try {
-                const { data } = await db.from('league_standings').select('*').order('pts', { ascending: false });
-                if (data && data.length > 0) standingsToRender = data;
-            } catch (err) {}
+                const { data, error } = await db.from('league_standings').select('*');
+                if (error) throw error;
+                const savedRows = Array.isArray(data) ? data : [];
+                const savedByName = new Map(savedRows.map(row => [String(row.club || row.club_name || '').trim().toLowerCase(), row]));
+                standingsToRender = defaultLeagueStandings.map(base => {
+                    const key = base.club.trim().toLowerCase();
+                    // tolerate common legacy spelling variations in stored club names
+                    const aliases = {
+                        "east end lions fc": ["east end lions", "east end lions fc"],
+                        "star sa": ["star sport academy", "star sa"],
+                        "waterloo fc": ["waterloo"]
+                    };
+                    const match = [key, ...(aliases[key] || [])].map(name => savedByName.get(name)).find(Boolean);
+                    return match ? { ...base, ...match, club: base.club } : base;
+                });
+            } catch (err) {
+                console.warn('Could not load saved league standings; showing the 16 registered clubs with zeroed statistics.', err);
+            }
+
+            const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
+            standingsToRender = standingsToRender.map(team => ({
+                ...team,
+                mp: number(team.mp), w: number(team.w), d: number(team.d), l: number(team.l),
+                gf: number(team.gf), ga: number(team.ga), pts: number(team.pts)
+            })).sort((a, b) =>
+                b.pts - a.pts ||
+                (b.gf - b.ga) - (a.gf - a.ga) ||
+                b.gf - a.gf ||
+                a.club.localeCompare(b.club)
+            );
 
             let html = '';
             standingsToRender.forEach((team, index) => {
-                const goalDiff = (team.gf - team.ga);
+                const goalDiff = team.gf - team.ga;
                 const gdDisplay = goalDiff > 0 ? `+${goalDiff}` : goalDiff;
                 const gdClass = goalDiff > 0 ? 'gd-pos' : (goalDiff < 0 ? 'gd-neg' : '');
-                html += `<tr${index === 0 ? ' class="leader"' : ''}><td class="c">${rankBadge(index)}</td><td>${clubCell(team.club)}</td><td class="c">${esc(team.mp)}</td><td class="c">${esc(team.w)}</td><td class="c">${esc(team.d)}</td><td class="c">${esc(team.l)}</td><td class="c ${gdClass}">${esc(gdDisplay)}</td><td class="c pts">${esc(team.pts)}</td></tr>`;
+                html += `<tr${index === 0 && team.pts > 0 ? ' class="leader"' : ''}><td class="c">${rankBadge(index)}</td><td>${clubCell(team.club)}</td><td class="c">${esc(team.mp)}</td><td class="c">${esc(team.w)}</td><td class="c">${esc(team.d)}</td><td class="c">${esc(team.l)}</td><td class="c ${gdClass}">${esc(gdDisplay)}</td><td class="c pts">${esc(team.pts)}</td></tr>`;
             });
             tbody.innerHTML = html;
         }
