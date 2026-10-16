@@ -717,12 +717,14 @@
               <h3>Submit information for verification</h3>
               <p class="section-hint">Club Admin submissions are restricted to the club assigned to their account. Include only the fields that should be reviewed. Do not enter passwords or unnecessary sensitive information.</p>
               <form id="leagueVerificationForm" onsubmit="submitLeagueVerification(event)">
+                <div id="verificationSubmitArea">
                 <div class="verification-grid">
                   <label class="field"><span>Information type</span><select id="verificationEntityType" required><option value="team">Team information</option><option value="club">Club information</option><option value="player">Player information</option></select></label>
                   <label class="field"><span>Existing record ID (optional)</span><input id="verificationEntityId" maxlength="120" placeholder="Record ID, if updating an existing record"></label>
                 </div>
                 <label class="field" style="display:block;margin-top:12px"><span>Information to review (JSON format)</span><textarea id="verificationProposedData" rows="5" required maxlength="12000" placeholder='{"club_name":"Example FC","notes":"Please verify this information"}' style="width:100%;font:13px/1.5 ui-monospace,monospace"></textarea></label>
                 <div class="form-actions"><button type="submit" class="btn btn-primary" id="verificationSubmitBtn">Submit for verification</button></div>
+                </div>
               </form>
               <p id="verificationFormMessage" class="section-hint" role="status" aria-live="polite"></p>
             </div>
@@ -762,6 +764,14 @@
           </div>
         </section>
 
+        <section id="developerPanelFinder" class="form-panel hidden" style="margin:0 0 18px;border:1px solid var(--line);border-radius:14px;padding:16px">
+          <h3>Developer — Search any panel</h3>
+          <p class="section-hint">Find panels across the system, open them, or export the information currently available to your account. Database permissions still apply.</p>
+          <label class="field" style="display:block"><span>Search panel names and descriptions</span><input id="developerPanelSearch" type="search" placeholder="Search clubs, fixtures, players, finance, staff, awards…" oninput="searchDeveloperPanels(this.value)" autocomplete="off"></label>
+          <div id="developerPanelSearchResults" class="verification-grid" style="margin-top:12px"><p class="section-hint">Enter a search term to find panels.</p></div>
+          <div class="verification-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadDeveloperPanelIndex()">Download panel directory (CSV)</button></div>
+          <p id="developerPanelSearchMessage" class="section-hint" role="status"></p>
+        </section>
         <div class="workspace-head">
             <h2 id="workspaceTitle">My panel</h2>
             <p id="workspaceSub"></p>
@@ -1801,7 +1811,10 @@
             show('awardBackupPanel', isDev);
             show('themeSettingsPanel', isDev);
             show('masterUserDirectoryPanel', isDev);
+            show('developerPanelFinder', isDev);
             show('leagueVerificationPanel', isDev || isAdmin || role === 'CLUB_ADMIN');
+            show('verificationSubmitArea', !isDev);
+            if (isDev) { const fm = document.getElementById('verificationFormMessage'); if (fm) fm.textContent = 'Developer oversight is read-only here. The Super Admin is responsible for reviewing and deciding submissions.'; }
             if (working && (isDev || isAdmin || role === 'CLUB_ADMIN')) loadLeagueVerificationRequests();
             show('clubAdminPanelContainer', isDev || role === 'CLUB_ADMIN');
             show('refereePanelContainer', isDev || role === 'REFEREE');
@@ -3531,9 +3544,96 @@
         // SHARED VERIFICATION QUEUE
         // RLS is authoritative; these role checks are for clear UI only.
         // ------------------------------------------------------------------
+
+        // Developer panel finder: navigation is broad, data access remains protected by RLS.
+        const developerPanelDirectory = [
+          {id:'publicArea', name:'Public league panels', description:'Public league tables, fixtures, match results, clubs, players and awards', keywords:'public league table fixtures results clubs players awards stats'},
+          {id:'developerDataExportPanel', name:'Full system data access & downloads', description:'Existing authorised system data export tools', keywords:'download export data backup accounts finance staff'},
+          {id:'developerBoardManagerPanel', name:'Executive board and governance', description:'Board members, governance and responsibilities', keywords:'executive board governance responsibility'},
+          {id:'awardBackupPanel', name:'Awards and award backups', description:'Awards and related backup tools', keywords:'golden boot playmaker golden glove awards backup'},
+          {id:'themeSettingsPanel', name:'Premium appearance and theme', description:'System appearance settings', keywords:'theme appearance colours design'},
+          {id:'masterUserDirectoryPanel', name:'Developer control center and accounts', description:'Registered profiles, roles and account management', keywords:'users accounts roles permissions developer'},
+          {id:'leagueVerificationPanel', name:'Club and team verification', description:'View submissions and verification status; review work belongs to Super Admin', keywords:'verification club team player submissions approval'},
+          {id:'clubAdminPanelContainer', name:'Club administration', description:'Club-specific administration tools', keywords:'club roster squad players club admin'},
+          {id:'refereePanelContainer', name:'Referee and match events', description:'Referee tools and match event records', keywords:'referee match events cards goals'},
+          {id:'staff-directory', name:'Staff directory', description:'Staff information and departments', keywords:'staff departments personnel'}
+        ];
+
+        function searchDeveloperPanels(value) {
+          const results = document.getElementById('developerPanelSearchResults');
+          if (!results) return;
+          const q = String(value || '').trim().toLowerCase();
+          if (!q) {
+            results.innerHTML = '<p class="section-hint">Enter a search term to find panels.</p>';
+            return;
+          }
+          const matches = developerPanelDirectory.filter(p => (p.name+' '+p.description+' '+p.keywords).toLowerCase().includes(q));
+          if (!matches.length) {
+            results.innerHTML = '<p class="section-hint">No panel matched that search. Try clubs, players, fixtures, finance, staff, awards, or accounts.</p>';
+            return;
+          }
+          results.innerHTML = matches.map(p => '<article class="verification-request"><strong>'+esc(p.name)+'</strong><p class="section-hint">'+esc(p.description)+'</p><div class="verification-actions"><button type="button" class="btn btn-primary btn-sm" onclick="openDeveloperPanel(\''+p.id+'\')">Open panel</button><button type="button" class="btn btn-outline btn-sm" onclick="downloadDeveloperPanelInfo(\''+p.id+'\')">Download visible information</button></div></article>').join('');
+        }
+
+        function openDeveloperPanel(id) {
+          if (realRole() !== 'DEVELOPER') { alert('Developer access is required.'); return; }
+          const el = document.getElementById(id);
+          if (!el) { alert('That panel is not present in this page build yet.'); return; }
+          if (id === 'publicArea') {
+            setView('public', true);
+            el.scrollIntoView({behavior:'smooth',block:'start'});
+            return;
+          }
+          if (!el.classList.contains('hidden')) {
+            el.scrollIntoView({behavior:'smooth',block:'start'});
+            return;
+          }
+          if (id === 'developerPanelFinder') return;
+          if (id === 'clubAdminPanelContainer' || id === 'refereePanelContainer' || id === 'leagueVerificationPanel') {
+            el.classList.remove('hidden');
+          } else {
+            // Developer-only panels are already permitted by the role.
+            el.classList.remove('hidden');
+          }
+          el.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+
+        function downloadDeveloperPanelIndex() {
+          if (realRole() !== 'DEVELOPER') { alert('Developer access is required.'); return; }
+          const rows = [['Panel','Description','Keywords'], ...developerPanelDirectory.map(p=>[p.name,p.description,p.keywords])];
+          const csv = rows.map(row=>row.map(v=>'"'+String(v ?? '').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+          downloadTextFile('league-panel-directory.csv', csv, 'text/csv;charset=utf-8');
+        }
+
+        function downloadDeveloperPanelInfo(id) {
+          if (realRole() !== 'DEVELOPER') { alert('Developer access is required.'); return; }
+          const item = developerPanelDirectory.find(p=>p.id===id);
+          const el = document.getElementById(id);
+          if (!item || !el) { alert('Panel not found in this page build.'); return; }
+          const clone = el.cloneNode(true);
+          clone.querySelectorAll('button,input,select,textarea,script,style').forEach(n=>n.remove());
+          const textContent = (clone.innerText || clone.textContent || '').trim();
+          const content = 'Panel: '+item.name+'\nExported: '+new Date().toISOString()+'\n\n'+textContent+'\n';
+          downloadTextFile('league-panel-'+id+'.txt', content, 'text/plain;charset=utf-8');
+          const msg = document.getElementById('developerPanelSearchMessage');
+          if (msg) msg.textContent = 'Downloaded the information currently rendered in this panel. For full underlying database records, use the authorised data-export tools.';
+        }
+
+        function downloadTextFile(filename, content, mime) {
+          const blob = new Blob([content], {type:mime || 'text/plain;charset=utf-8'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(()=>URL.revokeObjectURL(url), 1500);
+        }
+
         function canReviewLeagueVerification() {
           const role = realRole();
-          return !!currentUser && (role === 'DEVELOPER' || role === 'SUPER_ADMIN');
+          return !!currentUser && role === 'SUPER_ADMIN';
         }
 
         function setVerificationMessage(message, isError) {
