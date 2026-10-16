@@ -2594,6 +2594,46 @@ const defaultCleanSheets = [];
 </section>
 <!-- END MAN OF THE MATCH FEATURE -->
 
+
+    // Bind the sign-in and create-account menu items explicitly.
+    // This avoids relying on inline onclick handlers on mobile browsers.
+    function bindAuthMenuItems() {
+      const signIn = document.getElementById("menuSignIn");
+      const signUp = document.getElementById("menuSignUp");
+
+      if (signIn && signIn.dataset.authTapBound !== "yes") {
+        signIn.removeAttribute("onclick");
+        signIn.dataset.authTapBound = "yes";
+        signIn.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (typeof window.openAuthModal === "function") {
+            window.openAuthModal("signin");
+          } else {
+            const modal = document.getElementById("authModal");
+            if (modal) modal.classList.remove("hidden");
+          }
+        });
+      }
+
+      if (signUp && signUp.dataset.authTapBound !== "yes") {
+        signUp.removeAttribute("onclick");
+        signUp.dataset.authTapBound = "yes";
+        signUp.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (typeof window.openAuthModal === "function") {
+            window.openAuthModal("signup");
+          } else {
+            const modal = document.getElementById("authModal");
+            if (modal) modal.classList.remove("hidden");
+          }
+        });
+      }
+    }
+
+    bindAuthMenuItems();
+
 <!-- ADMIN DROPDOWN TAP FIX -->
 <script>
 (function () {
