@@ -2744,20 +2744,77 @@ const defaultCleanSheets = [];
         // Initialise a separate authentication client here so login does not
         // depend on the large application script having completed successfully.
         let client = window.__leagueSupabaseClient;
-        if ((!client || !client.auth) && window.supabase && typeof window.supabase.createClient === "function") {
-          try {
-            client = window.supabase.createClient(
+        function makeClient() {
+          if (window.__leagueSupabaseClient && window.__leagueSupabaseClient.auth) {
+            return window.__leagueSupabaseClient;
+          }
+          if (window.supabase && typeof window.supabase.createClient === "function") {
+            const created = window.supabase.createClient(
               "https://ticcaervmjdzbprdpxxv.supabase.co",
               "sb_publishable_WSlNd0DeyV4Z0vM3fM28iA_c5BIYRiL"
             );
-            window.__leagueSupabaseClient = client;
-          } catch (initError) {
-            showError("Could not initialise sign-in: " + (initError && initError.message ? initError.message : "Supabase client error"));
-            return;
+            window.__leagueSupabaseClient = created;
+            return created;
           }
+          return null;
         }
+
+        try { client = makeClient(); } catch (initError) {
+          showError("Could not initialise sign-in: " + (initError && initError.message ? initError.message : "Supabase client error"));
+          return;
+        }
+
         if (!client || !client.auth) {
-          showError("Supabase's login library did not load. Check your internet connection, then reload this page.");
+          // Some mobile browsers/extensions fail to load the head CDN script.
+          // Retry the library on demand from a second CDN before giving up.
+          if (button) button.disabled = true;
+          if (message) { message.textContent = "Loading secure sign-in…"; message.className = "auth-message"; }
+          const sources = [
+            "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js",
+            "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+          ];
+          const loadSource = function (index) {
+            if (index >= sources.length) {
+              showError("Secure sign-in library could not load. Check your internet connection or try Chrome again.");
+              if (button) button.disabled = false;
+              return;
+            }
+            const script = document.createElement("script");
+            script.src = sources[index];
+            script.async = true;
+            script.onload = function () {
+              try {
+                client = makeClient();
+                if (!client || !client.auth) throw new Error("Authentication client is unavailable");
+                submitLogin(client);
+              } catch (error) {
+                loadSource(index + 1);
+              }
+            };
+            script.onerror = function () { loadSource(index + 1); };
+            document.head.appendChild(script);
+          };
+          const submitLogin = function (readyClient) {
+            const email = (document.getElementById("authEmail").value || "").trim().toLowerCase();
+            const password = document.getElementById("authPassword").value || "";
+            if (!email || !password) {
+              showError("Enter your email address and password.");
+              if (button) button.disabled = false;
+              return;
+            }
+            if (message) { message.textContent = "Signing in…"; message.className = "auth-message"; }
+            readyClient.auth.signInWithPassword({ email: email, password: password })
+              .then(function (result) {
+                if (result.error) throw result.error;
+                if (!result.data || !result.data.session) throw new Error("No session returned. Check email confirmation and try again.");
+                window.location.reload();
+              })
+              .catch(function (error) {
+                showError("Sign-in failed: " + (error && error.message ? error.message : "Unexpected error"));
+                if (button) button.disabled = false;
+              });
+          };
+          loadSource(0);
           return;
         }
 
