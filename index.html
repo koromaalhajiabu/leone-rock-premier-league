@@ -2276,6 +2276,31 @@
             }
         }
 
+        async function promoteDemoStaffToDatabase() {
+            if (!['DEVELOPER', 'SUPER_ADMIN'].includes(realRole())) return alert('Developer or Super Admin access is required.');
+            const defaults = [
+                { name: "Alhaji Abu Koroma", role: "Master Developer & Tech Lead", department: "Operations and IT", status: "Active" },
+                { name: "Yayah Koroma", role: "Executive Operations Partner", department: "Administration", status: "Active" },
+                { name: "Dr. Brima", role: "Executive Board", department: "Executive Board", status: "Active" },
+                { name: "Mr. Foday Turay", role: "Club Admin & Operations", department: "Administration", status: "Active" }
+            ];
+            if (!confirm('Save the four currently displayed example personnel as real staff_registry records so you can edit them later? This will not delete existing records.')) return;
+            try {
+                const { data: existing, error: readError } = await db.from('staff_registry').select('name');
+                if (readError) throw readError;
+                const present = new Set((existing || []).map(row => String(row.name || '').trim().toLowerCase()));
+                const missing = defaults.filter(row => !present.has(row.name.toLowerCase()));
+                if (missing.length) {
+                    const { error } = await db.from('staff_registry').insert(missing);
+                    if (error) throw error;
+                }
+                alert('Directory saved. Existing records were kept; missing default personnel were added. Refreshing the list now.');
+                await loadStaffData();
+            } catch (err) {
+                alert('Could not save the directory: ' + friendlyError(err));
+            }
+        }
+
         // Finance dashboard reads the finance tables created in Supabase.
         // Row-level security (RLS) remains the real security boundary.
         function canViewFinanceDashboard() {
@@ -2336,9 +2361,9 @@
                 ? `<div class="staff-foot has-actions">${badge}<div class="staff-actions">
                         <button type="button" onclick="editStaffMember(${id})" class="btn btn-outline btn-sm">Edit</button>
                         <label class="btn btn-outline btn-sm photo-btn">${m.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${m.photo_url ? 'Change' : 'Add'} photo for ${esc(m.name)}" onchange="changeStaffPhoto(${id}, this)"></label>
-                        <button type="button" onclick="deleteStaffMember(${id}, this.dataset.name)" data-name="${esc(m.name)}" class="btn btn-outline btn-sm text-danger">Remove</button>
+                        <button type="button" onclick="deleteStaffMember(${id}, this.dataset.name)" data-name="${esc(m.name)}" data-demo="${isDemo ? 'true' : 'false'}" class="btn btn-outline btn-sm text-danger">${isDemo ? 'Remove demo' : 'Remove'}</button>
                    </div></div>`
-                : '';
+                : (canManageDirectory && isDemo ? `<div class="staff-foot has-actions">${badge}<div class="staff-actions"><button type="button" onclick="promoteDemoStaffToDatabase()" class="btn btn-outline btn-sm">Save directory to database</button></div></div>` : '');
             return `
                 <div class="staff-card">
                     ${avatarHtml(m.photo_url, m.name)}
@@ -2356,8 +2381,11 @@
             if (!grid) return;
             staffCache = isDemo ? [] : staffList;
 
-            const role = getRole();
-            const canEdit = !isDemo && (role === 'SUPER_ADMIN' || role === 'DEVELOPER');
+            const role = realRole();
+            // Developer/Super Admin may manage the directory even when only fallback examples are available.
+            // Fallback cards use demo IDs, so Edit/Remove are only enabled for real database rows.
+            const canManageDirectory = role === 'SUPER_ADMIN' || role === 'DEVELOPER';
+            const canEdit = canManageDirectory && !isDemo;
 
             const groups = {};
             staffList.forEach(m => {
@@ -2432,6 +2460,7 @@
         }
 
         async function editStaffMember(id) {
+            if (!['DEVELOPER', 'SUPER_ADMIN'].includes(realRole())) return alert('Developer or Super Admin access is required to edit personnel.');
             const m = staffCache.find(row => Number(row.id) === Number(id));
             if (!m) return alert('This record is not editable from the current list. Refresh and try again.');
             const role = realRole();
@@ -2471,7 +2500,9 @@
             }
         }
 
-        async function deleteStaffMember(id, name) {
+        async function deleteStaffMember(id, name, isDemo) {
+            if (!['DEVELOPER', 'SUPER_ADMIN'].includes(realRole())) return alert('Developer or Super Admin access is required.');
+            if (isDemo === true || isDemo === 'true') return alert('This is a fallback example, not a saved database record. First tap “Save directory to database” to create editable records.');
             if (!confirm(`Remove ${name} from the staff directory?`)) return;
             try {
                 const old = staffCache.find(m => Number(m.id) === Number(id));
