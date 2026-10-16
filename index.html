@@ -436,6 +436,23 @@ th{font-weight:800}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
 
+
+/* Accessible dropdown rows for the Roles & Responsibilities register */
+#roleResponsibilitiesList{display:grid;grid-template-columns:1fr;gap:10px}
+.role-responsibility-dropdown{border:1px solid var(--ui-line,#dfe6e2);border-radius:14px;background:#fff;overflow:hidden}
+.role-responsibility-dropdown>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:15px 16px;min-height:56px;font-weight:750;color:var(--ui-ink,#14213d)}
+.role-responsibility-dropdown>summary::-webkit-details-marker{display:none}
+.role-responsibility-dropdown>summary:focus-visible{outline:3px solid rgba(198,162,74,.55);outline-offset:-3px}
+.role-responsibility-title{flex:1;min-width:0}
+.role-responsibility-code{font-size:11px;font-weight:700;color:var(--ui-muted,#5f6b7a);background:var(--ui-soft,#f4f7f5);padding:4px 7px;border-radius:999px}
+.role-responsibility-chevron{font-size:23px;line-height:1;color:var(--ui-muted,#5f6b7a);transition:transform .16s ease}
+.role-responsibility-dropdown[open]>summary{background:linear-gradient(100deg,#fffdf6,#fff);border-bottom:1px solid var(--ui-line,#dfe6e2)}
+.role-responsibility-dropdown[open] .role-responsibility-chevron{transform:rotate(180deg)}
+.role-responsibility-details{padding:14px 16px 4px;line-height:1.65;color:var(--ui-muted,#5f6b7a)}
+.role-responsibility-details p{margin:0 0 12px}
+.role-responsibility-details strong{color:var(--ui-ink,#14213d)}
+@media(max-width:640px){.role-responsibility-dropdown>summary{padding:14px 12px;gap:8px}.role-responsibility-details{padding:12px}}
+
 </style>
 </head>
 <body>
@@ -3646,7 +3663,20 @@ th{font-weight:800}
           const target = document.getElementById('roleResponsibilitiesList');
           if (!target) return;
           const list = rows && rows.length ? rows : ROLE_RESPONSIBILITIES_FALLBACK;
-          target.innerHTML = list.map(r => '<article class="board-manager-card"><h3>'+esc(r.role_title || r.role_code || 'Role')+'</h3><p><strong>Responsibilities</strong><br>'+esc(r.responsibilities || '')+'</p><p><strong>Authority boundary</strong><br>'+esc(r.authority_scope || 'Only duties authorised by league rules and database permissions.')+'</p><p class="section-hint"><strong>Reports to:</strong> '+esc(r.reports_to || 'Designated league authority')+'</p></article>').join('');
+          target.innerHTML = list.map((r, index) => {
+            const title = esc(r.role_title || r.role_code || 'Role');
+            const code = esc(r.role_code || '');
+            const duties = esc(r.responsibilities || 'Responsibilities have not been specified yet.');
+            const scope = esc(r.authority_scope || 'Only duties authorised by league rules and database permissions.');
+            const reports = esc(r.reports_to || 'Designated league authority');
+            return '<details class="role-responsibility-dropdown"'+(index === 0 ? ' open' : '')+'>' +
+              '<summary><span class="role-responsibility-title">'+title+'</span>' +
+              (code ? '<span class="role-responsibility-code">'+code+'</span>' : '') +
+              '<span class="role-responsibility-chevron" aria-hidden="true">⌄</span></summary>' +
+              '<div class="role-responsibility-details"><p><strong>Responsibilities</strong><br>'+duties+'</p>' +
+              '<p><strong>Authority boundary</strong><br>'+scope+'</p>' +
+              '<p class="section-hint"><strong>Reports to:</strong> '+reports+'</p></div></details>';
+          }).join('');
         }
         async function loadRoleResponsibilities() {
           renderRoleResponsibilities(ROLE_RESPONSIBILITIES_FALLBACK);
