@@ -2855,7 +2855,7 @@
             loadMatchEvents();
         }
 
-        async async function loadRefereeMatchOptions() {
+        async function loadRefereeMatchOptions() {
             const select = document.getElementById('refMatchId');
             if (!select) return;
             select.innerHTML = '<option value="">Loading assigned matches…</option>';
