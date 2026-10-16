@@ -3328,6 +3328,18 @@
             }
         }
 
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof loadPublicLeagueBoards === 'function') loadPublicLeagueBoards();
+            if (typeof db !== 'undefined' && db && db.auth) {
+                db.auth.onAuthStateChange(function () {
+                    setTimeout(function () {
+                        if (typeof loadPublicLeagueBoards === 'function') loadPublicLeagueBoards();
+                        if (typeof loadBoardMembers === 'function') loadBoardMembers();
+                    }, 0);
+                });
+            }
+        });
 </script>
 </body>
 </html>
