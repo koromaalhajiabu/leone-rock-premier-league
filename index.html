@@ -2451,7 +2451,7 @@
                 if (!dbOnline || !db) throw new Error('Supabase is not connected.');
                 const { data, error } = await db.from('staff_registry').select('*').order('id', { ascending: true });
                 if (error) throw error;
-                renderStaffGrid(Array.isArray(data) ? data : [], false);
+                renderStaffGrid(Array.isArray(data) ? data : []);
             } catch (err) {
                 console.warn('Staff directory could not be loaded:', err.message);
                 if (grid) grid.innerHTML = '<p class="section-hint">Staff records could not be loaded. Check the Supabase connection and permissions.</p>';
@@ -2533,33 +2533,28 @@
                 </div>`;
         }
 
-        function renderStaffGrid(staffList, isDemo) {
+        function renderStaffGrid(staffList) {
             const grid = document.getElementById('staffGridContainer');
             if (!grid) return;
-            staffCache = isDemo ? [] : staffList;
+            staffCache = Array.isArray(staffList) ? staffList : [];
 
             const role = realRole();
-            // Developer/Super Admin may manage the directory even when only fallback examples are available.
-            // Fallback cards use demo IDs, so Edit/Remove are only enabled for real database rows.
-            const canManageDirectory = role === 'SUPER_ADMIN' || role === 'DEVELOPER';
-            const canEdit = canManageDirectory && !isDemo;
-
+            const canEdit = role === 'SUPER_ADMIN' || role === 'DEVELOPER';
             const groups = {};
-            staffList.forEach(m => {
+            staffCache.forEach(m => {
                 const dept = m.department || 'Administration';
                 (groups[dept] = groups[dept] || []).push(m);
             });
             const order = STAFF_DEPARTMENTS.filter(d => groups[d])
                 .concat(Object.keys(groups).filter(d => STAFF_DEPARTMENTS.indexOf(d) === -1));
 
-            if (!staffList || staffList.length === 0) {
+            if (!staffCache.length) {
                 grid.innerHTML = '<p class="section-hint">No staff records have been added yet.</p>';
                 return;
             }
 
             grid.innerHTML = order.map(dept =>
-                `<div class="dept-block"><h3 class="dept-title">${esc(dept)} <span class="dept-count">${groups[dept].length}</span></h3>` +
-                `<div class="staff-grid">${groups[dept].map(m => staffCardHtml(m, canEdit)).join('')}</div></div>`
+                `<div class="dept-block"><h3 class="dept-title">${esc(dept)} <span class="dept-count">${groups[dept].length}</span></h3><div class="staff-grid">${groups[dept].map(m => staffCardHtml(m, canEdit)).join('')}</div></div>`
             ).join('');
         }
 
