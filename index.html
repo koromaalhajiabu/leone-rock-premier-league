@@ -666,6 +666,20 @@
             <h2 id="workspaceTitle">My panel</h2>
             <p id="workspaceSub"></p>
         </div>
+        <section id="themeSettingsPanel" class="accordion-card hidden" style="--accent: var(--gold);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="themeSettingsContent" onclick="toggleAccordion('themeSettingsContent', this)" onkeydown="accordionKey(event, 'themeSettingsContent', this)">
+                <div><h2>Premium appearance & theme</h2><p>Only the Developer can change the system colours on this device.</p></div>
+                <div class="card-meta"><span class="badge badge-warning">Developer only</span></div>
+            </div>
+            <div id="themeSettingsContent" class="accordion-content">
+                <p class="section-hint">Choose a premium colour preset or select your own main colour. Your choice is saved in this browser on this device.</p>
+                <div class="form-grid">
+                    <label class="field"><span>Theme preset</span><select id="themePreset" onchange="applyThemePreset(this.value)"><option value="emerald">Emerald & gold (classic)</option><option value="navy">Navy & gold (executive)</option><option value="royal">Royal blue & silver</option><option value="burgundy">Burgundy & gold</option><option value="midnight">Midnight charcoal & gold</option><option value="custom">Custom main colour</option></select></label>
+                    <label class="field"><span>Custom main colour</span><input id="themeColorPicker" type="color" value="#0A2E1F" onchange="applyCustomThemeColor(this.value)" style="height:46px;padding:5px;max-width:160px;"></label>
+                </div>
+                <div class="section-toolbar" style="margin-top:16px;"><span id="themeStatus" aria-live="polite">Current theme: Emerald & gold</span><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="resetSystemTheme()">Reset classic theme</button></div></div>
+            </div>
+        </section>
 
         <!-- Developer-only exports and backups; intentionally excluded from public viewer pages. -->
         <section id="awardBackupPanel" class="accordion-card hidden" style="--accent: var(--gold);">
@@ -1314,6 +1328,7 @@
         // PAGE START
         // ------------------------------------------------------------------
         window.addEventListener('DOMContentLoaded', () => {
+            loadSavedSystemTheme();
             // Close admin dropdown when clicking anywhere outside (registered first so it always works)
             window.addEventListener('click', function (e) {
                 if (!e.target.closest('.dropdown-menu-container')) {
@@ -1490,6 +1505,50 @@
             if (justOpened) scrollToViewTabs();
         }
 
+        // Premium theme controls. Only the DEVELOPER role can change theme settings.
+        const SYSTEM_THEMES = {
+            emerald: { name: "Emerald & gold", pitch: "#0A2E1F", pitch2: "#0F3D2A", green: "#0E8A3E", bright: "#1EB53A", blue: "#0B5FA5", blueDark: "#084677", gold: "#B8921F" },
+            navy: { name: "Navy & gold", pitch: "#101B36", pitch2: "#182A4E", green: "#1B6A55", bright: "#35B58A", blue: "#214E9A", blueDark: "#17396F", gold: "#C6A24A" },
+            royal: { name: "Royal blue & silver", pitch: "#102B52", pitch2: "#173C70", green: "#167D72", bright: "#2CC7B0", blue: "#245FC7", blueDark: "#194796", gold: "#B8C5D6" },
+            burgundy: { name: "Burgundy & gold", pitch: "#3B1022", pitch2: "#57172F", green: "#24734D", bright: "#35B86B", blue: "#8B2948", blueDark: "#6A1E37", gold: "#D6B15E" },
+            midnight: { name: "Midnight charcoal & gold", pitch: "#17191F", pitch2: "#242832", green: "#287A57", bright: "#42C985", blue: "#465D8F", blueDark: "#34466F", gold: "#D1B15A" }
+        };
+        function applyThemeValues(theme, name) {
+            if (!theme || !theme.pitch) return;
+            const root = document.documentElement;
+            root.style.setProperty("--pitch", theme.pitch); root.style.setProperty("--pitch-2", theme.pitch2 || theme.pitch);
+            root.style.setProperty("--green", theme.green || "#0E8A3E"); root.style.setProperty("--green-bright", theme.bright || "#1EB53A");
+            root.style.setProperty("--blue", theme.blue || theme.pitch); root.style.setProperty("--blue-dark", theme.blueDark || theme.pitch); root.style.setProperty("--gold", theme.gold || "#B8921F");
+            root.style.setProperty("--gold-soft", theme.gold || "#B8921F");
+            const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute("content", theme.pitch);
+            const status = document.getElementById("themeStatus"); if (status) status.textContent = "Current theme: " + (name || "Custom colour");
+            const picker = document.getElementById("themeColorPicker"); if (picker) picker.value = theme.pitch;
+        }
+        function applyThemePreset(key) {
+            if (realRole() !== "DEVELOPER" || previewAsVisitor) { alert("Only the Developer can change the system theme."); return; }
+            if (key === "custom") { applyCustomThemeColor((document.getElementById("themeColorPicker") || {}).value || "#0A2E1F"); return; }
+            const theme = SYSTEM_THEMES[key]; if (!theme) return;
+            try { localStorage.setItem("lrpl_system_theme", JSON.stringify({ key, theme })); } catch (e) {}
+            applyThemeValues(theme, theme.name);
+        }
+        function applyCustomThemeColor(color) {
+            if (realRole() !== "DEVELOPER" || previewAsVisitor) { alert("Only the Developer can change the system theme."); return; }
+            if (!/^#[0-9a-fA-F]{6}$/.test(color || "")) return;
+            const theme = { name: "Custom colour", pitch: color, pitch2: color, green: color, bright: color, blue: color, blueDark: color, gold: "#C6A24A" };
+            try { localStorage.setItem("lrpl_system_theme", JSON.stringify({ key: "custom", theme })); } catch (e) {}
+            applyThemeValues(theme, "Custom colour");
+        }
+        function resetSystemTheme() {
+            if (realRole() !== "DEVELOPER" || previewAsVisitor) { alert("Only the Developer can reset the system theme."); return; }
+            try { localStorage.removeItem("lrpl_system_theme"); } catch (e) {}
+            applyThemeValues(SYSTEM_THEMES.emerald, SYSTEM_THEMES.emerald.name);
+            const preset = document.getElementById("themePreset"); if (preset) preset.value = "emerald";
+        }
+        function loadSavedSystemTheme() {
+            try { const saved = JSON.parse(localStorage.getItem("lrpl_system_theme") || "null"); if (saved && saved.theme) applyThemeValues(saved.theme, saved.theme.name || (saved.key === "custom" ? "Custom colour" : "Saved theme")); else applyThemeValues(SYSTEM_THEMES.emerald, SYSTEM_THEMES.emerald.name); }
+            catch (e) { applyThemeValues(SYSTEM_THEMES.emerald, SYSTEM_THEMES.emerald.name); }
+        }
+
         function applyRoleUI() {
             const role = getRole();
             const isDev = role === 'DEVELOPER';
@@ -1522,6 +1581,7 @@
             if (wSub) wSub.textContent = WORKSPACE_HINTS[real] || '';
 
             show('awardBackupPanel', isDev);
+            show('themeSettingsPanel', isDev);
             show('masterUserDirectoryPanel', isDev);
             show('clubAdminPanelContainer', isDev || role === 'CLUB_ADMIN');
             show('refereePanelContainer', isDev || role === 'REFEREE');
