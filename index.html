@@ -806,7 +806,6 @@
                     <button type="button" class="btn btn-outline" onclick="document.getElementById('developerBoardManagerPanel')?.scrollIntoView({behavior:'smooth',block:'start'})">Governance & board management</button>
                     <button type="button" class="btn btn-outline" onclick="document.getElementById('developerDataExportPanel')?.scrollIntoView({behavior:'smooth',block:'start'})">Data backup & export</button>
                     <button type="button" class="btn btn-outline" onclick="document.getElementById('themeSettingsPanel')?.scrollIntoView({behavior:'smooth',block:'start'})">Platform appearance</button>
-                    <button type="button" class="btn btn-outline" onclick="document.getElementById('awardBackupPanel')?.scrollIntoView({behavior:'smooth',block:'start'})">Awards & records backup</button>
                 </div>
                 <p class="section-hint" style="margin-top:12px"><strong>System suspension / restoration:</strong> this control will only be enabled after database-level write blocking and audit logging are implemented and verified. No records are changed by this panel.</p>
             </div>
@@ -1844,7 +1843,7 @@
             show('generalOverseerCommandCentre', isDev);
             show('developerDataExportPanel', isDev);
             show('developerBoardManagerPanel', isDev);
-            show('awardBackupPanel', isDev);
+            show('awardBackupPanel', false); // Award management and award backups are not General Overseer duties.
             show('themeSettingsPanel', isDev);
             show('masterUserDirectoryPanel', isDev);
             show('developerPanelFinder', isDev);
@@ -1854,8 +1853,8 @@
             show('verificationSubmitArea', !isDev);
             if (isDev) { const fm = document.getElementById('verificationFormMessage'); if (fm) fm.textContent = 'Developer oversight is read-only here. The Super Admin is responsible for reviewing and deciding submissions.'; }
             if (working && (isDev || isAdmin || role === 'CLUB_ADMIN')) loadLeagueVerificationRequests();
-            show('clubAdminPanelContainer', isDev || role === 'CLUB_ADMIN');
-            show('refereePanelContainer', isDev || role === 'REFEREE');
+            show('clubAdminPanelContainer', role === 'CLUB_ADMIN');
+            show('refereePanelContainer', role === 'REFEREE');
             if (isDev || role === 'SUPER_ADMIN' || role === 'REFEREE') loadRefereeMatchOptions();
             show('staffActionControls', isDev || isAdmin);
             if (!(isDev || isAdmin)) show('staffFormPanel', false);
@@ -1874,8 +1873,8 @@
             if (isDev && typeof loadBoardMembers === 'function') loadBoardMembers();
 
             if (isDev) fetchMasterUserDirectory();
-            if (isDev || role === 'CLUB_ADMIN') loadClubRoster();
-            if (isDev || role === 'REFEREE') loadMatchEvents();
+            if (role === 'CLUB_ADMIN') loadClubRoster();
+            if (role === 'REFEREE') loadMatchEvents();
             renderMotm();
             renderDbStatus();
         }
