@@ -373,7 +373,17 @@
             .scoreboard::before, .live-dot { animation: none; }
             .accordion-arrow, .btn { transition: none; }
         }
-    </style>
+    
+/* Developer board management */
+.board-manager-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.board-manager-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff}
+.board-manager-row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line-soft)}
+.board-manager-row:last-child{border-bottom:0}
+.board-manager-row img{width:52px;height:52px;border-radius:50%;object-fit:cover;background:#edf2ed}
+.board-manager-actions{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.board-manager-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+
+</style>
 </head>
 <body>
 
@@ -662,6 +672,35 @@
 
         <!-- My panel: opens automatically after sign-in -->
         <div id="workspaceArea" class="hidden">
+
+        <section id="developerBoardManagerPanel" class="accordion-card hidden" style="--accent:var(--gold);">
+          <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="developerBoardManagerContent" onclick="toggleAccordion('developerBoardManagerContent',this)" onkeydown="accordionKey(event,'developerBoardManagerContent',this)">
+            <div><h2>Administrative & Executive Board</h2><p>Add, edit, reorder and publish official board members.</p></div>
+            <div class="card-meta"><span class="badge badge-warning">Developer only</span><svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </div>
+          <div id="developerBoardManagerContent" class="accordion-content">
+            <p class="section-hint">Changes are saved to Supabase and appear on the public board section after refresh. Only your Developer account can manage these records.</p>
+            <form id="boardMemberForm" onsubmit="saveBoardMember(event)">
+              <input type="hidden" id="boardMemberId">
+              <div class="board-manager-fields">
+                <label class="field"><span>Board</span><select id="boardMemberType" required><option value="ADMINISTRATIVE">Administrative Board</option><option value="EXECUTIVE">Executive Board</option></select></label>
+                <label class="field"><span>Full name</span><input id="boardMemberName" maxlength="120" required placeholder="Full name"></label>
+                <label class="field"><span>Position / title</span><input id="boardMemberPosition" maxlength="120" required placeholder="e.g. President"></label>
+                <label class="field"><span>Photo URL (optional)</span><input id="boardMemberPhoto" type="url" maxlength="1000" placeholder="https://..."></label>
+                <label class="field"><span>Display order</span><input id="boardMemberOrder" type="number" min="0" max="9999" value="10" required></label>
+                <label class="field"><span>Active on public site</span><select id="boardMemberActive"><option value="true">Active / publish</option><option value="false">Inactive / hide</option></select></label>
+                <label class="field" style="grid-column:1/-1"><span>Short biography (optional)</span><textarea id="boardMemberBio" maxlength="1000" rows="2" placeholder="Short biography"></textarea></label>
+              </div>
+              <div class="form-actions"><button class="btn btn-success" id="boardMemberSaveBtn" type="submit">Save board member</button><button class="btn btn-outline" type="button" onclick="resetBoardMemberForm()">Clear form</button><button class="btn btn-outline" type="button" onclick="loadBoardMembers()">Refresh list</button></div>
+            </form>
+            <p id="boardManagerStatus" class="section-hint" aria-live="polite">Run the companion SQL setup before saving members.</p>
+            <div class="board-manager-grid">
+              <div class="board-manager-card"><h3>Administrative Board</h3><div id="adminBoardManagerList">Loading…</div></div>
+              <div class="board-manager-card"><h3>Executive Board</h3><div id="execBoardManagerList">Loading…</div></div>
+            </div>
+          </div>
+        </section>
+
         <div class="workspace-head">
             <h2 id="workspaceTitle">My panel</h2>
             <p id="workspaceSub"></p>
@@ -3168,6 +3207,96 @@
                 alert("Could not remove it: " + friendlyError(err));
             }
         }
-    </script>
+    
+        // Developer-only Administrative and Executive Board manager
+        let boardMemberCache = [];
+        function boardManagerIsDeveloper() {
+            return !!currentUser && (typeof realRole === 'function' ? realRole() : getRole()) === 'DEVELOPER';
+        }
+        function boardManagerStatus(message, isError) {
+            const el = document.getElementById('boardManagerStatus');
+            if (el) { el.textContent = message || ''; el.style.color = isError ? 'var(--danger)' : 'var(--muted)'; }
+        }
+        function boardMemberPhotoHtml(url, name) {
+            const safe = isSafePhotoUrl(url) ? esc(url) : '';
+            return safe ? '<img src="' + safe + '" alt="" loading="lazy" referrerpolicy="no-referrer">' :
+              '<div class="avatar">' + esc(String(name || '?').split(/\\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase()) + '</div>';
+        }
+        async function loadBoardMembers() {
+            const panel = document.getElementById('developerBoardManagerPanel');
+            if (!panel) return;
+            if (!boardManagerIsDeveloper()) { panel.classList.add('hidden'); return; }
+            panel.classList.remove('hidden');
+            boardManagerStatus('Loading board members…', false);
+            try {
+                const {data,error}=await db.from('league_board_members').select('*').order('board_type').order('display_order').order('full_name');
+                if(error) throw error;
+                boardMemberCache=data||[];
+                const render=(type)=> {
+                    const list=document.getElementById(type==='ADMINISTRATIVE'?'adminBoardManagerList':'execBoardManagerList');
+                    const rows=boardMemberCache.filter(m=>m.board_type===type);
+                    list.innerHTML=rows.length?rows.map(m=>'<div class="board-manager-row">'+boardMemberPhotoHtml(m.photo_url,m.full_name)+'<div style="min-width:0"><strong>'+esc(m.full_name)+'</strong><div class="section-hint">'+esc(m.position_title)+' · '+(m.is_active?'Published':'Hidden')+'</div></div><div class="board-manager-actions"><button class="btn btn-outline btn-sm" type="button" onclick="editBoardMember('+Number(m.id)+')">Edit</button><button class="btn btn-outline btn-sm" type="button" onclick="toggleBoardMember('+Number(m.id)+')">'+(m.is_active?'Hide':'Publish')+'</button><button class="btn btn-outline btn-sm text-danger" type="button" onclick="deleteBoardMember('+Number(m.id)+')">Delete</button></div></div>').join(''):'<p class="section-hint">No members added yet.</p>';
+                };
+                render('ADMINISTRATIVE'); render('EXECUTIVE');
+                boardManagerStatus('Loaded '+boardMemberCache.length+' board member(s).',false);
+            } catch(err) { boardManagerStatus('Could not load board members. Run the SQL setup and verify Developer permissions. '+friendlyError(err),true); }
+        }
+        function resetBoardMemberForm() {
+            const form=document.getElementById('boardMemberForm'); if(form) form.reset();
+            document.getElementById('boardMemberId').value='';
+            document.getElementById('boardMemberOrder').value='10';
+            document.getElementById('boardMemberActive').value='true';
+            document.getElementById('boardMemberSaveBtn').textContent='Save board member';
+        }
+        function editBoardMember(id) {
+            if(!boardManagerIsDeveloper()) return alert('Developer access only.');
+            const m=boardMemberCache.find(x=>Number(x.id)===Number(id)); if(!m)return;
+            document.getElementById('boardMemberId').value=m.id;
+            document.getElementById('boardMemberType').value=m.board_type;
+            document.getElementById('boardMemberName').value=m.full_name||'';
+            document.getElementById('boardMemberPosition').value=m.position_title||'';
+            document.getElementById('boardMemberPhoto').value=m.photo_url||'';
+            document.getElementById('boardMemberOrder').value=m.display_order??10;
+            document.getElementById('boardMemberActive').value=String(!!m.is_active);
+            document.getElementById('boardMemberBio').value=m.biography||'';
+            document.getElementById('boardMemberSaveBtn').textContent='Save changes';
+        }
+        async function saveBoardMember(event) {
+            event.preventDefault();
+            if(!boardManagerIsDeveloper()) return alert('Developer access only.');
+            const id=document.getElementById('boardMemberId').value;
+            const full_name=document.getElementById('boardMemberName').value.trim();
+            const position_title=document.getElementById('boardMemberPosition').value.trim();
+            const photo_url=document.getElementById('boardMemberPhoto').value.trim()||null;
+            if(photo_url && !isSafePhotoUrl(photo_url)) return boardManagerStatus('Use a valid HTTPS photo URL.',true);
+            const payload={board_type:document.getElementById('boardMemberType').value,full_name,position_title,photo_url,
+              display_order:Number(document.getElementById('boardMemberOrder').value),is_active:document.getElementById('boardMemberActive').value==='true',
+              biography:document.getElementById('boardMemberBio').value.trim()||null,updated_by:currentUser.id,updated_at:new Date().toISOString()};
+            if(!full_name||!position_title) return boardManagerStatus('Enter the member name and position.',true);
+            const btn=document.getElementById('boardMemberSaveBtn'); btn.disabled=true;
+            try {
+                const result=id?await db.from('league_board_members').update(payload).eq('id',Number(id)):await db.from('league_board_members').insert([payload]);
+                if(result.error)throw result.error;
+                boardManagerStatus('Board member saved successfully.',false); resetBoardMemberForm(); await loadBoardMembers();
+            } catch(err) { boardManagerStatus('Save failed: '+friendlyError(err),true); }
+            finally { btn.disabled=false; }
+        }
+        async function toggleBoardMember(id) {
+            if(!boardManagerIsDeveloper())return alert('Developer access only.');
+            const m=boardMemberCache.find(x=>Number(x.id)===Number(id)); if(!m)return;
+            const {error}=await db.from('league_board_members').update({is_active:!m.is_active,updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq('id',m.id);
+            if(error)return boardManagerStatus('Could not update visibility: '+friendlyError(error),true);
+            await loadBoardMembers();
+        }
+        async function deleteBoardMember(id) {
+            if(!boardManagerIsDeveloper())return alert('Developer access only.');
+            const m=boardMemberCache.find(x=>Number(x.id)===Number(id)); if(!m)return;
+            if(!confirm('Permanently delete '+m.full_name+' from the board? This cannot be undone.'))return;
+            const {error}=await db.from('league_board_members').delete().eq('id',m.id);
+            if(error)return boardManagerStatus('Delete failed: '+friendlyError(error),true);
+            await loadBoardMembers();
+        }
+
+</script>
 </body>
 </html>
