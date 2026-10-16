@@ -845,6 +845,7 @@
                         <label class="field"><span>Player full name</span><input type="text" id="scorerPlayerName"></label>
                         <label class="field"><span>Club</span><input type="text" id="scorerClubName"></label>
                         <label class="field span-all"><span>Total goals</span><input type="number" id="scorerGoalsCount" min="0"></label>
+                        <div class="field span-all"><span>Round close-up photo</span><div class="person" style="gap:12px;"><span id="scorerPhotoPreview" class="avatar avatar-sm">+</span><label class="btn btn-outline btn-sm" style="cursor:pointer;">Choose / change photo<input id="scorerPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewAwardPhoto(this,'scorerPhotoPreview')"></label><small>Optional — a square face photo works best.</small></div></div>
                     </div>
                     <div class="form-actions">
                         <button type="button" onclick="upsertTopScorer()" class="btn btn-primary">Save scorer</button>
@@ -857,6 +858,7 @@
                         <label class="field"><span>Player full name</span><input type="text" id="assistPlayerName"></label>
                         <label class="field"><span>Club</span><input type="text" id="assistClubName"></label>
                         <label class="field span-all"><span>Total assists</span><input type="number" id="assistCount" min="0"></label>
+                        <div class="field span-all"><span>Round close-up photo</span><div class="person" style="gap:12px;"><span id="assistPhotoPreview" class="avatar avatar-sm">+</span><label class="btn btn-outline btn-sm" style="cursor:pointer;">Choose / change photo<input id="assistPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewAwardPhoto(this,'assistPhotoPreview')"></label><small>Optional — a square face photo works best.</small></div></div>
                     </div>
                     <div class="form-actions">
                         <button type="button" onclick="upsertTopAssist()" class="btn btn-primary">Save assists</button>
@@ -869,6 +871,7 @@
                         <label class="field"><span>Goalkeeper full name</span><input type="text" id="gkPlayerName"></label>
                         <label class="field"><span>Club</span><input type="text" id="gkClubName"></label>
                         <label class="field span-all"><span>Total clean sheets</span><input type="number" id="gkCleanSheetsCount" min="0"></label>
+                        <div class="field span-all"><span>Round close-up photo</span><div class="person" style="gap:12px;"><span id="gkPhotoPreview" class="avatar avatar-sm">+</span><label class="btn btn-outline btn-sm" style="cursor:pointer;">Choose / change photo<input id="gkPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewAwardPhoto(this,'gkPhotoPreview')"></label><small>Optional — a square face photo works best.</small></div></div>
                     </div>
                     <div class="form-actions">
                         <button type="button" onclick="upsertCleanSheet()" class="btn btn-primary">Save clean sheets</button>
@@ -2248,14 +2251,53 @@
             else { alert(`Standing saved for ${club}.`); loadLeagueStandings(); }
         }
 
+        function previewAwardPhoto(input, previewId) {
+            const file = input && input.files && input.files[0];
+            const preview = document.getElementById(previewId);
+            if (!file || !preview) return;
+            if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+                alert('Choose a JPG, PNG, or WebP image.');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                preview.innerHTML = '';
+                const img = document.createElement('img');
+                img.className = 'avatar avatar-sm';
+                img.alt = 'Selected award headshot preview';
+                img.src = reader.result;
+                preview.replaceWith(img);
+                img.id = previewId;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function saveAwardPhoto(table, inputId, existingName, rowName) {
+            const input = document.getElementById(inputId);
+            const file = input && input.files && input.files[0];
+            const { data: existing, error: readError } = await db.from(table).select('photo_url').eq(existingName, rowName).maybeSingle();
+            if (readError) throw readError;
+            if (!file) return existing && existing.photo_url ? existing.photo_url : null;
+            const blob = await prepareImage(file);
+            if (!blob) throw new Error('Choose a valid player photo.');
+            const url = await uploadPhotoBlob('leaderboards/' + table, blob);
+            return url;
+        }
+
         async function upsertTopScorer() {
             const player = document.getElementById('scorerPlayerName').value.trim();
             const club = document.getElementById('scorerClubName').value.trim();
             const goals = parseInt(document.getElementById('scorerGoalsCount').value) || 0;
             if (!player || !club) { alert("Enter the player and the club."); return; }
-            const { error } = await db.from('top_scorers').upsert([{ player, club, goals, updated_at: new Date() }], { onConflict: 'player' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Goals saved for ${player}.`); loadTopScorers(); }
+            let photo_url = null;
+            try {
+                photo_url = await saveAwardPhoto('top_scorers', 'scorerPhotoInput', 'player', player);
+                const { error } = await db.from('top_scorers').upsert([{ player, club, goals, photo_url, updated_at: new Date() }], { onConflict: 'player' });
+                if (error) throw error;
+                document.getElementById('scorerPhotoInput').value = '';
+                alert(`Goals saved for ${player}.`); loadTopScorers();
+            } catch (err) { alert("Could not save scorer: " + friendlyError(err)); }
         }
 
         async function upsertTopAssist() {
@@ -2263,9 +2305,13 @@
             const club = document.getElementById('assistClubName').value.trim();
             const assists = parseInt(document.getElementById('assistCount').value) || 0;
             if (!player || !club) { alert("Enter the player and the club."); return; }
-            const { error } = await db.from('top_assists').upsert([{ player, club, assists, updated_at: new Date() }], { onConflict: 'player' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Assists saved for ${player}.`); loadTopAssists(); }
+            try {
+                const photo_url = await saveAwardPhoto('top_assists', 'assistPhotoInput', 'player', player);
+                const { error } = await db.from('top_assists').upsert([{ player, club, assists, photo_url, updated_at: new Date() }], { onConflict: 'player' });
+                if (error) throw error;
+                document.getElementById('assistPhotoInput').value = '';
+                alert(`Assists saved for ${player}.`); loadTopAssists();
+            } catch (err) { alert("Could not save assists: " + friendlyError(err)); }
         }
 
         async function upsertCleanSheet() {
@@ -2273,9 +2319,13 @@
             const club = document.getElementById('gkClubName').value.trim();
             const clean_sheets = parseInt(document.getElementById('gkCleanSheetsCount').value) || 0;
             if (!goalkeeper || !club) { alert("Enter the goalkeeper and the club."); return; }
-            const { error } = await db.from('clean_sheets').upsert([{ goalkeeper, club, clean_sheets, updated_at: new Date() }], { onConflict: 'goalkeeper' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Clean sheets saved for ${goalkeeper}.`); loadCleanSheets(); }
+            try {
+                const photo_url = await saveAwardPhoto('clean_sheets', 'gkPhotoInput', 'goalkeeper', goalkeeper);
+                const { error } = await db.from('clean_sheets').upsert([{ goalkeeper, club, clean_sheets, photo_url, updated_at: new Date() }], { onConflict: 'goalkeeper' });
+                if (error) throw error;
+                document.getElementById('gkPhotoInput').value = '';
+                alert(`Clean sheets saved for ${goalkeeper}.`); loadCleanSheets();
+            } catch (err) { alert("Could not save clean sheets: " + friendlyError(err)); }
         }
 
         // ------------------------------------------------------------------
