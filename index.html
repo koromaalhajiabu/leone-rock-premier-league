@@ -2518,9 +2518,9 @@
                 ? `<div class="staff-foot has-actions">${badge}<div class="staff-actions">
                         <button type="button" onclick="editStaffMember(${id})" class="btn btn-outline btn-sm">Edit</button>
                         <label class="btn btn-outline btn-sm photo-btn">${m.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${m.photo_url ? 'Change' : 'Add'} photo for ${esc(m.name)}" onchange="changeStaffPhoto(${id}, this)"></label>
-                        <button type="button" onclick="deleteStaffMember(${id}, this.dataset.name)" data-name="${esc(m.name)}" data-demo="${isDemo ? 'true' : 'false'}" class="btn btn-outline btn-sm text-danger">${isDemo ? 'Remove demo' : 'Remove'}</button>
+                        <button type="button" onclick="deleteStaffMember(${id}, this.dataset.name)" data-name="${esc(m.name)}" class="btn btn-outline btn-sm text-danger">Remove</button>
                    </div></div>`
-                : (canManageDirectory && isDemo ? `<div class="staff-foot has-actions">${badge}<div class="staff-actions"><button type="button" onclick="promoteDemoStaffToDatabase()" class="btn btn-outline btn-sm">Save directory to database</button></div></div>` : '');
+                : `<div class="staff-foot">${badge}</div>`;
             return `
                 <div class="staff-card">
                     ${avatarHtml(m.photo_url, m.name)}
@@ -2529,7 +2529,7 @@
                         <div class="staff-role">${esc(m.role)}</div>
                         ${canEdit ? '' : `<div class="staff-foot">${badge}</div>`}
                     </div>
-                    ${foot}
+                    ${canEdit ? foot : ''}
                 </div>`;
         }
 
