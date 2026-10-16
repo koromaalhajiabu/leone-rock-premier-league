@@ -3622,12 +3622,9 @@
           {id:'publicArea', name:'Public league panels', description:'Public league tables, fixtures, match results, clubs, players and awards', keywords:'public league table fixtures results clubs players awards stats'},
           {id:'developerDataExportPanel', name:'Full system data access & downloads', description:'Existing authorised system data export tools', keywords:'download export data backup accounts finance staff'},
           {id:'developerBoardManagerPanel', name:'Executive board and governance', description:'Board members, governance and responsibilities', keywords:'executive board governance responsibility'},
-          {id:'awardBackupPanel', name:'Awards and award backups', description:'Awards and related backup tools', keywords:'golden boot playmaker golden glove awards backup'},
           {id:'themeSettingsPanel', name:'Premium appearance and theme', description:'System appearance settings', keywords:'theme appearance colours design'},
           {id:'masterUserDirectoryPanel', name:'Developer control center and accounts', description:'Registered profiles, roles and account management', keywords:'users accounts roles permissions developer'},
           {id:'leagueVerificationPanel', name:'Club and team verification', description:'View submissions and verification status; review work belongs to Super Admin', keywords:'verification club team player submissions approval'},
-          {id:'clubAdminPanelContainer', name:'Club administration', description:'Club-specific administration tools', keywords:'club roster squad players club admin'},
-          {id:'refereePanelContainer', name:'Referee and match events', description:'Referee tools and match event records', keywords:'referee match events cards goals'},
           {id:'staff-directory', name:'Staff directory', description:'Staff information and departments', keywords:'staff departments personnel'}
         ];
 
@@ -3650,6 +3647,8 @@
         function openDeveloperPanel(id) {
           if (realRole() !== 'DEVELOPER') { alert('Developer access is required.'); return; }
           const el = document.getElementById(id);
+          const roleRestrictedPanels = ['awardBackupPanel', 'clubAdminPanelContainer', 'refereePanelContainer'];
+          if (roleRestrictedPanels.includes(id)) { alert('This panel belongs to the relevant award administrator, Club Admin, or Referee role and cannot be opened from the General Overseer panel.'); return; }
           if (!el) { alert('That panel is not present in this page build yet.'); return; }
           if (id === 'publicArea') {
             setView('public', true);
