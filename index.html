@@ -155,22 +155,10 @@
         .db-ok { background: #D7F2DF; color: #0B5A28; }
         .db-warn { background: #FDE8C8; color: #8A3B07; }
         .db-off { background: #FBD9D5; color: #8E1F15; }
-    
-        
-.readonly-notice { 
-    display: flex; 
-    width: fit-content; 
-    max-width: 100%; 
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-
+        .readonly-notice { display: flex; width: fit-content; max-width: 100%; align-items: center; gap: 8px; margin-top: 12px; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; line-height: 1.35; background: rgba(255,255,255,0.12); color: #EAF4EC; border: 1px solid rgba(255,255,255,0.24); }
+        .readonly-notice svg { flex-shrink: 0; }
+        .readonly-notice.is-editing { background: rgba(30,181,58,0.22); border-color: rgba(30,181,58,0.6); }
+        .notice-action { background: none; border: 0; padding: 0 0 0 4px; font: inherit; font-weight: 700; color: #fff; text-decoration: underline; cursor: pointer; white-space: nowrap; }
 
         .scoreboard {
             position: relative; background: #061F15; border: 1px solid rgba(255,255,255,0.1);
@@ -341,6 +329,29 @@
         /* ------------------------------------------------------------
            Responsive + motion
            ------------------------------------------------------------ */
+
+        /* ------------------------------------------------------------
+           My panel / public view switch, Man of the Match
+           ------------------------------------------------------------ */
+        .view-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 14px; width: fit-content; max-width: 100%; scroll-margin-top: 84px; box-shadow: 0 1px 2px rgba(10,46,31,0.05); }
+        .view-tab { font: inherit; font-size: 14px; font-weight: 700; padding: 9px 18px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+        .view-tab:hover { background: #EEF2EE; color: var(--ink); }
+        .view-tab.is-active { background: var(--pitch); color: #fff; }
+        .view-tab:focus-visible { outline: 3px solid rgba(11,95,165,0.45); outline-offset: 2px; }
+        .workspace-head { margin-bottom: 16px; }
+        .workspace-head h2 { font-size: 22px; font-weight: 800; }
+        .workspace-head p { color: var(--muted); font-size: 14px; margin-top: 2px; }
+        .avatar-xl { width: 96px; height: 96px; font-size: 30px; box-shadow: 0 0 0 3px var(--gold-soft), 0 0 0 4px var(--gold); }
+        .motm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+        .motm-card { display: grid; grid-template-columns: auto 1fr; gap: 12px 16px; align-items: center; padding: 16px; border-radius: var(--radius-panel); border: 1px solid var(--gold-soft); background: linear-gradient(135deg, #FFFBEA 0%, #F8FAF7 70%); }
+        .motm-label { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+        .motm-name { font-size: 18px; font-weight: 800; line-height: 1.2; margin-top: 2px; overflow-wrap: anywhere; }
+        .motm-team { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 14px; font-weight: 600; }
+        .motm-shirt { display: inline-grid; place-items: center; min-width: 30px; height: 26px; padding: 0 8px; border-radius: 8px; background: var(--pitch); color: #fff; font-size: 13px; font-weight: 800; }
+        .motm-match { margin-top: 6px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+        .motm-card .motm-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+        .motm-empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 18px 8px; }
+
         @media (max-width: 860px) {
             .hero-inner { grid-template-columns: 1fr; padding: 40px 20px 48px; gap: 32px; }
             .brand-name { font-size: 14px; }
@@ -395,6 +406,7 @@
                     <div id="adminDropdownContent" class="dropdown-content">
                         <div id="sessionInfo" class="session-info hidden"></div>
                         <button type="button" id="menuPhoto" onclick="openPhotoModal()" class="menu-item hidden">My profile photo</button>
+                        <button type="button" id="menuPreview" onclick="setVisitorPreview(!previewAsVisitor)" class="menu-item hidden">View as visitor (read-only)</button>
                         <button type="button" id="menuSignIn" onclick="openAuthModal('signin')" class="menu-item">Sign in</button>
                         <button type="button" id="menuSignUp" onclick="openAuthModal('signup')" class="menu-item">Create account</button>
                         <button type="button" id="menuSignOut" onclick="logoutSystem()" class="menu-item hidden">Sign out</button>
@@ -416,7 +428,7 @@
                 <div id="authMessage" class="auth-message" aria-live="polite"></div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button type="submit" id="authSubmitBtn" class="btn btn-primary">Sign in</button>
-                    <button type="button" id="authCancelBtn" class="btn btn-outline">Cancel</button>
+                    <button type="button" class="btn btn-outline" onclick="closeAuthModal()">Cancel</button>
                 </div>
                 <div style="margin-top:16px;">
                     <button type="button" id="authSwitchLink" class="auth-link" onclick="toggleAuthMode()">No account yet? Create one</button>
@@ -464,12 +476,13 @@
                 <p class="hero-lead">Official league management for clubs, match officials and administrators. Follow the table, the scorers and every match incident as it is recorded.</p>
                 <div class="hero-actions">
                     <a href="#standings" class="btn btn-light" style="text-decoration:none;">View standings</a>
-                    <button type="button" id="staffSignInButton" class="btn btn-ghost">Staff sign in</button>
+                    <button type="button" class="btn btn-ghost" onclick="openAuthModal('signin')">Staff sign in</button>
                 </div>
                 <span id="dbStatus" class="db-status hidden" role="status"></span>
                 <div id="readOnlyNotice" class="readonly-notice hidden" role="status">
                     <svg width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9V6.5a4 4 0 1 1 8 0V9M5 9h10v8H5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span id="readOnlyText"></span>
+                    <button type="button" id="noticeAction" class="notice-action hidden" onclick="setVisitorPreview(!previewAsVisitor)"></button>
                 </div>
             </div>
             <div class="scoreboard">
@@ -492,6 +505,13 @@
 
     <main class="app-shell">
 
+        <!-- Switch between "My panel" and the public pages (only for signed-in editors) -->
+        <nav id="viewTabs" class="view-tabs hidden" aria-label="Choose what to show">
+            <button type="button" id="tabWorkspace" class="view-tab" onclick="setView('workspace', true)">My panel</button>
+            <button type="button" id="tabPublic" class="view-tab" onclick="setView('public', true)">Public view</button>
+        </nav>
+
+        <div id="publicArea">
         <!-- 1. Public league sections: each has its own dropdown -->
         <div class="section-toolbar" id="publicSectionControls">
             <span>Tap a heading to open or close that section.</span>
@@ -500,247 +520,6 @@
                 <button type="button" class="btn btn-outline btn-sm" onclick="setPublicSections(false)">Close all</button>
             </div>
         </div>
-
-<style>
-.motm-card {
-  background: linear-gradient(135deg,#7f1018,#c51e2a,#8f101b);
-  color: white;
-  border-radius: 18px;
-  padding: 18px;
-  margin: 0 0 20px;
-  box-shadow: 0 10px 25px rgba(95,10,20,.18);
-}
-.motm-layout {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.motm-photo {
-  width: 82px;
-  height: 82px;
-  flex: 0 0 82px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 3px solid white;
-  background: #f4d9db;
-}
-.motm-eyebrow {
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  font-weight: 800;
-  margin-bottom: 6px;
-}
-.motm-name {
-  font-size: 24px;
-  line-height: 1.2;
-  font-weight: 900;
-  margin: 0 0 7px;
-}
-.motm-meta { font-size: 14px; }
-.motm-controls {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255,255,255,.35);
-}
-.motm-controls label {
-  display: block;
-  margin: 10px 0;
-  font-size: 13px;
-}
-.motm-controls input {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 11px;
-  margin-top: 5px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  color: #222;
-  background: white;
-}
-.motm-controls button {
-  padding: 11px 14px;
-  margin: 8px 6px 0 0;
-  border: 1px solid white;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-}
-@media(max-width:480px) {
-  .motm-card { padding: 14px; }
-  .motm-layout { gap: 12px; }
-  .motm-photo { width: 70px; height: 70px; flex-basis: 70px; }
-  .motm-name { font-size: 20px; }
-}
-</style>
-
-<section id="manOfTheMatchCard" class="motm-card">
-  <div class="motm-layout">
-    <img id="motmPublicPhoto" class="motm-photo"
-      alt="Man of the Match player photo"
-      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f4d9db'/%3E%3Ccircle cx='50' cy='35' r='18' fill='%23b86c72'/%3E%3Cpath d='M15 100c2-27 16-40 35-40s33 13 35 40' fill='%23b86c72'/%3E%3C/svg%3E">
-    <div>
-      <div class="motm-eyebrow">⭐ Man of the Match</div>
-      <h2 id="motmPublicName" class="motm-name">Awaiting announcement</h2>
-      <div id="motmPublicMeta" class="motm-meta">
-        The featured player will appear here.
-      </div>
-    </div>
-  </div>
-
-  <div id="motmDeveloperControls" class="motm-controls" hidden>
-    <strong>Developer: Publish Man of the Match</strong>
-
-    <label>Player name
-      <input id="motmPlayerName" type="text" placeholder="Player full name">
-    </label>
-
-    <label>Team / club
-      <input id="motmTeamName" type="text" placeholder="Club name">
-    </label>
-
-    <label>Jersey number
-      <input id="motmJerseyNumber" type="number" min="0" max="99" placeholder="10">
-    </label>
-
-    <label>Player photo URL (optional)
-      <input id="motmPhotoUrl" type="url" placeholder="https://example.com/player.jpg">
-    </label>
-
-    <button type="button" onclick="saveManOfTheMatch()">
-      Publish
-    </button>
-    <button type="button" onclick="clearManOfTheMatch()">
-      Clear announcement
-    </button>
-  </div>
-</section>
-
-<script>
-(function () {
-  const placeholder =
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f4d9db'/%3E%3Ccircle cx='50' cy='35' r='18' fill='%23b86c72'/%3E%3Cpath d='M15 100c2-27 16-40 35-40s33 13 35 40' fill='%23b86c72'/%3E%3C/svg%3E";
-
-  function developerAllowed() {
-    return typeof getRole === "function" &&
-      String(getRole()).toUpperCase() === "DEVELOPER";
-  }
-
-  function updatePublic(player) {
-    document.getElementById("motmPublicName").textContent =
-      player.name || "Awaiting announcement";
-
-    document.getElementById("motmPublicMeta").textContent =
-      player.name
-        ? (player.team || "Team not specified") +
-          " • Jersey #" +
-          (player.number === "" || player.number == null ? "—" : player.number)
-        : "The featured player will appear here.";
-
-    const photo = document.getElementById("motmPublicPhoto");
-    photo.src = player.photo && /^https:\/\//i.test(player.photo)
-      ? player.photo
-      : placeholder;
-  }
-
-  window.loadManOfTheMatch = async function () {
-    try {
-      const result = await db.from("app_settings")
-        .select("value")
-        .eq("key", "man_of_the_match")
-        .maybeSingle();
-
-      if (result.error) throw result.error;
-      updatePublic(result.data && result.data.value
-        ? result.data.value : {});
-    } catch (e) {
-      console.error("Man of the Match load error:", e);
-    }
-  };
-
-  window.saveManOfTheMatch = async function () {
-    if (!developerAllowed()) {
-      alert("Only the Developer can publish this announcement.");
-      return;
-    }
-
-    const name = document.getElementById("motmPlayerName").value.trim();
-    const team = document.getElementById("motmTeamName").value.trim();
-    const number = document.getElementById("motmJerseyNumber").value.trim();
-    const photo = document.getElementById("motmPhotoUrl").value.trim();
-
-    if (!name || !team || number === "") {
-      alert("Enter the player's name, team and jersey number.");
-      return;
-    }
-
-    if (photo && !/^https:\/\//i.test(photo)) {
-      alert("The photo URL must begin with https://");
-      return;
-    }
-
-    try {
-      const result = await db.from("app_settings").upsert({
-        key: "man_of_the_match",
-        value: {
-          name: name,
-          team: team,
-          number: number,
-          photo: photo,
-          updated_at: new Date().toISOString()
-        }
-      }, { onConflict: "key" });
-
-      if (result.error) throw result.error;
-      await window.loadManOfTheMatch();
-      alert("Man of the Match published.");
-    } catch (e) {
-      alert("Could not publish: " + e.message);
-    }
-  };
-
-  window.clearManOfTheMatch = async function () {
-    if (!developerAllowed()) {
-      alert("Only the Developer can clear this announcement.");
-      return;
-    }
-
-    if (!confirm("Clear the Man of the Match announcement?")) return;
-
-    try {
-      const result = await db.from("app_settings").upsert({
-        key: "man_of_the_match",
-        value: {}
-      }, { onConflict: "key" });
-
-      if (result.error) throw result.error;
-
-      ["motmPlayerName", "motmTeamName", "motmJerseyNumber", "motmPhotoUrl"]
-        .forEach(function (id) {
-          document.getElementById(id).value = "";
-        });
-
-      updatePublic({});
-      alert("Announcement cleared.");
-    } catch (e) {
-      alert("Could not clear announcement: " + e.message);
-    }
-  };
-
-  function initMotm() {
-    const controls = document.getElementById("motmDeveloperControls");
-    if (controls) controls.hidden = !developerAllowed();
-    if (typeof db !== "undefined") window.loadManOfTheMatch();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initMotm);
-  } else {
-    initMotm();
-  }
-})();
-</script>
 
         <section id="standings" class="accordion-card" style="--accent: var(--green);">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="standingsContent" onclick="toggleAccordion('standingsContent', this)" onkeydown="accordionKey(event, 'standingsContent', this)">
@@ -833,6 +612,22 @@
             </div>
         </section>
 
+        <!-- Man of the Match (posted by match officials) -->
+        <section id="man-of-the-match" class="accordion-card" style="--accent: var(--gold);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="motmContent" onclick="toggleAccordion('motmContent', this)" onkeydown="accordionKey(event, 'motmContent', this)">
+                <div>
+                    <h2>Man of the Match</h2>
+                    <p>The standout player of each match, chosen by the match officials</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="motmContent" class="accordion-content">
+                <div id="publicMotmGrid" class="motm-grid"><p class="motm-empty">Loading Man of the Match...</p></div>
+            </div>
+        </section>
+
         <section id="incidents" class="accordion-card" style="--accent: var(--danger);">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="incidentsContent" onclick="toggleAccordion('incidentsContent', this)" onkeydown="accordionKey(event, 'incidentsContent', this)">
                 <div>
@@ -856,45 +651,14 @@
                 </div>
             </div>
         </section>
+        </div>
 
-        <!-- 2. Executive staff directory -->
-        <section id="staff-directory" class="accordion-card" style="--accent: var(--blue);">
-            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="staffAccordionContent" onclick="toggleAccordion('staffAccordionContent', this)" onkeydown="accordionKey(event, 'staffAccordionContent', this)">
-                <div>
-                    <h2>Executive and staff directory</h2>
-                    <p>League board members, officials and operations staff</p>
-                </div>
-                <div class="card-meta">
-                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
-            </div>
-            <div id="staffAccordionContent" class="accordion-content">
-                <div id="staffActionControls" class="toolbar hidden">
-                    <button type="button" id="staffFormToggle" onclick="toggleStaffForm()" class="btn btn-primary btn-sm" aria-expanded="false" aria-controls="staffFormPanel">Add personnel</button>
-                </div>
-                <div id="staffFormPanel" class="form-panel hidden" style="margin-top:12px;">
-                    <h3>Add a staff member</h3>
-                    <p class="section-hint">Choose the department so the person appears in the right group of the directory.</p>
-                    <div class="grid-2">
-                        <label class="field"><span>Full name</span><input type="text" id="staffName" placeholder="e.g., Dr. Brima Kamara" autocomplete="off"></label>
-                        <label class="field"><span>Job title</span><input type="text" id="staffTitle" placeholder="e.g., Head of Media" autocomplete="off"></label>
-                        <label class="field"><span>Department</span><select id="staffDepartment"></select></label>
-                        <div class="photo-field">
-                            <span class="avatar avatar-lg photo-preview" id="staffPhotoPreview" aria-hidden="true">+</span>
-                            <div>
-                                <label class="btn btn-outline btn-sm photo-btn">Attach photo<input type="file" id="staffPhotoInput" accept="image/*" class="sr-only" onchange="onPhotoChosen(this, 'staffPhotoPreview')"></label>
-                                <div class="hint">A clear photo of the person's face (JPG, PNG or WebP).</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-actions" style="gap:10px;">
-                        <button type="button" onclick="toggleStaffForm(false)" class="btn btn-outline">Cancel</button>
-                        <button type="button" id="staffSaveBtn" onclick="saveStaffMember()" class="btn btn-primary">Save staff member</button>
-                    </div>
-                </div>
-                <div id="staffGridContainer" style="margin-top:16px;"></div>
-            </div>
-        </section>
+        <!-- My panel: opens automatically after sign-in -->
+        <div id="workspaceArea" class="hidden">
+        <div class="workspace-head">
+            <h2 id="workspaceTitle">My panel</h2>
+            <p id="workspaceSub"></p>
+        </div>
 
         <!-- 3. Club administration (Club Admin and Developer) -->
         <section id="clubAdminPanelContainer" class="accordion-card hidden" style="--accent: var(--amber);">
@@ -946,7 +710,7 @@
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="refereeAccordionContent" onclick="toggleAccordion('refereeAccordionContent', this)" onkeydown="accordionKey(event, 'refereeAccordionContent', this)">
                 <div>
                     <h2>Match official portal</h2>
-                    <p>Record goals, cards and substitutions during a match</p>
+                    <p>Record match incidents and post the Man of the Match</p>
                 </div>
                 <div class="card-meta">
                     <span class="badge badge-success">Match official</span>
@@ -973,6 +737,32 @@
                         <button type="button" onclick="submitMatchIncident()" class="btn btn-success">Record incident</button>
                     </div>
                 </div>
+
+                <div class="form-panel" id="motmFormPanel">
+                    <h3 id="motmFormTitle">Post Man of the Match</h3>
+                    <p class="section-hint">Everything you post here appears in the public "Man of the Match" section for all visitors.</p>
+                    <div class="grid-2" style="margin-top:12px;">
+                        <label class="field span-all"><span>Match</span><input type="text" id="motmMatch" maxlength="120" placeholder="e.g., Freetown FC vs Eastern Lions" autocomplete="off"></label>
+                        <label class="field"><span>Match date</span><input type="date" id="motmDate"></label>
+                        <label class="field"><span>Player's full name</span><input type="text" id="motmPlayer" maxlength="80" placeholder="e.g., Alpha Jalloh" autocomplete="off"></label>
+                        <label class="field"><span>Team</span><input type="text" id="motmTeam" maxlength="80" placeholder="e.g., Freetown FC" autocomplete="off"></label>
+                        <label class="field"><span>Shirt number</span><input type="number" id="motmShirt" min="1" max="99" inputmode="numeric" placeholder="e.g., 9"></label>
+                        <div class="photo-field span-all">
+                            <span class="avatar avatar-lg photo-preview" id="motmPhotoPreview" aria-hidden="true">+</span>
+                            <div>
+                                <label class="btn btn-outline btn-sm photo-btn">Upload player photo<input type="file" id="motmPhotoInput" accept="image/*" class="sr-only" onchange="onPhotoChosen(this, 'motmPhotoPreview')"></label>
+                                <div class="hint">A clear photo of the player (JPG, PNG or WebP).</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="gap:10px;">
+                        <button type="button" id="motmCancelBtn" onclick="resetMotmForm()" class="btn btn-outline hidden">Cancel edit</button>
+                        <button type="button" id="motmSaveBtn" onclick="saveMotm()" class="btn btn-success">Post Man of the Match</button>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Man of the Match already posted</h3>
+                <div id="refereeMotmList" class="motm-grid" style="margin:10px 0 24px;"></div>
 
                 <h3 class="section-title">Official incident log</h3>
                 <div class="table-container" style="margin-top:10px;">
@@ -1105,6 +895,46 @@
                 </div>
             </div>
         </section>
+        </div>
+
+        <!-- 2. Executive staff directory -->
+        <section id="staff-directory" class="accordion-card" style="--accent: var(--blue);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="staffAccordionContent" onclick="toggleAccordion('staffAccordionContent', this)" onkeydown="accordionKey(event, 'staffAccordionContent', this)">
+                <div>
+                    <h2>Executive and staff directory</h2>
+                    <p>League board members, officials and operations staff</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="staffAccordionContent" class="accordion-content">
+                <div id="staffActionControls" class="toolbar hidden">
+                    <button type="button" id="staffFormToggle" onclick="toggleStaffForm()" class="btn btn-primary btn-sm" aria-expanded="false" aria-controls="staffFormPanel">Add personnel</button>
+                </div>
+                <div id="staffFormPanel" class="form-panel hidden" style="margin-top:12px;">
+                    <h3>Add a staff member</h3>
+                    <p class="section-hint">Choose the department so the person appears in the right group of the directory.</p>
+                    <div class="grid-2">
+                        <label class="field"><span>Full name</span><input type="text" id="staffName" placeholder="e.g., Dr. Brima Kamara" autocomplete="off"></label>
+                        <label class="field"><span>Job title</span><input type="text" id="staffTitle" placeholder="e.g., Head of Media" autocomplete="off"></label>
+                        <label class="field"><span>Department</span><select id="staffDepartment"></select></label>
+                        <div class="photo-field">
+                            <span class="avatar avatar-lg photo-preview" id="staffPhotoPreview" aria-hidden="true">+</span>
+                            <div>
+                                <label class="btn btn-outline btn-sm photo-btn">Attach photo<input type="file" id="staffPhotoInput" accept="image/*" class="sr-only" onchange="onPhotoChosen(this, 'staffPhotoPreview')"></label>
+                                <div class="hint">A clear photo of the person's face (JPG, PNG or WebP).</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="gap:10px;">
+                        <button type="button" onclick="toggleStaffForm(false)" class="btn btn-outline">Cancel</button>
+                        <button type="button" id="staffSaveBtn" onclick="saveStaffMember()" class="btn btn-primary">Save staff member</button>
+                    </div>
+                </div>
+                <div id="staffGridContainer" style="margin-top:16px;"></div>
+            </div>
+        </section>
     </main>
 
     <footer>
@@ -1164,49 +994,9 @@
             db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             dbOnline = true;
         } catch (err) {
-            console.warn('Primary Supabase library did not initialise; using offline placeholder temporarily: ' + err.message);
+            console.warn('Running without database: ' + err.message);
             db = createOfflineDb();
-
-            // Recover the full application if the primary Supabase CDN was blocked
-            // or unavailable. Replacing the offline placeholder is essential:
-            // otherwise successful fallback login still returns to the Viewer panel.
-            const recoverySources = [
-                'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
-                'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
-            ];
-            const loadSupabaseRecovery = (index) => {
-                if (index >= recoverySources.length) {
-                    console.error('Supabase library could not be loaded from the recovery CDNs.');
-                    return;
-                }
-                const script = document.createElement('script');
-                script.src = recoverySources[index];
-                script.async = true;
-                script.onload = () => {
-                    try {
-                        if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
-                            throw new Error('Supabase createClient is unavailable after loading the recovery library.');
-                        }
-                        db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                        dbOnline = true;
-                        window.__leagueSupabaseClient = db;
-                        console.info('Supabase recovery succeeded; refreshing the signed-in profile.');
-                        initAuth().then(() => {
-                            checkConnection();
-                            applyRoleUI();
-                        }).catch(error => console.error('Recovered auth initialisation failed:', error));
-                    } catch (recoveryError) {
-                        console.error('Supabase recovery initialisation failed:', recoveryError);
-                        loadSupabaseRecovery(index + 1);
-                    }
-                };
-                script.onerror = () => loadSupabaseRecovery(index + 1);
-                document.head.appendChild(script);
-            };
-            loadSupabaseRecovery(0);
         }
-        // Expose the configured client for the standalone mobile auth recovery handler.
-        window.__leagueSupabaseClient = db;
 
         // ------------------------------------------------------------------
         // READ-ONLY MODE: visitors who are signed out, and accounts with the Viewer role
@@ -1305,6 +1095,9 @@
         function friendlyError(err) {
             const msg = (err && err.message) ? err.message : String(err || 'Something went wrong.');
             if (/row-level security|not allowed|permission denied/i.test(msg)) return 'Your account does not have permission to do that.';
+            if (/man_of_the_match/i.test(msg)) {
+                return 'The database still needs the Man of the Match upgrade. Run supabase-upgrade-man-of-the-match.sql in Supabase, then try again.';
+            }
             if (/photo_url|department|member-photos|bucket not found|schema cache|could not find the function/i.test(msg)) {
                 return 'The database still needs the photo upgrade. Run supabase-upgrade-photos-staff.sql in Supabase, then try again.';
             }
@@ -1412,9 +1205,72 @@
         };
         const ASSIGNABLE_ROLES = ['SUPER_ADMIN', 'CLUB_ADMIN', 'REFEREE', 'STAFF', 'VIEWER'];
 
-        function getRole() {
+        // "Preview as visitor": a signed-in editor can look at exactly what the public sees.
+        // It is never saved; reloading the page ends it.
+        let previewAsVisitor = false;
+
+        function realRole() {
             if (!currentProfile || currentProfile.status === 'Suspended') return null;
             return currentProfile.system_role || null;
+        }
+
+        function getRole() {
+            return previewAsVisitor ? null : realRole();
+        }
+
+        function canEditForReal() {
+            const role = realRole();
+            return !!role && role !== 'VIEWER' && role !== 'STAFF';
+        }
+
+        function setVisitorPreview(on) {
+            previewAsVisitor = !!on && canEditForReal();
+            if (previewAsVisitor) viewMode = 'public';
+            closeAdminDropdown();
+            applyRoleUI();
+            loadStaffData();
+        }
+
+        // "My panel" (the role's own tools) or the public pages. Signing in as an editor opens My panel.
+        let viewMode = 'public';
+        let lastViewUserId = null;
+
+        const WORKSPACE_NAMES = {
+            DEVELOPER: 'Developer panel',
+            SUPER_ADMIN: 'Super Admin panel',
+            CLUB_ADMIN: 'Club manager panel',
+            REFEREE: 'Referee panel'
+        };
+        const WORKSPACE_HINTS = {
+            DEVELOPER: 'Assign roles, update the league tables, publish notices, and manage squads and match records.',
+            SUPER_ADMIN: 'Manage the executive and staff directory below.',
+            CLUB_ADMIN: 'Register and manage the players of your club.',
+            REFEREE: 'Record match incidents and post the Man of the Match for the public pages.'
+        };
+
+        function inWorkspace() {
+            return canEditForReal() && !previewAsVisitor && viewMode === 'workspace';
+        }
+
+        function scrollToViewTabs() {
+            setTimeout(() => {
+                const el = document.getElementById('viewTabs');
+                if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 60);
+        }
+
+        function setView(mode, scroll) {
+            if (mode === 'workspace') {
+                if (!canEditForReal()) return;
+                previewAsVisitor = false;
+                viewMode = 'workspace';
+            } else {
+                viewMode = 'public';
+            }
+            closeAdminDropdown();
+            applyRoleUI();
+            loadStaffData();
+            if (scroll) scrollToViewTabs();
         }
 
         // ------------------------------------------------------------------
@@ -1439,6 +1295,7 @@
             });
 
             populateDepartments();
+            resetMotmForm();
             checkConnection();
             checkSystemFreeze();
             loadStaffData();
@@ -1448,6 +1305,7 @@
             loadTopAssists();
             loadCleanSheets();
             loadMatchEvents();
+            loadMotm();
             initAuth();
         });
 
@@ -1476,7 +1334,7 @@
 
         // Open or close every public section at once (standings, Golden Boot, Playmakers,
         // Golden Glove, incidents and the staff directory).
-        const PUBLIC_SECTIONS = ['standingsContent', 'goldenBootContent', 'playmakersContent', 'goldenGloveContent', 'incidentsContent', 'staffAccordionContent'];
+        const PUBLIC_SECTIONS = ['standingsContent', 'goldenBootContent', 'playmakersContent', 'goldenGloveContent', 'motmContent', 'incidentsContent', 'staffAccordionContent'];
 
         function setPublicSections(open) {
             PUBLIC_SECTIONS.forEach(id => {
@@ -1539,75 +1397,59 @@
         // ------------------------------------------------------------------
         async function initAuth() {
             try {
-                // Reuse the recovered client if the initial CDN failed; do not let
-                // a later initialisation overwrite the working auth client.
-                if (window.__leagueSupabaseClient && window.__leagueSupabaseClient.auth &&
-                    typeof window.__leagueSupabaseClient.auth.getSession === 'function' &&
-                    db !== window.__leagueSupabaseClient) {
-                    db = window.__leagueSupabaseClient;
-                    dbOnline = true;
-                }
-                const { data, error } = await db.auth.getSession();
-                if (error) throw error;
+                const { data } = await db.auth.getSession();
                 await applySession(data && data.session);
-                if (!window.__leagueAuthListenerBound) {
-                    window.__leagueAuthListenerBound = true;
-                    db.auth.onAuthStateChange((event, session) => {
-                        if (event === 'INITIAL_SESSION') return;
-                        // Run outside the callback so Supabase calls inside it cannot deadlock
-                        setTimeout(() => applySession(session), 0);
-                    });
-                }
+                db.auth.onAuthStateChange((event, session) => {
+                    if (event === 'INITIAL_SESSION') return;
+                    // Run outside the callback so Supabase calls inside it cannot deadlock
+                    setTimeout(() => applySession(session), 0);
+                });
             } catch (err) {
-                console.error('League auth initialisation failed:', err);
-                window.__profileLoadMessage = 'Authentication initialisation failed: ' + (err.message || 'unknown error');
                 await applySession(null);
             }
         }
 
-        async function applySession(session) {
-            currentUser = session ? session.user : null;
-            currentProfile = null;
-            let profileLoadMessage = '';
+        let sessionSeq = 0;
 
-            // Prefer the recovered real Supabase client over an offline placeholder.
-            const activeClient = window.__leagueSupabaseClient &&
-                window.__leagueSupabaseClient.auth &&
-                typeof window.__leagueSupabaseClient.from === 'function'
-                ? window.__leagueSupabaseClient : db;
-            if (activeClient && activeClient !== db) {
-                db = activeClient;
-                dbOnline = true;
-            }
-
-            if (currentUser) {
+        async function fetchMyProfile(userId) {
+            for (let attempt = 0; attempt < 3; attempt++) {
                 try {
-                    if (!db || typeof db.from !== 'function') throw new Error('Supabase database client is not ready.');
-                    const { data, error } = await db
-                        .from('user_profiles')
-                        .select('id, system_role, status, full_name, email')
-                        .eq('id', currentUser.id)
-                        .maybeSingle();
+                    const { data, error } = await db.from('user_profiles').select('*').eq('id', userId).maybeSingle();
+                    if (!error && data) return data;
+                } catch (err) {}
+                await new Promise(resolve => setTimeout(resolve, 350 * (attempt + 1)));
+            }
+            return null;
+        }
 
-                    if (error) {
-                        console.error('User profile lookup failed:', error);
-                        profileLoadMessage = 'Profile lookup failed: ' + (error.message || 'database error');
-                    } else if (!data) {
-                        profileLoadMessage = 'No profile matched this signed-in user ID (' + currentUser.id + '). Check that user_profiles.id equals the Auth user ID.';
-                    } else {
-                        currentProfile = data;
-                        if (String(data.system_role || '').toUpperCase() === 'DEVELOPER') currentProfile.system_role = 'DEVELOPER';
-                        if (String(data.status || '').toLowerCase() === 'suspended') currentProfile.status = 'Suspended';
-                    }
-                } catch (err) {
-                    console.error('User profile lookup exception:', err);
-                    profileLoadMessage = 'Could not load profile: ' + (err.message || 'check Supabase connection and user_profiles SELECT policy');
-                }
+        async function applySession(session) {
+            const seq = ++sessionSeq;
+            const user = session ? session.user : null;
+            let profile = null;
+            if (user) {
+                profile = await fetchMyProfile(user.id);
+                if (seq !== sessionSeq) return;   // a newer sign-in/out already took over
+                // A background token refresh must never downgrade a signed-in editor
+                if (!profile && currentUser && currentUser.id === user.id) profile = currentProfile;
+            }
+            currentUser = user;
+            currentProfile = profile;
+
+            // A new sign-in lands on the person's own panel (not the public pages)
+            let justOpened = false;
+            if (!user) {
+                lastViewUserId = null;
+                viewMode = 'public';
+                previewAsVisitor = false;
+            } else if (user.id !== lastViewUserId) {
+                lastViewUserId = user.id;
+                viewMode = canEditForReal() ? 'workspace' : 'public';
+                justOpened = viewMode === 'workspace';
             }
 
-            window.__profileLoadMessage = profileLoadMessage;
             applyRoleUI();
             loadStaffData();
+            if (justOpened) scrollToViewTabs();
         }
 
         function applyRoleUI() {
@@ -1619,12 +1461,37 @@
                 if (el) el.classList.toggle('hidden', !on);
             };
 
+            const working = inWorkspace();
+            const real = realRole();
+            show('viewTabs', canEditForReal() && !previewAsVisitor);
+            show('publicArea', !working);
+            show('workspaceArea', working);
+            show('staff-directory', !working || isDev || isAdmin);
+            const tabW = document.getElementById('tabWorkspace');
+            const tabP = document.getElementById('tabPublic');
+            if (tabW) {
+                tabW.textContent = WORKSPACE_NAMES[real] || 'My panel';
+                tabW.classList.toggle('is-active', working);
+                tabW.setAttribute('aria-pressed', String(working));
+            }
+            if (tabP) {
+                tabP.classList.toggle('is-active', !working);
+                tabP.setAttribute('aria-pressed', String(!working));
+            }
+            const wTitle = document.getElementById('workspaceTitle');
+            const wSub = document.getElementById('workspaceSub');
+            if (wTitle) wTitle.textContent = WORKSPACE_NAMES[real] || 'My panel';
+            if (wSub) wSub.textContent = WORKSPACE_HINTS[real] || '';
+
             show('masterUserDirectoryPanel', isDev);
             show('clubAdminPanelContainer', isDev || role === 'CLUB_ADMIN');
             show('refereePanelContainer', isDev || role === 'REFEREE');
             show('staffActionControls', isDev || isAdmin);
             if (!(isDev || isAdmin)) show('staffFormPanel', false);
             show('menuPhoto', !!currentUser && !isReadOnly());
+            show('menuPreview', !!currentUser && canEditForReal());
+            const previewItem = document.getElementById('menuPreview');
+            if (previewItem) previewItem.textContent = previewAsVisitor ? 'Exit visitor preview' : 'View as visitor (read-only)';
             renderReadOnlyNotice();
             show('logoutBtn', !!currentUser);
             show('menuSignIn', !currentUser);
@@ -1636,20 +1503,42 @@
             if (isDev) fetchMasterUserDirectory();
             if (isDev || role === 'CLUB_ADMIN') loadClubRoster();
             if (isDev || role === 'REFEREE') loadMatchEvents();
+            renderMotm();
             renderDbStatus();
         }
 
         function renderReadOnlyNotice() {
             const box = document.getElementById('readOnlyNotice');
             const text = document.getElementById('readOnlyText');
-            if (!box || !text) return;
-            if (!isReadOnly()) { box.classList.add('hidden'); return; }
+            const action = document.getElementById('noticeAction');
+            if (!box || !text || !action) return;
+
             let message;
-            if (!currentUser) message = 'You are viewing in read-only mode. Staff and officials sign in to manage the league.';
-            else if (currentProfile && currentProfile.status === 'Suspended') message = 'This account is suspended. You have read-only access.';
-            else if (currentProfile && currentProfile.system_role === 'STAFF') message = 'Staff accounts have read-only access. You can view all league information but not change it.';
-            else message = 'Read-only access. A Developer must assign your role before you can make changes.';
+            let editing = false;
+            let actionLabel = '';
+            if (previewAsVisitor) {
+                message = 'Visitor preview: this is exactly what the public sees. Nothing can be changed.';
+                actionLabel = 'Exit preview';
+            } else if (!isReadOnly()) {
+                editing = true;
+                message = 'Editing enabled for your ' + (ROLE_LABELS[realRole()] || 'staff') + ' account.';
+                actionLabel = 'View as visitor';
+            } else if (!currentUser) {
+                message = 'You are viewing in read-only mode. Staff and officials sign in to manage the league.';
+            } else if (currentUser && !currentProfile) {
+                message = 'You are signed in, but your role could not be loaded. Refresh the page to try again.';
+            } else if (currentProfile && currentProfile.status === 'Suspended') {
+                message = 'This account is suspended. You have read-only access.';
+            } else if (currentProfile && currentProfile.system_role === 'STAFF') {
+                message = 'Staff accounts have read-only access. You can view all league information but not change it.';
+            } else {
+                message = 'Read-only access. A Developer must assign your role before you can make changes.';
+            }
+
             text.textContent = message;
+            box.classList.toggle('is-editing', editing);
+            action.textContent = actionLabel;
+            action.classList.toggle('hidden', !actionLabel);
             box.classList.remove('hidden');
         }
 
@@ -1658,12 +1547,7 @@
             if (!info) return;
             if (!currentUser) { info.classList.add('hidden'); return; }
             let line;
-            if (!currentProfile) {
-                line = 'No role found for this account yet.';
-                if (window.__profileLoadMessage) {
-                    line += '<br><span class="muted-cell">' + esc(window.__profileLoadMessage) + '</span>';
-                }
-            }
+            if (!currentProfile) line = 'No role found for this account yet.';
             else if (currentProfile.status === 'Suspended') line = 'This account is <strong>suspended</strong>. Contact the league office.';
             else if (currentProfile.system_role === 'VIEWER') line = 'Role: <strong>Viewer</strong>. Waiting for a Developer to assign your role.';
             else line = 'Role: <strong>' + esc(ROLE_LABELS[currentProfile.system_role] || currentProfile.system_role) + '</strong>';
@@ -1758,16 +1642,10 @@
         function openAuthModal(mode) {
             closeAdminDropdown();
             setAuthMode(mode || 'signin');
-            const modal = document.getElementById('authModal');
-            if (!modal) return;
             document.getElementById('authPassword').value = '';
-            modal.classList.remove('hidden');
-            // On mobile, avoid focusing an input during modal animation; this can
-            // interrupt the first tap and make Staff sign in appear unresponsive.
-            window.setTimeout(() => {
-                const first = document.getElementById(authMode === 'signup' ? 'authFullName' : 'authEmail');
-                if (first) first.focus({ preventScroll: true });
-            }, 120);
+            document.getElementById('authModal').classList.remove('hidden');
+            const first = document.getElementById(authMode === 'signup' ? 'authFullName' : 'authEmail');
+            if (first) first.focus();
         }
 
         function closeAuthModal() {
@@ -1790,26 +1668,9 @@
             setAuthMessage('Please wait...', false);
             try {
                 if (authMode === 'signin') {
-                    const { data, error } = await db.auth.signInWithPassword({ email, password });
+                    const { error } = await db.auth.signInWithPassword({ email, password });
                     if (error) throw error;
-
-                    // Apply the returned session directly; do not rely only on the
-                    // asynchronous auth-state event to refresh the visible portal.
-                    const signedInSession = data && data.session;
-                    if (signedInSession) {
-                        await applySession(signedInSession);
-                    } else {
-                        const { data: sessionData, error: sessionError } = await db.auth.getSession();
-                        if (sessionError) throw sessionError;
-                        await applySession(sessionData && sessionData.session);
-                    }
-
                     closeAuthModal();
-                    if (currentUser && (!currentProfile || !currentProfile.system_role)) {
-                        alert('You are signed in, but this account has no readable role profile. The page now shows the profile lookup result under your account information.');
-                    } else if (currentProfile && currentProfile.system_role === 'VIEWER') {
-                        alert('You are signed in successfully, but Supabase identifies this account as VIEWER, not DEVELOPER. The account role must be corrected in user_profiles.');
-                    }
                 } else {
                     if (!fullName) throw new Error('Enter your full name.');
                     const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
@@ -1823,1208 +1684,4 @@
                 }
             } catch (err) {
                 setAuthMessage(err.message || 'Something went wrong. Try again.', true);
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        // The main application script is wrapped in a closure, so inline HTML
-        // handlers and the separate mobile form binder cannot see this function
-        // unless it is deliberately exported.
-        window.handleAuthSubmit = handleAuthSubmit;
-        window.openAuthModal = openAuthModal;
-        window.closeAuthModal = closeAuthModal;
-        window.toggleAuthMode = toggleAuthMode;
-
-        async function logoutSystem() {
-            try { await db.auth.signOut(); } catch (err) {}
-            alert("You have been signed out.");
-            window.location.reload();
-        }
-
-        // ------------------------------------------------------------------
-        // SYSTEM FREEZE
-        // ------------------------------------------------------------------
-        async function checkSystemFreeze() {
-            try {
-                const { data } = await db.from('app_settings').select('value').eq('key', 'system_freeze').single();
-                if (data && data.value === true) {
-                    document.body.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#F3F6F2; text-align:center; padding:20px; font-family:system-ui,sans-serif;"><h1 style="color:#0A2E1F; font-size:28px;">Sierra Leone Premier League is under maintenance</h1><p style="color:#586861;">The league platform is temporarily unavailable. Please check back shortly.</p></div>`;
-                }
-            } catch (err) {}
-        }
-
-        // ------------------------------------------------------------------
-        // SHARED DISPLAY HELPERS
-        // ------------------------------------------------------------------
-        const rankBadge = (index) => index === 0
-            ? `<span class="rank rank-1">1</span>`
-            : `<span class="rank">${index + 1}</span>`;
-
-        function crestTone(name) {
-            let h = 0;
-            for (const ch of String(name || '')) h = (h * 31 + ch.charCodeAt(0)) % 5;
-            return h;
-        }
-
-        function clubCell(name) {
-            const initials = String(name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase();
-            return `<span class="club"><span class="crest t${crestTone(name)}">${esc(initials)}</span><strong>${esc(name)}</strong></span>`;
-        }
-
-        const EVENT_LABELS = {
-            GOAL: ['Goal', 'badge-success'],
-            YELLOW_CARD: ['Yellow card', 'badge-warning'],
-            RED_CARD: ['Red card', 'badge-danger'],
-            SUB: ['Substitution', 'badge-info']
-        };
-
-        function eventBadge(type) {
-            const entry = EVENT_LABELS[type] || [type, 'badge-role'];
-            return `<span class="badge ${entry[1]}">${esc(entry[0])}</span>`;
-        }
-
-        function leaderboardRows(rows, nameKey, valueKey) {
-            let html = '';
-            rows.forEach((row, index) => {
-                html += `<tr><td class="c">${rankBadge(index)}</td><td><div class="pl-name">${esc(row[nameKey])}</div><div class="pl-club">${esc(row.club)}</div></td><td class="stat">${esc(row[valueKey])}</td></tr>`;
-            });
-            return html;
-        }
-
-        // ------------------------------------------------------------------
-        // STAFF DIRECTORY
-        // ------------------------------------------------------------------
-        const STAFF_DEPARTMENTS = [
-            'Executive Board', 'Administration', 'Competitions and Fixtures', 'Referees Committee',
-            'Technical and Coaching', 'Medical', 'Media and Communications', 'Marketing and Sponsorship',
-            'Finance', 'Legal and Discipline', 'Security and Stewarding', 'Operations and IT', 'Other'
-        ];
-        let staffCache = [];
-
-        function populateDepartments() {
-            const sel = document.getElementById('staffDepartment');
-            if (sel && !sel.options.length) {
-                sel.innerHTML = STAFF_DEPARTMENTS.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
-            }
-        }
-
-        async function loadStaffData() {
-            const defaultStaff = [
-                { id: 1, name: "Alhaji Abu Koroma", role: "Master Developer & Tech Lead", department: "Operations and IT", status: "Active" },
-                { id: 2, name: "Yayah Koroma", role: "Executive Operations Partner", department: "Administration", status: "Active" },
-                { id: 3, name: "Dr. Brima", role: "Executive Board", department: "Executive Board", status: "Active" },
-                { id: 4, name: "Mr. Foday Turay", role: "Club Admin & Operations", department: "Administration", status: "Active" }
-            ];
-
-            try {
-                const { data, error } = await db.from('staff_registry').select('*').order('id', { ascending: true });
-                if (error) throw error;
-                if (data && data.length > 0) renderStaffGrid(data, false);
-                else renderStaffGrid(defaultStaff, true);
-            } catch (err) {
-                renderStaffGrid(defaultStaff, true);
-            }
-        }
-
-        function staffCardHtml(m, canEdit) {
-            const id = Number(m.id);
-            const badge = `<span class="badge badge-success">${esc(m.status || 'Active')}</span>`;
-            const foot = canEdit
-                ? `<div class="staff-foot has-actions">${badge}<div class="staff-actions">
-                        <label class="btn btn-outline btn-sm photo-btn">${m.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${m.photo_url ? 'Change' : 'Add'} photo for ${esc(m.name)}" onchange="changeStaffPhoto(${id}, this)"></label>
-                        <button type="button" onclick="deleteStaffMember(${id}, this.dataset.name)" data-name="${esc(m.name)}" class="btn btn-outline btn-sm text-danger">Remove</button>
-                   </div></div>`
-                : '';
-            return `
-                <div class="staff-card">
-                    ${avatarHtml(m.photo_url, m.name)}
-                    <div style="min-width:0;">
-                        <div class="staff-name">${esc(m.name)}</div>
-                        <div class="staff-role">${esc(m.role)}</div>
-                        ${canEdit ? '' : `<div class="staff-foot">${badge}</div>`}
-                    </div>
-                    ${foot}
-                </div>`;
-        }
-
-        function renderStaffGrid(staffList, isDemo) {
-            const grid = document.getElementById('staffGridContainer');
-            if (!grid) return;
-            staffCache = isDemo ? [] : staffList;
-
-            const role = getRole();
-            const canEdit = !isDemo && (role === 'SUPER_ADMIN' || role === 'DEVELOPER');
-
-            const groups = {};
-            staffList.forEach(m => {
-                const dept = m.department || 'Administration';
-                (groups[dept] = groups[dept] || []).push(m);
-            });
-            const order = STAFF_DEPARTMENTS.filter(d => groups[d])
-                .concat(Object.keys(groups).filter(d => STAFF_DEPARTMENTS.indexOf(d) === -1));
-
-            grid.innerHTML = order.map(dept =>
-                `<div class="dept-block"><h3 class="dept-title">${esc(dept)} <span class="dept-count">${groups[dept].length}</span></h3>` +
-                `<div class="staff-grid">${groups[dept].map(m => staffCardHtml(m, canEdit)).join('')}</div></div>`
-            ).join('');
-        }
-
-        function toggleStaffForm(force) {
-            const panel = document.getElementById('staffFormPanel');
-            const btn = document.getElementById('staffFormToggle');
-            if (!panel) return;
-            const open = (typeof force === 'boolean') ? force : panel.classList.contains('hidden');
-            panel.classList.toggle('hidden', !open);
-            if (btn) btn.setAttribute('aria-expanded', String(open));
-            if (open) {
-                populateDepartments();
-                const first = document.getElementById('staffName');
-                if (first) first.focus();
-            } else {
-                document.getElementById('staffName').value = '';
-                document.getElementById('staffTitle').value = '';
-                resetPhotoField('staffPhotoInput', 'staffPhotoPreview');
-            }
-        }
-
-        async function saveStaffMember() {
-            const name = document.getElementById('staffName').value.trim();
-            const title = document.getElementById('staffTitle').value.trim();
-            const department = document.getElementById('staffDepartment').value;
-            if (!name || !title) { alert("Enter the person's full name and job title."); return; }
-
-            const btn = document.getElementById('staffSaveBtn');
-            btn.disabled = true;
-            let photoUrl = null;
-            try {
-                const blob = photoDrafts.staffPhotoInput;
-                if (blob) photoUrl = await uploadPhotoBlob('staff', blob);
-                const { error } = await db.from('staff_registry').insert([{ name, role: title, department, status: 'Active', photo_url: photoUrl }]);
-                if (error) throw error;
-                alert(`${name} was added to the directory.`);
-                toggleStaffForm(false);
-                loadStaffData();
-            } catch (err) {
-                if (photoUrl) removePhotoByUrl(photoUrl);
-                alert("Could not add this person: " + friendlyError(err));
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        async function changeStaffPhoto(id, input) {
-            let url = null;
-            try {
-                const blob = await prepareImage(input.files && input.files[0]);
-                if (!blob) return;
-                url = await uploadPhotoBlob('staff', blob);
-                const { error } = await db.from('staff_registry').update({ photo_url: url }).eq('id', id);
-                if (error) throw error;
-                const old = staffCache.find(m => Number(m.id) === Number(id));
-                if (old) removePhotoByUrl(old.photo_url);
-                loadStaffData();
-            } catch (err) {
-                if (url) removePhotoByUrl(url);
-                alert("Could not save the photo: " + friendlyError(err));
-            } finally {
-                input.value = '';
-            }
-        }
-
-        async function deleteStaffMember(id, name) {
-            if (!confirm(`Remove ${name} from the staff directory?`)) return;
-            try {
-                const old = staffCache.find(m => Number(m.id) === Number(id));
-                const { error } = await db.from('staff_registry').delete().eq('id', id);
-                if (error) throw error;
-                if (old) removePhotoByUrl(old.photo_url);
-                alert(`${name} was removed.`);
-                loadStaffData();
-            } catch (err) {
-                alert("Could not remove this person: " + friendlyError(err));
-            }
-        }
-
-        // ------------------------------------------------------------------
-        // PUBLIC LEADERBOARDS
-        // ------------------------------------------------------------------
-        // Official 2026/27 Leone Rock Premier League clubs.
-        // Zeroed statistics are placeholders until verified match results are entered.
-        const defaultLeagueStandings = [
-            { club: "Bai Bureh Warriors FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Bhantal FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Bo Rangers FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Bullom Stars FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Diamond Stars FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "East End Lions FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "FC Kallon", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Kamboi Eagles FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Mighty Blackpool FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Old Edwardians FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Ports Authority FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Star SA", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Waterloo FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Western United FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Wilberforce Strikers FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-            { club: "Wusum Stars FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }
-        ];
-const defaultTopScorers = [];
-const defaultTopAssists = [];
-const defaultCleanSheets = [];
-        async function loadLeagueStandings() {
-            const tbody = document.getElementById('leagueStandingsTableBody');
-            if (!tbody) return;
-            // Always show all 16 clubs; use saved database statistics when available.
-            let savedStandings = [];
-            try {
-                const { data, error } = await db.from('league_standings').select('*').order('pts', { ascending: false });
-                if (!error && Array.isArray(data)) savedStandings = data;
-            } catch (err) {
-                console.warn('Using the built-in 2026/27 club list because standings could not be loaded:', err);
-            }
-            const savedByClub = new Map(savedStandings.map(team => [String(team.club || '').trim().toLowerCase(), team]));
-            const standingsToRender = defaultLeagueStandings.map(base => {
-                const saved = savedByClub.get(base.club.toLowerCase());
-                return saved ? { ...base, ...saved } : base;
-            });
-            // Include any additional club that an administrator has saved.
-            savedStandings.forEach(team => {
-                if (!defaultLeagueStandings.some(base => base.club.toLowerCase() === String(team.club || '').trim().toLowerCase())) {
-                    standingsToRender.push(team);
-                }
-            });
-            standingsToRender.sort((a, b) => (Number(b.pts) || 0) - (Number(a.pts) || 0) || (Number(b.gf) || 0) - (Number(a.gf) || 0) || a.club.localeCompare(b.club));
-
-            let html = '';
-            standingsToRender.forEach((team, index) => {
-                const goalDiff = (team.gf - team.ga);
-                const gdDisplay = goalDiff > 0 ? `+${goalDiff}` : goalDiff;
-                const gdClass = goalDiff > 0 ? 'gd-pos' : (goalDiff < 0 ? 'gd-neg' : '');
-                html += `<tr${index === 0 ? ' class="leader"' : ''}><td class="c">${rankBadge(index)}</td><td>${clubCell(team.club)}</td><td class="c">${esc(team.mp)}</td><td class="c">${esc(team.w)}</td><td class="c">${esc(team.d)}</td><td class="c">${esc(team.l)}</td><td class="c ${gdClass}">${esc(gdDisplay)}</td><td class="c pts">${esc(team.pts)}</td></tr>`;
-            });
-            tbody.innerHTML = html;
-        }
-
-        const defaultTopScorers = [
-            { player: "Mohamed Bangura", club: "Bo Rangers FC", goals: 12 },
-            { player: "Alpha Jalloh", club: "Freetown FC", goals: 9 },
-            { player: "Ibrahim Conteh", club: "Eastern Lions", goals: 8 },
-            { player: "Musa Kamara", club: "Mighty Blackpool", goals: 7 }
-        ];
-
-        async function loadTopScorers() {
-            const tbody = document.getElementById('topScorersTableBody');
-            if (!tbody) return;
-            let scorersToRender = defaultTopScorers;
-            try {
-                const { data } = await db.from('top_scorers').select('*').order('goals', { ascending: false });
-                if (data && data.length > 0) scorersToRender = data;
-            } catch (err) {}
-            tbody.innerHTML = leaderboardRows(scorersToRender, 'player', 'goals');
-        }
-
-        const defaultTopAssists = [
-            { player: "Musa Kamara", club: "Bo Rangers FC", assists: 8 },
-            { player: "Alpha Jalloh", club: "Freetown FC", assists: 7 },
-            { player: "Mohamed Bangura", club: "Bo Rangers FC", assists: 6 },
-            { player: "Ibrahim Conteh", club: "Eastern Lions", assists: 5 }
-        ];
-
-        async function loadTopAssists() {
-            const tbody = document.getElementById('topAssistsTableBody');
-            if (!tbody) return;
-            let assistsToRender = defaultTopAssists;
-            try {
-                const { data } = await db.from('top_assists').select('*').order('assists', { ascending: false });
-                if (data && data.length > 0) assistsToRender = data;
-            } catch (err) {}
-            tbody.innerHTML = leaderboardRows(assistsToRender, 'player', 'assists');
-        }
-
-        const defaultCleanSheets = [
-            { goalkeeper: "Mohamed Kamara", club: "Bo Rangers FC", clean_sheets: 6 },
-            { goalkeeper: "Donald Wellington", club: "Freetown FC", clean_sheets: 5 },
-            { goalkeeper: "Unisa Conteh", club: "Eastern Lions", clean_sheets: 4 },
-            { goalkeeper: "Prince Koroma", club: "Mighty Blackpool", clean_sheets: 3 }
-        ];
-
-        async function loadCleanSheets() {
-            const tbody = document.getElementById('cleanSheetsTableBody');
-            if (!tbody) return;
-            let sheetsToRender = defaultCleanSheets;
-            try {
-                const { data } = await db.from('clean_sheets').select('*').order('clean_sheets', { ascending: false });
-                if (data && data.length > 0) sheetsToRender = data;
-            } catch (err) {}
-            tbody.innerHTML = leaderboardRows(sheetsToRender, 'goalkeeper', 'clean_sheets');
-        }
-
-        // ------------------------------------------------------------------
-        // CLUB SQUAD ROSTER (with NIN) - the database only returns the rows you may see
-        // ------------------------------------------------------------------
-        let squadCache = [];
-
-        async function submitClubPlayer() {
-            const name = document.getElementById('clubPlayerName').value.trim();
-            const nin = document.getElementById('clubPlayerNIN').value.trim();
-            const position = document.getElementById('clubPlayerPosition').value.trim();
-            if (!name || !nin || !position) { alert("Complete all player fields, including the NIN."); return; }
-            if (!currentUser) { alert("Sign in first."); return; }
-
-            const btn = document.getElementById('clubSubmitBtn');
-            btn.disabled = true;
-            let photoUrl = null;
-            try {
-                const blob = photoDrafts.clubPlayerPhotoInput;
-                if (blob) photoUrl = await uploadPhotoBlob('squad/' + currentUser.id, blob);
-                const { error } = await db.from('club_squad').insert([{ player_name: name, player_nin: nin, position: position, status: 'Active', photo_url: photoUrl }]);
-                if (error) {
-                    if (error.code === '23505') throw new Error('A player with this NIN is already registered.');
-                    throw error;
-                }
-                alert("Player registered.");
-                document.getElementById('clubPlayerName').value = '';
-                document.getElementById('clubPlayerNIN').value = '';
-                document.getElementById('clubPlayerPosition').value = '';
-                resetPhotoField('clubPlayerPhotoInput', 'clubPlayerPhotoPreview');
-                loadClubRoster();
-            } catch (err) {
-                if (photoUrl) removePhotoByUrl(photoUrl);
-                alert("Could not register this player: " + friendlyError(err));
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        async function loadClubRoster() {
-            const tbody = document.getElementById('clubRosterTableBody');
-            if (!tbody) return;
-            try {
-                const { data, error } = await db.from('club_squad').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-                squadCache = data || [];
-                if (data && data.length > 0) {
-                    let html = '';
-                    data.forEach(p => {
-                        const id = Number(p.id);
-                        html += `<tr><td><span class="person">${avatarHtml(p.photo_url, p.player_name, 'avatar-sm')}<strong>${esc(p.player_name)}</strong></span></td><td><code style="font-size:13px; background:#F3F6F2; padding:2px 8px; border-radius:6px; border:1px solid var(--line);">${esc(p.player_nin || 'N/A')}</code></td><td><span class="badge badge-role">${esc(p.position)}</span></td><td><span class="badge badge-success">${esc(p.status || 'Active')}</span></td><td class="r"><label class="btn btn-outline btn-sm photo-btn">${p.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${p.photo_url ? 'Change' : 'Add'} photo for ${esc(p.player_name)}" onchange="changeClubPlayerPhoto(${id}, this)"></label> <button type="button" onclick="deleteClubPlayer(${id})" class="btn btn-outline btn-sm text-danger">Remove</button></td></tr>`;
-                    });
-                    tbody.innerHTML = html;
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="5" class="muted-cell">No players registered yet. Use the form above to add the first one.</td></tr>`;
-                }
-            } catch (err) { tbody.innerHTML = `<tr><td colspan="5" class="muted-cell">The squad roster could not be loaded.</td></tr>`; }
-        }
-
-        async function changeClubPlayerPhoto(id, input) {
-            if (!currentUser) return;
-            let url = null;
-            try {
-                const blob = await prepareImage(input.files && input.files[0]);
-                if (!blob) return;
-                url = await uploadPhotoBlob('squad/' + currentUser.id, blob);
-                const { error } = await db.from('club_squad').update({ photo_url: url }).eq('id', id);
-                if (error) throw error;
-                const old = squadCache.find(p => Number(p.id) === Number(id));
-                if (old) removePhotoByUrl(old.photo_url);
-                loadClubRoster();
-            } catch (err) {
-                if (url) removePhotoByUrl(url);
-                alert("Could not save the photo: " + friendlyError(err));
-            } finally {
-                input.value = '';
-            }
-        }
-
-        async function deleteClubPlayer(id) {
-            if (confirm("Remove this player from the roster?")) {
-                const old = squadCache.find(p => Number(p.id) === Number(id));
-                const { error } = await db.from('club_squad').delete().eq('id', id);
-                if (error) alert("Could not remove this player: " + friendlyError(error));
-                else if (old) removePhotoByUrl(old.photo_url);
-                loadClubRoster();
-            }
-        }
-
-        // ------------------------------------------------------------------
-        // DEVELOPER CONTROLS
-        // ------------------------------------------------------------------
-        async function upsertLeagueStanding() {
-            const club = document.getElementById('standingClubName').value.trim();
-            const mp = parseInt(document.getElementById('standingMP').value) || 0;
-            const w = parseInt(document.getElementById('standingW').value) || 0;
-            const d = parseInt(document.getElementById('standingD').value) || 0;
-            const l = parseInt(document.getElementById('standingL').value) || 0;
-            const gf = parseInt(document.getElementById('standingGF').value) || 0;
-            const ga = parseInt(document.getElementById('standingGA').value) || 0;
-            if (!club) { alert("Enter the club name."); return; }
-            const pts = (w * 3) + (d * 1);
-            const { error } = await db.from('league_standings').upsert([{ club, mp, w, d, l, gf, ga, pts, updated_at: new Date() }], { onConflict: 'club' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Standing saved for ${club}.`); loadLeagueStandings(); }
-        }
-
-        async function upsertTopScorer() {
-            const player = document.getElementById('scorerPlayerName').value.trim();
-            const club = document.getElementById('scorerClubName').value.trim();
-            const goals = parseInt(document.getElementById('scorerGoalsCount').value) || 0;
-            if (!player || !club) { alert("Enter the player and the club."); return; }
-            const { error } = await db.from('top_scorers').upsert([{ player, club, goals, updated_at: new Date() }], { onConflict: 'player' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Goals saved for ${player}.`); loadTopScorers(); }
-        }
-
-        async function upsertTopAssist() {
-            const player = document.getElementById('assistPlayerName').value.trim();
-            const club = document.getElementById('assistClubName').value.trim();
-            const assists = parseInt(document.getElementById('assistCount').value) || 0;
-            if (!player || !club) { alert("Enter the player and the club."); return; }
-            const { error } = await db.from('top_assists').upsert([{ player, club, assists, updated_at: new Date() }], { onConflict: 'player' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Assists saved for ${player}.`); loadTopAssists(); }
-        }
-
-        async function upsertCleanSheet() {
-            const goalkeeper = document.getElementById('gkPlayerName').value.trim();
-            const club = document.getElementById('gkClubName').value.trim();
-            const clean_sheets = parseInt(document.getElementById('gkCleanSheetsCount').value) || 0;
-            if (!goalkeeper || !club) { alert("Enter the goalkeeper and the club."); return; }
-            const { error } = await db.from('clean_sheets').upsert([{ goalkeeper, club, clean_sheets, updated_at: new Date() }], { onConflict: 'goalkeeper' });
-            if (error) alert("Could not save: " + error.message);
-            else { alert(`Clean sheets saved for ${goalkeeper}.`); loadCleanSheets(); }
-        }
-
-        // ------------------------------------------------------------------
-        // USER ACCOUNTS (roles live in the database; only a Developer can change them)
-        // ------------------------------------------------------------------
-        let userCache = [];
-
-        async function fetchMasterUserDirectory() {
-            const tbody = document.getElementById('masterUserTableBody');
-            if (!tbody) return;
-            try {
-                const { data, error } = await db.from('user_profiles').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-                userCache = data || [];
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="muted-cell">No accounts yet.</td></tr>`;
-                    return;
-                }
-                let html = '';
-                data.forEach(u => {
-                    const isSuspended = u.status === 'Suspended';
-                    const nextStatus = isSuspended ? 'Active' : 'Suspended';
-                    const isSelf = currentUser && u.id === currentUser.id;
-                    const displayName = u.full_name || u.email || '';
-
-                    let roleCell;
-                    let actionCell;
-                    if (isSelf || u.system_role === 'DEVELOPER') {
-                        roleCell = `<span class="badge badge-role">${esc(ROLE_LABELS[u.system_role] || u.system_role)}</span>`;
-                        actionCell = `<span style="color:var(--muted); font-size:13px;">${isSelf ? 'You' : 'Protected'}</span>`;
-                    } else {
-                        const options = ASSIGNABLE_ROLES.map(r => `<option value="${r}"${r === u.system_role ? ' selected' : ''}>${esc(ROLE_LABELS[r])}</option>`).join('');
-                        roleCell = `<select data-id="${esc(u.id)}" onchange="updateUserRole(this.dataset.id, this.value)" aria-label="Role for ${esc(u.email)}" style="height:34px; font-size:13px; min-width:150px;">${options}</select>`;
-                        actionCell = `<button type="button" data-id="${esc(u.id)}" data-status="${nextStatus}" onclick="toggleAccountStatus(this.dataset.id, this.dataset.status)" class="btn btn-outline btn-sm ${isSuspended ? 'text-success' : 'text-danger'}">${isSuspended ? 'Activate' : 'Suspend'}</button>`;
-                    }
-                    const photoBtn = `<label class="btn btn-outline btn-sm photo-btn">${u.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" data-id="${esc(u.id)}" aria-label="${u.photo_url ? 'Change' : 'Add'} photo for ${esc(displayName)}" onchange="changeUserPhoto(this.dataset.id, this)"></label>`;
-
-                    html += `<tr><td style="font-weight:600;">${esc(u.unique_user_id || '—')}</td><td><span class="person">${avatarHtml(u.photo_url, displayName, 'avatar-sm')}<strong>${esc(u.full_name || '—')}</strong></span></td><td style="font-size:13px;">${esc(u.email || '')}</td><td>${roleCell}</td><td><span class="badge ${isSuspended ? 'badge-danger' : 'badge-success'}">${esc(u.status || 'Active')}</span></td><td class="r">${actionCell} ${photoBtn}</td></tr>`;
-                });
-                tbody.innerHTML = html;
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="6" class="muted-cell">The account list could not be loaded.</td></tr>`;
-            }
-        }
-
-        async function assignRoleByEmail() {
-            const email = document.getElementById('newAccountEmail').value.trim().toLowerCase();
-            const uniqueId = document.getElementById('newAccountID').value.trim();
-            const role = document.getElementById('newAccountRole').value;
-            if (!email) { alert("Enter the email the person used to create their account."); return; }
-            const patch = { system_role: role };
-            if (uniqueId) patch.unique_user_id = uniqueId;
-            const { data, error } = await db.from('user_profiles').update(patch).eq('email', email).select();
-            if (error) { alert("Could not assign the role: " + friendlyError(error)); return; }
-            if (!data || data.length === 0) { alert("No account found for that email. The person must use \"Create account\" first."); return; }
-
-            let photoNote = '';
-            const blob = photoDrafts.assignPhotoInput;
-            if (blob) {
-                let url = null;
-                try {
-                    url = await uploadPhotoBlob('profiles/' + data[0].id, blob);
-                    const { error: photoError } = await db.from('user_profiles').update({ photo_url: url }).eq('id', data[0].id);
-                    if (photoError) throw photoError;
-                    removePhotoByUrl(data[0].photo_url);
-                } catch (err) {
-                    if (url) removePhotoByUrl(url);
-                    photoNote = " The photo could not be saved: " + friendlyError(err);
-                }
-            }
-            alert("Role assigned." + photoNote);
-            document.getElementById('newAccountEmail').value = '';
-            document.getElementById('newAccountID').value = '';
-            resetPhotoField('assignPhotoInput', 'assignPhotoPreview');
-            fetchMasterUserDirectory();
-        }
-
-        async function changeUserPhoto(userId, input) {
-            let url = null;
-            try {
-                const blob = await prepareImage(input.files && input.files[0]);
-                if (!blob) return;
-                url = await uploadPhotoBlob('profiles/' + userId, blob);
-                const { error } = await db.from('user_profiles').update({ photo_url: url }).eq('id', userId);
-                if (error) throw error;
-                const old = userCache.find(u => u.id === userId);
-                if (old) removePhotoByUrl(old.photo_url);
-                if (currentUser && userId === currentUser.id && currentProfile) { currentProfile.photo_url = url; renderSessionInfo(); }
-                fetchMasterUserDirectory();
-            } catch (err) {
-                if (url) removePhotoByUrl(url);
-                alert("Could not save the photo: " + friendlyError(err));
-            } finally {
-                input.value = '';
-            }
-        }
-
-        async function updateUserRole(userId, newRole) {
-            const { error } = await db.from('user_profiles').update({ system_role: newRole }).eq('id', userId);
-            if (error) alert("Could not change the role: " + error.message);
-            fetchMasterUserDirectory();
-        }
-
-        async function toggleAccountStatus(userId, newStatus) {
-            const { error } = await db.from('user_profiles').update({ status: newStatus }).eq('id', userId);
-            if (error) alert("Could not change the status: " + error.message);
-            fetchMasterUserDirectory();
-        }
-
-        // ------------------------------------------------------------------
-        // GLOBAL BROADCAST BANNER
-        // ------------------------------------------------------------------
-        async function loadSystemBanner() {
-            try {
-                const { data } = await db.from('app_settings').select('value').eq('key', 'banner_config').single();
-                if (data && data.value && data.value.active) {
-                    document.getElementById('bannerTextContent').innerText = data.value.message;
-                    document.getElementById('systemNotificationBanner').classList.remove('hidden');
-                }
-            } catch (err) {}
-        }
-
-        async function updateSystemBanner() {
-            const message = document.getElementById('bannerInputText').value.trim();
-            if (!message) return;
-            const { error } = await db.from('app_settings').upsert({ key: 'banner_config', value: { active: true, message } }, { onConflict: 'key' });
-            if (error) { alert("Could not publish the notice: " + error.message); return; }
-            loadSystemBanner();
-            alert("Notice published.");
-        }
-
-        async function toggleBannerVisibility(active) {
-            const { error } = await db.from('app_settings').upsert({ key: 'banner_config', value: { active, message: "" } }, { onConflict: 'key' });
-            if (error) { alert("Could not remove the notice: " + error.message); return; }
-            document.getElementById('systemNotificationBanner').classList.add('hidden');
-        }
-
-        function dismissBanner() { document.getElementById('systemNotificationBanner').classList.add('hidden'); }
-
-        // ------------------------------------------------------------------
-        // MATCH INCIDENTS
-        // ------------------------------------------------------------------
-        async function submitMatchIncident() {
-            const event_type = document.getElementById('refEventType').value;
-            const team_name = document.getElementById('refTeamName').value.trim();
-            const player_name = document.getElementById('refPlayerName').value.trim();
-            const minute = document.getElementById('refMinute').value;
-            if (!team_name || !player_name || !minute) { alert("Complete all incident fields."); return; }
-            const recorded_by = (currentProfile && (currentProfile.full_name || currentProfile.email)) || 'Match Official';
-            const { error } = await db.from('match_events').insert([{ match_id: 'match_01', event_type, team_name, player_name, minute: parseInt(minute), recorded_by }]);
-            if (error) { alert("Could not record the incident: " + error.message); return; }
-            alert("Incident recorded.");
-            loadMatchEvents();
-        }
-
-        async function loadMatchEvents() {
-            const tbody = document.getElementById('publicMatchEventsBody');
-            const refTbody = document.getElementById('refereeEventsLogBody');
-            try {
-                const { data } = await db.from('match_events').select('*').order('created_at', { ascending: false });
-                let html = '';
-                if (data && data.length > 0) {
-                    data.forEach(e => {
-                        html += `<tr><td><strong>${esc(e.minute)}'</strong></td><td>${eventBadge(e.event_type)}</td><td>${esc(e.team_name)}</td><td>${esc(e.player_name)}</td><td style="color:var(--muted); font-size:13px;">${esc(e.recorded_by)}</td></tr>`;
-                    });
-                } else {
-                    html = `<tr><td colspan="5" class="muted-cell">No incidents recorded yet.</td></tr>`;
-                }
-                if (tbody) tbody.innerHTML = html;
-                if (refTbody) refTbody.innerHTML = html;
-            } catch (err) {}
-        }
-      
-/* MAN OF THE MATCH: SUPABASE SAVE AND LOAD */
-(function () {
-  const settingKey = "man_of_the_match";
-  const admin = document.getElementById("motm-admin");
-  const status = document.getElementById("motm-status");
-  const saveButton = document.getElementById("motm-save-button");
-
-  if (!admin || !status || !saveButton) return;
-
-  function showStatus(message) {
-    status.textContent = message;
-  }
-
-  function showAnnouncement(data) {
-    data = data || {};
-
-    document.getElementById("motm-player-name").textContent =
-      data.player_name || "Awaiting announcement";
-
-    document.getElementById("motm-team").textContent =
-      "Team: " + (data.team_name || "To be announced");
-
-    document.getElementById("motm-number").textContent =
-      "Jersey No.: " +
-      (data.jersey_number === undefined || data.jersey_number === null ||
-       data.jersey_number === "" ? "—" : data.jersey_number);
-
-    const photo = document.getElementById("motm-photo");
-    const url = typeof data.photo_url === "string" ? data.photo_url.trim() : "";
-
-    photo.onerror = function () {
-      photo.onerror = null;
-      photo.src = "https://placehold.co/160x160/eeeeee/555555?text=PLAYER";
-    };
-
-    photo.src = url || "https://placehold.co/160x160/eeeeee/555555?text=PLAYER";
-
-    document.getElementById("motm-input-name").value =
-      data.player_name || "";
-    document.getElementById("motm-input-team").value =
-      data.team_name || "";
-    document.getElementById("motm-input-number").value =
-      data.jersey_number ?? "";
-    document.getElementById("motm-input-photo").value =
-      data.photo_url || "";
-  }
-
-  function isAuthorisedReferee() {
-    if (typeof currentProfile === "undefined" || !currentProfile) {
-      return false;
-    }
-
-    const role = String(currentProfile.system_role || "").toUpperCase();
-    const active = String(currentProfile.status || "ACTIVE").toUpperCase();
-
-    return active !== "SUSPENDED" &&
-      (role === "REFEREE" || role === "SUPER_ADMIN");
-  }
-
-  async function loadAnnouncement() {
-    if (typeof db === "undefined" || !db) {
-      showStatus("Supabase is not available yet. Refresh after the app finishes loading.");
-      return;
-    }
-
-    try {
-      const result = await db
-        .from("app_settings")
-        .select("value")
-        .eq("key", settingKey)
-        .maybeSingle();
-
-      if (result.error) throw result.error;
-
-      showAnnouncement(result.data ? result.data.value : {});
-    } catch (error) {
-      console.error("Man of the Match load error:", error);
-      showStatus("Could not load the announcement. Check Supabase access and policies.");
-    }
-  }
-
-  function updateAdminVisibility() {
-    admin.style.display = isAuthorisedReferee() ? "block" : "none";
-  }
-
-  saveButton.addEventListener("click", async function () {
-    if (!isAuthorisedReferee()) {
-      showStatus("Access denied. Sign in with an authorised Referee or Super Admin account.");
-      return;
-    }
-
-    if (typeof db === "undefined" || !db) {
-      showStatus("Supabase is not ready. Refresh the page and try again.");
-      return;
-    }
-
-    const playerName = document.getElementById("motm-input-name").value.trim();
-    const teamName = document.getElementById("motm-input-team").value.trim();
-    const jerseyText = document.getElementById("motm-input-number").value.trim();
-    const photoUrl = document.getElementById("motm-input-photo").value.trim();
-
-    if (!playerName || !teamName || !jerseyText) {
-      showStatus("Enter the player's name, team and jersey number.");
-      return;
-    }
-
-    if (photoUrl && !/^https:\/\/\S+$/i.test(photoUrl)) {
-      showStatus("Use a valid HTTPS photo URL, or leave the photo field empty.");
-      return;
-    }
-
-    const announcement = {
-      player_name: playerName,
-      team_name: teamName,
-      jersey_number: Number(jerseyText),
-      photo_url: photoUrl,
-      published_at: new Date().toISOString()
-    };
-
-    saveButton.disabled = true;
-    showStatus("Publishing…");
-
-    try {
-      const result = await db
-        .from("app_settings")
-        .upsert(
-          { key: settingKey, value: announcement },
-          { onConflict: "key" }
-        );
-
-      if (result.error) throw result.error;
-
-      showAnnouncement(announcement);
-      showStatus("Announcement published successfully.");
-    } catch (error) {
-      console.error("Man of the Match save error:", error);
-      showStatus(
-        "Publishing failed. Confirm that you are signed in and that Supabase RLS allows this authorised account to update app_settings. No success was confirmed."
-      );
-    } finally {
-      saveButton.disabled = false;
-    }
-  });
-
-  updateAdminVisibility();
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", loadAnnouncement);
-  } else {
-    loadAnnouncement();
-  }
-
-  // Refresh the public announcement when another visitor publishes it.
-  if (typeof db !== "undefined" && db &&
-      typeof db.channel === "function") {
-    try {
-      db.channel("motm-live-updates")
-        .on("postgres_changes", {
-          event: "*",
-          schema: "public",
-          table: "app_settings",
-          filter: "key=eq.man_of_the_match"
-        }, loadAnnouncement)
-        .subscribe();
-    } catch (error) {
-      console.warn("Live announcement updates unavailable:", error);
-    }
-  }
-})();
-
-    </script>
-  
-<!-- MAN OF THE MATCH FEATURE -->
-<style>
-  #motm-public {
-    max-width: 720px;
-    margin: 22px auto;
-    padding: 18px;
-    background: #a90018;
-    color: #fff;
-    border-radius: 16px;
-    font-family: Arial, sans-serif;
-    box-shadow: 0 8px 24px #0002;
-  }
-  #motm-public h2 {
-    margin: 0 0 14px;
-    font-size: 20px;
-    letter-spacing: 1px;
-  }
-  .motm-player {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-  #motm-photo {
-    width: 82px;
-    height: 82px;
-    border-radius: 50%;
-    border: 3px solid white;
-    object-fit: cover;
-    background: #eee;
-    flex-shrink: 0;
-  }
-  #motm-player-name {
-    font-size: 21px;
-    font-weight: 800;
-    margin-bottom: 5px;
-  }
-  #motm-team, #motm-number {
-    margin-top: 5px;
-    font-size: 14px;
-  }
-  #motm-admin {
-    display: none;
-    max-width: 720px;
-    margin: 20px auto;
-    padding: 18px;
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    font-family: Arial, sans-serif;
-    background: #fff;
-    color: #111;
-  }
-  #motm-admin input {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    margin: 7px 0 13px;
-    border: 1px solid #bbb;
-    border-radius: 8px;
-    font-size: 16px;
-  }
-  #motm-admin button {
-    padding: 12px 18px;
-    background: #a90018;
-    color: white;
-    border: 0;
-    border-radius: 8px;
-    font-weight: bold;
-  }
-  #motm-status {
-    font-size: 14px;
-    margin-top: 12px;
-    overflow-wrap: anywhere;
-  }
-</style>
-
-<section id="motm-public" aria-live="polite">
-  <h2>🏆 MAN OF THE MATCH</h2>
-  <div class="motm-player">
-    <img id="motm-photo" alt="Man of the Match player photo"
-      src="https://placehold.co/160x160/eeeeee/555555?text=PLAYER">
-    <div>
-      <div id="motm-player-name">Awaiting announcement</div>
-      <div id="motm-team">Team: To be announced</div>
-      <div id="motm-number">Jersey No.: —</div>
-    </div>
-  </div>
-</section>
-
-<section id="motm-admin">
-  <h3>Referee Admin — Publish Man of the Match</h3>
-  <p>Enter the player's details and a publicly accessible photo URL.</p>
-
-  <label for="motm-input-name">Player's full name</label>
-  <input id="motm-input-name" maxlength="100" placeholder="e.g. Mohamed Kamara">
-
-  <label for="motm-input-team">Team / Club</label>
-  <input id="motm-input-team" maxlength="100" placeholder="e.g. Example FC">
-
-  <label for="motm-input-number">Jersey number</label>
-  <input id="motm-input-number" type="number" min="0" max="999"
-    placeholder="e.g. 10">
-
-  <label for="motm-input-photo">Player photo URL</label>
-  <input id="motm-input-photo" type="url"
-    placeholder="https://example.com/player.jpg">
-
-  <button id="motm-save-button" type="button">Publish Announcement</button>
-  <div id="motm-status" role="status"></div>
-</section>
-<!-- END MAN OF THE MATCH FEATURE -->
-
-
-<script>
-    // Bind the sign-in and create-account menu items explicitly.
-    // This avoids relying on inline onclick handlers on mobile browsers.
-    function bindStaffSignInButton() {
-      const button = document.getElementById("staffSignInButton");
-      if (!button || button.dataset.staffAuthBound === "yes") return;
-      button.dataset.staffAuthBound = "yes";
-      button.addEventListener("click", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        const modal = document.getElementById("authModal");
-        if (typeof window.openAuthModal === "function") {
-          window.openAuthModal("signin");
-        } else if (modal) {
-          modal.classList.remove("hidden");
-        }
-      });
-    }
-
-    function bindAuthMenuItems() {
-      const signIn = document.getElementById("menuSignIn");
-      const signUp = document.getElementById("menuSignUp");
-
-      if (signIn && signIn.dataset.authTapBound !== "yes") {
-        signIn.removeAttribute("onclick");
-        signIn.dataset.authTapBound = "yes";
-        signIn.addEventListener("click", function (event) {
-          event.preventDefault();
-          event.stopPropagation();
-          if (typeof window.openAuthModal === "function") {
-            window.openAuthModal("signin");
-          } else {
-            const modal = document.getElementById("authModal");
-            if (modal) modal.classList.remove("hidden");
-          }
-        });
-      }
-
-      if (signUp && signUp.dataset.authTapBound !== "yes") {
-        signUp.removeAttribute("onclick");
-        signUp.dataset.authTapBound = "yes";
-        signUp.addEventListener("click", function (event) {
-          event.preventDefault();
-          event.stopPropagation();
-          if (typeof window.openAuthModal === "function") {
-            window.openAuthModal("signup");
-          } else {
-            const modal = document.getElementById("authModal");
-            if (modal) modal.classList.remove("hidden");
-          }
-        });
-      }
-    }
-
-    // Cancel must work even if the main application script fails to expose its functions.
-    function bindAuthCancel() {
-      const cancel = document.getElementById("authCancelBtn");
-      const modal = document.getElementById("authModal");
-      if (cancel && cancel.dataset.cancelBound !== "yes") {
-        cancel.dataset.cancelBound = "yes";
-        cancel.addEventListener("click", function (event) {
-          event.preventDefault();
-          if (modal) modal.classList.add("hidden");
-          const password = document.getElementById("authPassword");
-          if (password) password.value = "";
-          const message = document.getElementById("authMessage");
-          if (message) { message.textContent = ""; message.className = "auth-message"; }
-        });
-      }
-      if (modal && modal.dataset.backdropBound !== "yes") {
-        modal.dataset.backdropBound = "yes";
-        modal.addEventListener("click", function (event) {
-          if (event.target === modal) modal.classList.add("hidden");
-        });
-      }
-    }
-
-    bindAuthMenuItems();
-    bindStaffSignInButton();
-    bindAuthCancel();
-
-    // Bind the sign-in form explicitly. This avoids depending on an inline
-    // onsubmit attribute and gives a visible message if the main handler failed.
-    function bindAuthForm() {
-      const form = document.getElementById("authForm");
-      const button = document.getElementById("authSubmitBtn");
-      if (!form || form.dataset.explicitSubmitBound === "yes") return;
-
-      form.removeAttribute("onsubmit");
-      form.dataset.explicitSubmitBound = "yes";
-      form.addEventListener("submit", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        const message = document.getElementById("authMessage");
-
-        const showError = function (text) {
-          if (message) {
-            message.textContent = text;
-            message.className = "auth-message auth-error";
-          }
-        };
-
-        if (typeof window.handleAuthSubmit === "function") {
-          Promise.resolve(window.handleAuthSubmit(event)).catch(function (error) {
-            showError("Sign-in failed: " + (error && error.message ? error.message : "Unexpected error"));
-          });
-          return;
-        }
-
-        // Recovery path: authenticate directly if the main app's handler failed
-        // to initialise. The page reload then lets its normal session/profile
-        // code decide which panels this account is authorised to see.
-        // Initialise a separate authentication client here so login does not
-        // depend on the large application script having completed successfully.
-        let client = window.__leagueSupabaseClient;
-        function makeClient() {
-          // Prefer the real Supabase library. The main app may have installed
-          // an offline placeholder in __leagueSupabaseClient after a CDN failure.
-          if (window.supabase && typeof window.supabase.createClient === "function") {
-            const existing = window.__leagueSupabaseClient;
-            if (existing && existing.auth && typeof existing.auth.signInWithPassword === "function") {
-              // The placeholder's sign-in always returns a "Database not connected" error.
-              // Build a real client whenever the Supabase library is available.
-            }
-            const created = window.supabase.createClient(
-              "https://ticcaervmjdzbprdpxxv.supabase.co",
-              "sb_publishable_WSlNd0DeyV4Z0vM3fM28iA_c5BIYRiL"
-            );
-            window.__leagueSupabaseClient = created;
-            return created;
-          }
-          return null;
-        }
-
-        try { client = makeClient(); } catch (initError) {
-          showError("Could not initialise sign-in: " + (initError && initError.message ? initError.message : "Supabase client error"));
-          return;
-        }
-
-        if (!client || !client.auth) {
-          // Some mobile browsers/extensions fail to load the head CDN script.
-          // Retry the library on demand from a second CDN before giving up.
-          if (button) button.disabled = true;
-          if (message) { message.textContent = "Loading secure sign-in…"; message.className = "auth-message"; }
-          const sources = [
-            "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js",
-            "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-          ];
-          const loadSource = function (index) {
-            if (index >= sources.length) {
-              showError("Secure sign-in library could not load. Check your internet connection or try Chrome again.");
-              if (button) button.disabled = false;
-              return;
-            }
-            const script = document.createElement("script");
-            script.src = sources[index];
-            script.async = true;
-            script.onload = function () {
-              try {
-                client = makeClient();
-                if (!client || !client.auth) throw new Error("Authentication client is unavailable");
-                submitLogin(client);
-              } catch (error) {
-                loadSource(index + 1);
-              }
-            };
-            script.onerror = function () { loadSource(index + 1); };
-            document.head.appendChild(script);
-          };
-          const submitLogin = function (readyClient) {
-            const email = (document.getElementById("authEmail").value || "").trim().toLowerCase();
-            const password = document.getElementById("authPassword").value || "";
-            if (!email || !password) {
-              showError("Enter your email address and password.");
-              if (button) button.disabled = false;
-              return;
-            }
-            if (message) { message.textContent = "Signing in…"; message.className = "auth-message"; }
-            readyClient.auth.signInWithPassword({ email: email, password: password })
-              .then(function (result) {
-                if (result.error) throw result.error;
-                if (!result.data || !result.data.session) throw new Error("No session returned. Check email confirmation and try again.");
-                window.location.reload();
-              })
-              .catch(function (error) {
-                showError("Sign-in failed: " + (error && error.message ? error.message : "Unexpected error"));
-                if (button) button.disabled = false;
-              });
-          };
-          loadSource(0);
-          return;
-        }
-
-        const email = (document.getElementById("authEmail").value || "").trim().toLowerCase();
-        const password = document.getElementById("authPassword").value || "";
-        if (!email || !password) {
-          showError("Enter your email address and password.");
-          return;
-        }
-
-        if (button) button.disabled = true;
-        showError("");
-        if (message) { message.textContent = "Signing in…"; message.className = "auth-message"; }
-
-        client.auth.signInWithPassword({ email: email, password: password })
-          .then(function (result) {
-            if (result.error) throw result.error;
-            if (!result.data || !result.data.session) {
-              throw new Error("Sign-in did not return a session. Check your email confirmation and try again.");
-            }
-            window.location.reload();
-          })
-          .catch(function (error) {
-            showError("Sign-in failed: " + (error && error.message ? error.message : "Unexpected error"));
-            if (button) button.disabled = false;
-          });
-      });
-    }
-
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", bindAuthForm);
-    } else {
-      bindAuthForm();
-    }
-</script>
-
-
-
-<!-- ADMIN DROPDOWN TAP FIX -->
-<script>
-(function () {
-  function bindAdministrationMenu() {
-    const button = document.getElementById("adminMenuBtn");
-    const dropdown = document.getElementById("adminDropdownContent");
-
-    if (!button || !dropdown ||
-        button.dataset.tapFixBound === "yes") return;
-
-    const container = button.closest(".dropdown-menu-container");
-    if (!container) return;
-
-    button.removeAttribute("onclick");
-    button.dataset.tapFixBound = "yes";
-    button.setAttribute("aria-expanded", "false");
-
-    button.addEventListener("click", function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const opening =
-        !dropdown.classList.contains("show-dropdown");
-
-      dropdown.classList.toggle("show-dropdown", opening);
-      button.setAttribute("aria-expanded", String(opening));
-    });
-
-    document.addEventListener("click", function (event) {
-      if (!container.contains(event.target)) {
-        dropdown.classList.remove("show-dropdown");
-        button.setAttribute("aria-expanded", "false");
-      }
-    });
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener(
-      "DOMContentLoaded",
-      bindAdministrationMenu
-    );
-  } else {
-    bindAdministrationMenu();
-  }
-})();
-</script>
-
-</body>
-</html>
+ 
