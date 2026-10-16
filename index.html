@@ -1570,11 +1570,22 @@
             currentProfile = null;
             let profileLoadMessage = '';
 
+            // Prefer the recovered real Supabase client over an offline placeholder.
+            const activeClient = window.__leagueSupabaseClient &&
+                window.__leagueSupabaseClient.auth &&
+                typeof window.__leagueSupabaseClient.from === 'function'
+                ? window.__leagueSupabaseClient : db;
+            if (activeClient && activeClient !== db) {
+                db = activeClient;
+                dbOnline = true;
+            }
+
             if (currentUser) {
                 try {
+                    if (!db || typeof db.from !== 'function') throw new Error('Supabase database client is not ready.');
                     const { data, error } = await db
                         .from('user_profiles')
-                        .select('*')
+                        .select('id, system_role, status, full_name, email')
                         .eq('id', currentUser.id)
                         .maybeSingle();
 
@@ -1582,13 +1593,15 @@
                         console.error('User profile lookup failed:', error);
                         profileLoadMessage = 'Profile lookup failed: ' + (error.message || 'database error');
                     } else if (!data) {
-                        profileLoadMessage = 'No user_profiles row matches this signed-in account ID. The Developer role must be assigned to the matching profile in Supabase.';
+                        profileLoadMessage = 'No profile matched this signed-in user ID (' + currentUser.id + '). Check that user_profiles.id equals the Auth user ID.';
                     } else {
                         currentProfile = data;
+                        if (String(data.system_role || '').toUpperCase() === 'DEVELOPER') currentProfile.system_role = 'DEVELOPER';
+                        if (String(data.status || '').toLowerCase() === 'suspended') currentProfile.status = 'Suspended';
                     }
                 } catch (err) {
                     console.error('User profile lookup exception:', err);
-                    profileLoadMessage = 'Could not load your profile. Check the Supabase connection and user_profiles access policies.';
+                    profileLoadMessage = 'Could not load profile: ' + (err.message || 'check Supabase connection and user_profiles SELECT policy');
                 }
             }
 
