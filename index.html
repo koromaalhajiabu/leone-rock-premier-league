@@ -567,7 +567,7 @@
                 </div>
             </div>
             <div id="goldenBootContent" class="accordion-content">
-                <div class="section-toolbar"><span>All saved goalscorer records</span><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadLeaderboardPanel('top_scorers')">Save CSV</button><button type="button" class="btn btn-primary btn-sm" onclick="downloadLeaderboardPanel('top_scorers', 'json')">Save JSON</button><button type="button" class="btn btn-success btn-sm" onclick="downloadAllAwardRecords()">Backup all 3 panels</button></div></div>
+                
                 <div class="table-container">
                     <table>
                         <thead><tr><th class="c" style="width:56px;">Rank</th><th>Player</th><th class="r">Goals</th></tr></thead>
@@ -588,7 +588,7 @@
                 </div>
             </div>
             <div id="playmakersContent" class="accordion-content">
-                <div class="section-toolbar"><span>All saved playmaker records</span><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadLeaderboardPanel('top_assists')">Save CSV</button><button type="button" class="btn btn-primary btn-sm" onclick="downloadLeaderboardPanel('top_assists', 'json')">Save JSON</button></div></div>
+                
                 <div class="table-container">
                     <table>
                         <thead><tr><th class="c" style="width:56px;">Rank</th><th>Player</th><th class="r">Assists</th></tr></thead>
@@ -609,7 +609,7 @@
                 </div>
             </div>
             <div id="goldenGloveContent" class="accordion-content">
-                <div class="section-toolbar"><span>All saved goalkeeper records</span><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadLeaderboardPanel('clean_sheets')">Save CSV</button><button type="button" class="btn btn-primary btn-sm" onclick="downloadLeaderboardPanel('clean_sheets', 'json')">Save JSON</button></div></div>
+                
                 <div class="table-container">
                     <table>
                         <thead><tr><th class="c" style="width:56px;">Rank</th><th>Goalkeeper</th><th class="r">Clean sheets</th></tr></thead>
@@ -666,6 +666,23 @@
             <h2 id="workspaceTitle">My panel</h2>
             <p id="workspaceSub"></p>
         </div>
+
+        <!-- Developer-only exports and backups; intentionally excluded from public viewer pages. -->
+        <section id="awardBackupPanel" class="accordion-card hidden" style="--accent: var(--gold);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="awardBackupContent" onclick="toggleAccordion('awardBackupContent', this)" onkeydown="accordionKey(event, 'awardBackupContent', this)">
+                <div><h2>Award records — exports and backups</h2><p>Developer-only tools for saved Golden Boot, Playmakers, and Golden Glove records.</p></div>
+                <div class="card-meta"><span class="badge badge-warning">Developer only</span><svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+            <div id="awardBackupContent" class="accordion-content">
+                <p class="section-hint">Downloads copies of records already saved in the database. These buttons do not delete or change records.</p>
+                <div class="section-toolbar"><span>Back up all three award panels together</span><div class="section-toolbar-actions"><button type="button" class="btn btn-success btn-sm" onclick="downloadAllAwardRecords()">Backup all 3 panels (JSON)</button></div></div>
+                <div class="board-grid">
+                    <div class="board"><div class="board-head"><h3>Golden Boot</h3><p>Saved goalscorer records</p></div><div class="section-toolbar" style="padding:12px 16px;"><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadLeaderboardPanel('top_scorers')">Save CSV</button><button type="button" class="btn btn-primary btn-sm" onclick="downloadLeaderboardPanel('top_scorers', 'json')">Save JSON</button></div></div></div>
+                    <div class="board"><div class="board-head"><h3>Playmakers</h3><p>Saved assist records</p></div><div class="section-toolbar" style="padding:12px 16px;"><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadLeaderboardPanel('top_assists')">Save CSV</button><button type="button" class="btn btn-primary btn-sm" onclick="downloadLeaderboardPanel('top_assists', 'json')">Save JSON</button></div></div></div>
+                    <div class="board"><div class="board-head"><h3>Golden Glove</h3><p>Saved goalkeeper records</p></div><div class="section-toolbar" style="padding:12px 16px;"><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadLeaderboardPanel('clean_sheets')">Save CSV</button><button type="button" class="btn btn-primary btn-sm" onclick="downloadLeaderboardPanel('clean_sheets', 'json')">Save JSON</button></div></div></div>
+                </div>
+            </div>
+        </section>
 
         <!-- 3. Club administration (Club Admin and Developer) -->
         <section id="clubAdminPanelContainer" class="accordion-card hidden" style="--accent: var(--amber);">
@@ -1504,6 +1521,7 @@
             if (wTitle) wTitle.textContent = WORKSPACE_NAMES[real] || 'My panel';
             if (wSub) wSub.textContent = WORKSPACE_HINTS[real] || '';
 
+            show('awardBackupPanel', isDev);
             show('masterUserDirectoryPanel', isDev);
             show('clubAdminPanelContainer', isDev || role === 'CLUB_ADMIN');
             show('refereePanelContainer', isDev || role === 'REFEREE');
