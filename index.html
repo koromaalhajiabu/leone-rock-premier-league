@@ -681,6 +681,18 @@
             </div>
         </section>
 
+        <section id="developerDataExportPanel" class="accordion-card hidden" style="--accent: var(--gold);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="developerDataExportContent" onclick="toggleAccordion('developerDataExportContent', this)" onkeydown="accordionKey(event, 'developerDataExportContent', this)">
+                <div><h2>Full system data access & downloads</h2><p>Developer-only copies of Super Admin, Admin, Club/Coach Admin, match, finance, staff, account, and league records.</p></div>
+                <div class="card-meta"><span class="badge badge-warning">Developer only</span><svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+            <div id="developerDataExportContent" class="accordion-content">
+                <p class="section-hint">Download a read-only snapshot of records the signed-in Developer account is permitted to read. This does not edit or delete database records. Tables blocked by database permissions will be listed in the report.</p>
+                <div class="section-toolbar"><span>Full system snapshot — JSON</span><div class="section-toolbar-actions"><button type="button" class="btn btn-success" onclick="downloadDeveloperSystemBackup()">Download all accessible system data</button></div></div>
+                <p id="developerExportStatus" class="section-hint" aria-live="polite">Includes available records from administration, coach/club operations, accounts, staff, finance, match events, standings, player squads and awards.</p>
+            </div>
+        </section>
+
         <!-- Developer-only exports and backups; intentionally excluded from public viewer pages. -->
         <section id="awardBackupPanel" class="accordion-card hidden" style="--accent: var(--gold);">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="awardBackupContent" onclick="toggleAccordion('awardBackupContent', this)" onkeydown="accordionKey(event, 'awardBackupContent', this)">
@@ -1580,7 +1592,7 @@
             if (wTitle) wTitle.textContent = WORKSPACE_NAMES[real] || 'My panel';
             if (wSub) wSub.textContent = WORKSPACE_HINTS[real] || '';
 
-            show('awardBackupPanel', isDev);
+            show('developerDataExportPanel', isDev);\n            show('awardBackupPanel', isDev);
             show('themeSettingsPanel', isDev);
             show('masterUserDirectoryPanel', isDev);
             show('clubAdminPanelContainer', isDev || role === 'CLUB_ADMIN');
@@ -1857,6 +1869,71 @@
                 photo_url: isSafePhotoUrl(row.photo_url) ? row.photo_url :
                     (squadPhotos.get(String(row[nameKey] || '').trim().toLowerCase()) || null)
             }));
+        }
+
+        // Developer-only, read-only export of the system tables used by the Super Admin,
+        // Admin, Club/Coach Admin, match, finance, staff, and award areas.
+        async function downloadDeveloperSystemBackup() {
+            if (realRole() !== 'DEVELOPER' || previewAsVisitor) {
+                alert('Only the signed-in Developer can download the full system backup.');
+                return;
+            }
+            if (!db) {
+                alert('Database is not connected. No backup was downloaded.');
+                return;
+            }
+            const status = document.getElementById('developerExportStatus');
+            const button = document.querySelector('#developerDataExportContent button[onclick="downloadDeveloperSystemBackup()"]');
+            if (button) { button.disabled = true; button.textContent = 'Collecting records…'; }
+            if (status) status.textContent = 'Reading available tables. Please keep this page open until the download starts.';
+            const tables = [
+                'user_profiles', 'app_settings', 'staff_departments', 'staff_registry',
+                'club_financial_balances', 'finance_transactions', 'league_standings',
+                'club_squad', 'match_events', 'top_scorers', 'top_assists',
+                'clean_sheets', 'man_of_the_match'
+            ];
+            const backup = {
+                product: 'Leone Rock Premier League',
+                backup_type: 'developer_read_only_system_export',
+                created_at: new Date().toISOString(),
+                requested_by_role: 'DEVELOPER',
+                tables: {},
+                table_errors: {}
+            };
+            try {
+                for (const table of tables) {
+                    const rows = [];
+                    let start = 0;
+                    const pageSize = 500;
+                    let failed = false;
+                    while (true) {
+                        const { data, error } = await db.from(table).select('*').range(start, start + pageSize - 1);
+                        if (error) {
+                            backup.table_errors[table] = error.message || String(error);
+                            failed = true;
+                            break;
+                        }
+                        const page = Array.isArray(data) ? data : [];
+                        rows.push(...page);
+                        if (page.length < pageSize) break;
+                        start += pageSize;
+                    }
+                    if (!failed) backup.tables[table] = { row_count: rows.length, records: rows };
+                }
+                const filename = 'LRPL-full-system-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+                downloadExportFile(filename, JSON.stringify(backup, null, 2), 'application/json;charset=utf-8');
+                const okCount = Object.keys(backup.tables).length;
+                const failCount = Object.keys(backup.table_errors).length;
+                const message = 'Backup downloaded. Tables exported: ' + okCount + '/' + tables.length + '. Tables blocked/unavailable: ' + failCount + '.';
+                if (status) status.textContent = message + (failCount ? ' Open the JSON file’s table_errors section to see which tables need database permissions or setup.' : ' All listed tables were read successfully.');
+                alert(message);
+            } catch (err) {
+                console.error('Developer system backup failed:', err);
+                if (status) status.textContent = 'Backup failed: ' + (err.message || String(err));
+                alert('Backup could not be completed: ' + (err.message || String(err)));
+            } finally {
+                if (button) { button.disabled = false; button.textContent = 'Download all accessible system data'; }
+            }
         }
 
         // Download a copy of the saved award-panel records to this phone or computer.
