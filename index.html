@@ -933,6 +933,16 @@
                     </div>
                 </div>
                 <div id="staffGridContainer" style="margin-top:16px;"></div>
+                <section id="financeDashboard" class="card" style="margin-top:22px;padding:18px;border:1px solid var(--line);display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <div><h3>Finance dashboard</h3><p style="color:var(--muted);font-size:13px;">Live records from Supabase finance tables</p></div>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="loadFinanceDashboard()">Refresh finance data</button>
+                    </div>
+                    <p id="financeStatus" role="status" style="margin:12px 0;color:var(--muted);">Finance data has not been loaded.</p>
+                    <div id="financeBalances" style="overflow-x:auto;"></div>
+                    <h4 style="margin-top:18px;">Recent transactions</h4>
+                    <div id="financeTransactions" style="overflow-x:auto;"></div>
+                </section>
             </div>
         </section>
     </main>
@@ -1295,6 +1305,7 @@
             });
 
             populateDepartments();
+            loadFinanceDashboard();
             resetMotmForm();
             checkConnection();
             checkSystemFreeze();
@@ -1776,18 +1787,35 @@
         // ------------------------------------------------------------------
         // STAFF DIRECTORY
         // ------------------------------------------------------------------
-        const STAFF_DEPARTMENTS = [
+        const FALLBACK_STAFF_DEPARTMENTS = [
             'Executive Board', 'Administration', 'Competitions and Fixtures', 'Referees Committee',
             'Technical and Coaching', 'Medical', 'Media and Communications', 'Marketing and Sponsorship',
-            'Finance', 'Legal and Discipline', 'Security and Stewarding', 'Operations and IT', 'Other'
+            'Finance', 'Legal and Discipline', 'Security and Stewarding', 'Operations and IT'
         ];
+        let STAFF_DEPARTMENTS = [...FALLBACK_STAFF_DEPARTMENTS, 'Other'];
         let staffCache = [];
 
-        function populateDepartments() {
+        async function populateDepartments() {
             const sel = document.getElementById('staffDepartment');
-            if (sel && !sel.options.length) {
-                sel.innerHTML = STAFF_DEPARTMENTS.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+            if (!sel) return;
+            const current = sel.value;
+            try {
+                if (!dbOnline) throw new Error('Supabase is offline');
+                const { data, error } = await db.from('staff_departments')
+                    .select('department_name,is_active')
+                    .eq('is_active', true)
+                    .order('id', { ascending: true });
+                if (error) throw error;
+                if (Array.isArray(data) && data.length) {
+                    STAFF_DEPARTMENTS = data.map(row => row.department_name).filter(Boolean);
+                }
+            } catch (err) {
+                console.warn('Could not load staff_departments; using built-in fallback:', err.message);
+                STAFF_DEPARTMENTS = [...FALLBACK_STAFF_DEPARTMENTS];
             }
+            if (!STAFF_DEPARTMENTS.includes('Other')) STAFF_DEPARTMENTS.push('Other');
+            sel.innerHTML = STAFF_DEPARTMENTS.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+            if (STAFF_DEPARTMENTS.includes(current)) sel.value = current;
         }
 
         async function loadStaffData() {
@@ -1806,6 +1834,59 @@
             } catch (err) {
                 renderStaffGrid(defaultStaff, true);
             }
+        }
+
+        // Finance dashboard reads the finance tables created in Supabase.
+        // Row-level security (RLS) remains the real security boundary.
+        function canViewFinanceDashboard() {
+            return ['DEVELOPER', 'SUPER_ADMIN', 'FINANCE_OFFICER'].includes(realRole());
+        }
+
+        function escapeFinance(value) {
+            if (value === null || value === undefined) return '';
+            return esc(typeof value === 'object' ? JSON.stringify(value) : String(value));
+        }
+
+        function financeTableHtml(rows, emptyText) {
+            if (!Array.isArray(rows) || !rows.length) return `<p style="padding:12px;color:var(--muted);">${esc(emptyText)}</p>`;
+            const columns = [...new Set(rows.flatMap(row => Object.keys(row)))];
+            return `<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;"><thead><tr>${columns.map(c => `<th style="text-align:left;padding:9px;border-bottom:1px solid var(--line);white-space:nowrap;">${esc(c.replaceAll('_',' '))}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${columns.map(c => `<td style="padding:9px;border-bottom:1px solid var(--line-soft);max-width:260px;overflow-wrap:anywhere;">${escapeFinance(row[c])}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+        }
+
+        async function loadFinanceDashboard() {
+            const panel = document.getElementById('financeDashboard');
+            const status = document.getElementById('financeStatus');
+            const balances = document.getElementById('financeBalances');
+            const transactions = document.getElementById('financeTransactions');
+            if (!panel || !status || !balances || !transactions) return;
+            if (!canViewFinanceDashboard()) {
+                panel.style.display = 'none';
+                return;
+            }
+            panel.style.display = 'block';
+            if (!dbOnline) {
+                status.textContent = 'Supabase is not connected. Finance records cannot be loaded.';
+                return;
+            }
+            status.textContent = 'Loading finance records…';
+            balances.innerHTML = '';
+            transactions.innerHTML = '';
+            const results = await Promise.all([
+                db.from('club_financial_balances').select('*').limit(100),
+                db.from('finance_transactions').select('*').order('created_at', { ascending: false }).limit(100)
+            ]);
+            const balanceResult = results[0];
+            const transactionResult = results[1];
+            const errors = [balanceResult.error, transactionResult.error].filter(Boolean);
+            if (errors.length) {
+                status.textContent = 'Finance tables could not be read: ' + errors.map(e => e.message).join(' | ');
+                return;
+            }
+            const balanceRows = balanceResult.data || [];
+            const transactionRows = transactionResult.data || [];
+            balances.innerHTML = '<h4>Club balances</h4>' + financeTableHtml(balanceRows, 'No club balance records found yet.');
+            transactions.innerHTML = financeTableHtml(transactionRows, 'No finance transactions recorded yet.');
+            status.textContent = `Connected. Loaded ${balanceRows.length} balance row(s) and ${transactionRows.length} transaction row(s). This view is read-only.`;
         }
 
         function staffCardHtml(m, canEdit) {
