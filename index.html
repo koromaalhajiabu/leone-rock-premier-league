@@ -1167,6 +1167,8 @@
             console.warn('Running without database: ' + err.message);
             db = createOfflineDb();
         }
+        // Expose the configured client for the standalone mobile auth recovery handler.
+        window.__leagueSupabaseClient = db;
 
         // ------------------------------------------------------------------
         // READ-ONLY MODE: visitors who are signed out, and accounts with the Viewer role
@@ -2722,20 +2724,52 @@ const defaultCleanSheets = [];
         event.stopPropagation();
         const message = document.getElementById("authMessage");
 
-        if (typeof window.handleAuthSubmit !== "function") {
+        const showError = function (text) {
           if (message) {
-            message.textContent = "Sign-in script did not load correctly. Please refresh this page and try again.";
+            message.textContent = text;
             message.className = "auth-message auth-error";
           }
+        };
+
+        if (typeof window.handleAuthSubmit === "function") {
+          Promise.resolve(window.handleAuthSubmit(event)).catch(function (error) {
+            showError("Sign-in failed: " + (error && error.message ? error.message : "Unexpected error"));
+          });
           return;
         }
 
-        Promise.resolve(window.handleAuthSubmit(event)).catch(function (error) {
-          if (message) {
-            message.textContent = "Sign-in failed: " + (error && error.message ? error.message : "Unexpected error");
-            message.className = "auth-message auth-error";
-          }
-        });
+        // Recovery path: authenticate directly if the main app's handler failed
+        // to initialise. The page reload then lets its normal session/profile
+        // code decide which panels this account is authorised to see.
+        const client = window.__leagueSupabaseClient;
+        if (!client || !client.auth) {
+          showError("Sign-in is unavailable because the app script or Supabase client did not initialise. Reload the page and try again.");
+          return;
+        }
+
+        const email = (document.getElementById("authEmail").value || "").trim().toLowerCase();
+        const password = document.getElementById("authPassword").value || "";
+        if (!email || !password) {
+          showError("Enter your email address and password.");
+          return;
+        }
+
+        if (button) button.disabled = true;
+        showError("");
+        if (message) { message.textContent = "Signing in…"; message.className = "auth-message"; }
+
+        client.auth.signInWithPassword({ email: email, password: password })
+          .then(function (result) {
+            if (result.error) throw result.error;
+            if (!result.data || !result.data.session) {
+              throw new Error("Sign-in did not return a session. Check your email confirmation and try again.");
+            }
+            window.location.reload();
+          })
+          .catch(function (error) {
+            showError("Sign-in failed: " + (error && error.message ? error.message : "Unexpected error"));
+            if (button) button.disabled = false;
+          });
       });
     }
 
