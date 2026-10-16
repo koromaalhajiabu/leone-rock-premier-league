@@ -545,6 +545,27 @@ th{font-weight:800}
             *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
         }
 
+    
+        /* Straightforward operations-first interface */
+        .hero { padding-block:clamp(24px,4vw,48px); }
+        .hero-inner { max-width:1240px; }
+        .hero h1 { max-width:650px; font-size:clamp(30px,4.4vw,52px); line-height:1.08; }
+        .hero-lead { max-width:540px; font-size:15px; line-height:1.55; }
+        .section-toolbar { display:flex; align-items:center; justify-content:space-between; min-height:44px; padding:10px 14px; font-weight:700; color:#183454; }
+        #publicLeagueBoards { margin-top:18px; }
+        #workspaceArea { margin-top:18px; }
+        #workspaceArea > .accordion-card { scroll-margin-top:100px; }
+        .admin-quick-menu { margin-bottom:18px; }
+        .section-hint { line-height:1.55; }
+        @media(max-width:700px) {
+          .hero { padding:24px 14px; }
+          .hero-inner { gap:18px; }
+          .hero h1 { font-size:32px; }
+          .hero-lead { font-size:14px; }
+          .scoreboard { width:100%; }
+          #publicLeagueBoards .board-manager-grid { grid-template-columns:minmax(0,1fr); }
+        }
+
     </style>
 </head>
 <body>
@@ -655,7 +676,7 @@ th{font-weight:800}
         <div class="hero-inner">
             <div>
                 <h1>Sierra Leone<br>Premier League</h1>
-                <p class="hero-lead">Official league management for clubs, match officials and administrators. Follow the table, the scorers and every match incident as it is recorded.</p>
+                <p class="hero-lead">Official competition information, fixtures, results and standings.</p>
                 <div class="hero-actions">
                     <a href="#standings" class="btn btn-light" style="text-decoration:none;">View standings</a>
                     <button type="button" class="btn btn-ghost" onclick="openAuthModal('signin')">Staff sign in</button>
@@ -675,10 +696,10 @@ th{font-weight:800}
                     <div class="sb-team">Premier League</div>
                 </div>
                 <div class="sb-next">
-                    <h2>Official match centre</h2>
+                    <h2>Competition overview</h2>
                     <ul>
                         <li>All 16 registered clubs</li>
-                        <li>Scores and standings refresh when official records are updated</li>
+                        <li>Official scores and standings</li>
                     </ul>
                 </div>
             </div>
@@ -696,11 +717,7 @@ th{font-weight:800}
         <div id="publicArea">
         <!-- 1. Public league sections: each has its own dropdown -->
         <div class="section-toolbar" id="publicSectionControls">
-            <span>Tap a heading to open or close that section.</span>
-            <div class="section-toolbar-actions">
-                <button type="button" class="btn btn-outline btn-sm" onclick="setPublicSections(true)">Open all</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="setPublicSections(false)">Close all</button>
-            </div>
+            <span>League information</span>
         </div>
 
         <section id="standings" class="accordion-card" style="--accent: var(--green);">
