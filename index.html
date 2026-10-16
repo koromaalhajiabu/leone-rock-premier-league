@@ -1717,9 +1717,26 @@
             setAuthMessage('Please wait...', false);
             try {
                 if (authMode === 'signin') {
-                    const { error } = await db.auth.signInWithPassword({ email, password });
+                    const { data, error } = await db.auth.signInWithPassword({ email, password });
                     if (error) throw error;
+
+                    // Apply the returned session directly; do not rely only on the
+                    // asynchronous auth-state event to refresh the visible portal.
+                    const signedInSession = data && data.session;
+                    if (signedInSession) {
+                        await applySession(signedInSession);
+                    } else {
+                        const { data: sessionData, error: sessionError } = await db.auth.getSession();
+                        if (sessionError) throw sessionError;
+                        await applySession(sessionData && sessionData.session);
+                    }
+
                     closeAuthModal();
+                    if (currentUser && (!currentProfile || !currentProfile.system_role)) {
+                        alert('You are signed in, but this account has no readable role profile. The page now shows the profile lookup result under your account information.');
+                    } else if (currentProfile && currentProfile.system_role === 'VIEWER') {
+                        alert('You are signed in successfully, but Supabase identifies this account as VIEWER, not DEVELOPER. The account role must be corrected in user_profiles.');
+                    }
                 } else {
                     if (!fullName) throw new Error('Enter your full name.');
                     const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
