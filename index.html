@@ -501,6 +501,247 @@
             </div>
         </div>
 
+<style>
+.motm-card {
+  background: linear-gradient(135deg,#7f1018,#c51e2a,#8f101b);
+  color: white;
+  border-radius: 18px;
+  padding: 18px;
+  margin: 0 0 20px;
+  box-shadow: 0 10px 25px rgba(95,10,20,.18);
+}
+.motm-layout {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.motm-photo {
+  width: 82px;
+  height: 82px;
+  flex: 0 0 82px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid white;
+  background: #f4d9db;
+}
+.motm-eyebrow {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.motm-name {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 900;
+  margin: 0 0 7px;
+}
+.motm-meta { font-size: 14px; }
+.motm-controls {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.35);
+}
+.motm-controls label {
+  display: block;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.motm-controls input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px;
+  margin-top: 5px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  color: #222;
+  background: white;
+}
+.motm-controls button {
+  padding: 11px 14px;
+  margin: 8px 6px 0 0;
+  border: 1px solid white;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+@media(max-width:480px) {
+  .motm-card { padding: 14px; }
+  .motm-layout { gap: 12px; }
+  .motm-photo { width: 70px; height: 70px; flex-basis: 70px; }
+  .motm-name { font-size: 20px; }
+}
+</style>
+
+<section id="manOfTheMatchCard" class="motm-card">
+  <div class="motm-layout">
+    <img id="motmPublicPhoto" class="motm-photo"
+      alt="Man of the Match player photo"
+      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f4d9db'/%3E%3Ccircle cx='50' cy='35' r='18' fill='%23b86c72'/%3E%3Cpath d='M15 100c2-27 16-40 35-40s33 13 35 40' fill='%23b86c72'/%3E%3C/svg%3E">
+    <div>
+      <div class="motm-eyebrow">⭐ Man of the Match</div>
+      <h2 id="motmPublicName" class="motm-name">Awaiting announcement</h2>
+      <div id="motmPublicMeta" class="motm-meta">
+        The featured player will appear here.
+      </div>
+    </div>
+  </div>
+
+  <div id="motmDeveloperControls" class="motm-controls" hidden>
+    <strong>Developer: Publish Man of the Match</strong>
+
+    <label>Player name
+      <input id="motmPlayerName" type="text" placeholder="Player full name">
+    </label>
+
+    <label>Team / club
+      <input id="motmTeamName" type="text" placeholder="Club name">
+    </label>
+
+    <label>Jersey number
+      <input id="motmJerseyNumber" type="number" min="0" max="99" placeholder="10">
+    </label>
+
+    <label>Player photo URL (optional)
+      <input id="motmPhotoUrl" type="url" placeholder="https://example.com/player.jpg">
+    </label>
+
+    <button type="button" onclick="saveManOfTheMatch()">
+      Publish
+    </button>
+    <button type="button" onclick="clearManOfTheMatch()">
+      Clear announcement
+    </button>
+  </div>
+</section>
+
+<script>
+(function () {
+  const placeholder =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f4d9db'/%3E%3Ccircle cx='50' cy='35' r='18' fill='%23b86c72'/%3E%3Cpath d='M15 100c2-27 16-40 35-40s33 13 35 40' fill='%23b86c72'/%3E%3C/svg%3E";
+
+  function developerAllowed() {
+    return typeof getRole === "function" &&
+      String(getRole()).toUpperCase() === "DEVELOPER";
+  }
+
+  function updatePublic(player) {
+    document.getElementById("motmPublicName").textContent =
+      player.name || "Awaiting announcement";
+
+    document.getElementById("motmPublicMeta").textContent =
+      player.name
+        ? (player.team || "Team not specified") +
+          " • Jersey #" +
+          (player.number === "" || player.number == null ? "—" : player.number)
+        : "The featured player will appear here.";
+
+    const photo = document.getElementById("motmPublicPhoto");
+    photo.src = player.photo && /^https:\/\//i.test(player.photo)
+      ? player.photo
+      : placeholder;
+  }
+
+  window.loadManOfTheMatch = async function () {
+    try {
+      const result = await db.from("app_settings")
+        .select("value")
+        .eq("key", "man_of_the_match")
+        .maybeSingle();
+
+      if (result.error) throw result.error;
+      updatePublic(result.data && result.data.value
+        ? result.data.value : {});
+    } catch (e) {
+      console.error("Man of the Match load error:", e);
+    }
+  };
+
+  window.saveManOfTheMatch = async function () {
+    if (!developerAllowed()) {
+      alert("Only the Developer can publish this announcement.");
+      return;
+    }
+
+    const name = document.getElementById("motmPlayerName").value.trim();
+    const team = document.getElementById("motmTeamName").value.trim();
+    const number = document.getElementById("motmJerseyNumber").value.trim();
+    const photo = document.getElementById("motmPhotoUrl").value.trim();
+
+    if (!name || !team || number === "") {
+      alert("Enter the player's name, team and jersey number.");
+      return;
+    }
+
+    if (photo && !/^https:\/\//i.test(photo)) {
+      alert("The photo URL must begin with https://");
+      return;
+    }
+
+    try {
+      const result = await db.from("app_settings").upsert({
+        key: "man_of_the_match",
+        value: {
+          name: name,
+          team: team,
+          number: number,
+          photo: photo,
+          updated_at: new Date().toISOString()
+        }
+      }, { onConflict: "key" });
+
+      if (result.error) throw result.error;
+      await window.loadManOfTheMatch();
+      alert("Man of the Match published.");
+    } catch (e) {
+      alert("Could not publish: " + e.message);
+    }
+  };
+
+  window.clearManOfTheMatch = async function () {
+    if (!developerAllowed()) {
+      alert("Only the Developer can clear this announcement.");
+      return;
+    }
+
+    if (!confirm("Clear the Man of the Match announcement?")) return;
+
+    try {
+      const result = await db.from("app_settings").upsert({
+        key: "man_of_the_match",
+        value: {}
+      }, { onConflict: "key" });
+
+      if (result.error) throw result.error;
+
+      ["motmPlayerName", "motmTeamName", "motmJerseyNumber", "motmPhotoUrl"]
+        .forEach(function (id) {
+          document.getElementById(id).value = "";
+        });
+
+      updatePublic({});
+      alert("Announcement cleared.");
+    } catch (e) {
+      alert("Could not clear announcement: " + e.message);
+    }
+  };
+
+  function initMotm() {
+    const controls = document.getElementById("motmDeveloperControls");
+    if (controls) controls.hidden = !developerAllowed();
+    if (typeof db !== "undefined") window.loadManOfTheMatch();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initMotm);
+  } else {
+    initMotm();
+  }
+})();
+</script>
+
         <section id="standings" class="accordion-card" style="--accent: var(--green);">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="standingsContent" onclick="toggleAccordion('standingsContent', this)" onkeydown="accordionKey(event, 'standingsContent', this)">
                 <div>
@@ -2072,6 +2313,290 @@
                 if (refTbody) refTbody.innerHTML = html;
             } catch (err) {}
         }
+      
+/* MAN OF THE MATCH: SUPABASE SAVE AND LOAD */
+(function () {
+  const settingKey = "man_of_the_match";
+  const admin = document.getElementById("motm-admin");
+  const status = document.getElementById("motm-status");
+  const saveButton = document.getElementById("motm-save-button");
+
+  if (!admin || !status || !saveButton) return;
+
+  function showStatus(message) {
+    status.textContent = message;
+  }
+
+  function showAnnouncement(data) {
+    data = data || {};
+
+    document.getElementById("motm-player-name").textContent =
+      data.player_name || "Awaiting announcement";
+
+    document.getElementById("motm-team").textContent =
+      "Team: " + (data.team_name || "To be announced");
+
+    document.getElementById("motm-number").textContent =
+      "Jersey No.: " +
+      (data.jersey_number === undefined || data.jersey_number === null ||
+       data.jersey_number === "" ? "—" : data.jersey_number);
+
+    const photo = document.getElementById("motm-photo");
+    const url = typeof data.photo_url === "string" ? data.photo_url.trim() : "";
+
+    photo.onerror = function () {
+      photo.onerror = null;
+      photo.src = "https://placehold.co/160x160/eeeeee/555555?text=PLAYER";
+    };
+
+    photo.src = url || "https://placehold.co/160x160/eeeeee/555555?text=PLAYER";
+
+    document.getElementById("motm-input-name").value =
+      data.player_name || "";
+    document.getElementById("motm-input-team").value =
+      data.team_name || "";
+    document.getElementById("motm-input-number").value =
+      data.jersey_number ?? "";
+    document.getElementById("motm-input-photo").value =
+      data.photo_url || "";
+  }
+
+  function isAuthorisedReferee() {
+    if (typeof currentProfile === "undefined" || !currentProfile) {
+      return false;
+    }
+
+    const role = String(currentProfile.system_role || "").toUpperCase();
+    const active = String(currentProfile.status || "ACTIVE").toUpperCase();
+
+    return active !== "SUSPENDED" &&
+      (role === "REFEREE" || role === "SUPER_ADMIN");
+  }
+
+  async function loadAnnouncement() {
+    if (typeof db === "undefined" || !db) {
+      showStatus("Supabase is not available yet. Refresh after the app finishes loading.");
+      return;
+    }
+
+    try {
+      const result = await db
+        .from("app_settings")
+        .select("value")
+        .eq("key", settingKey)
+        .maybeSingle();
+
+      if (result.error) throw result.error;
+
+      showAnnouncement(result.data ? result.data.value : {});
+    } catch (error) {
+      console.error("Man of the Match load error:", error);
+      showStatus("Could not load the announcement. Check Supabase access and policies.");
+    }
+  }
+
+  function updateAdminVisibility() {
+    admin.style.display = isAuthorisedReferee() ? "block" : "none";
+  }
+
+  saveButton.addEventListener("click", async function () {
+    if (!isAuthorisedReferee()) {
+      showStatus("Access denied. Sign in with an authorised Referee or Super Admin account.");
+      return;
+    }
+
+    if (typeof db === "undefined" || !db) {
+      showStatus("Supabase is not ready. Refresh the page and try again.");
+      return;
+    }
+
+    const playerName = document.getElementById("motm-input-name").value.trim();
+    const teamName = document.getElementById("motm-input-team").value.trim();
+    const jerseyText = document.getElementById("motm-input-number").value.trim();
+    const photoUrl = document.getElementById("motm-input-photo").value.trim();
+
+    if (!playerName || !teamName || !jerseyText) {
+      showStatus("Enter the player's name, team and jersey number.");
+      return;
+    }
+
+    if (photoUrl && !/^https:\/\/\S+$/i.test(photoUrl)) {
+      showStatus("Use a valid HTTPS photo URL, or leave the photo field empty.");
+      return;
+    }
+
+    const announcement = {
+      player_name: playerName,
+      team_name: teamName,
+      jersey_number: Number(jerseyText),
+      photo_url: photoUrl,
+      published_at: new Date().toISOString()
+    };
+
+    saveButton.disabled = true;
+    showStatus("Publishing…");
+
+    try {
+      const result = await db
+        .from("app_settings")
+        .upsert(
+          { key: settingKey, value: announcement },
+          { onConflict: "key" }
+        );
+
+      if (result.error) throw result.error;
+
+      showAnnouncement(announcement);
+      showStatus("Announcement published successfully.");
+    } catch (error) {
+      console.error("Man of the Match save error:", error);
+      showStatus(
+        "Publishing failed. Confirm that you are signed in and that Supabase RLS allows this authorised account to update app_settings. No success was confirmed."
+      );
+    } finally {
+      saveButton.disabled = false;
+    }
+  });
+
+  updateAdminVisibility();
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadAnnouncement);
+  } else {
+    loadAnnouncement();
+  }
+
+  // Refresh the public announcement when another visitor publishes it.
+  if (typeof db !== "undefined" && db &&
+      typeof db.channel === "function") {
+    try {
+      db.channel("motm-live-updates")
+        .on("postgres_changes", {
+          event: "*",
+          schema: "public",
+          table: "app_settings",
+          filter: "key=eq.man_of_the_match"
+        }, loadAnnouncement)
+        .subscribe();
+    } catch (error) {
+      console.warn("Live announcement updates unavailable:", error);
+    }
+  }
+})();
+
     </script>
+  
+<!-- MAN OF THE MATCH FEATURE -->
+<style>
+  #motm-public {
+    max-width: 720px;
+    margin: 22px auto;
+    padding: 18px;
+    background: #a90018;
+    color: #fff;
+    border-radius: 16px;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 8px 24px #0002;
+  }
+  #motm-public h2 {
+    margin: 0 0 14px;
+    font-size: 20px;
+    letter-spacing: 1px;
+  }
+  .motm-player {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  #motm-photo {
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    border: 3px solid white;
+    object-fit: cover;
+    background: #eee;
+    flex-shrink: 0;
+  }
+  #motm-player-name {
+    font-size: 21px;
+    font-weight: 800;
+    margin-bottom: 5px;
+  }
+  #motm-team, #motm-number {
+    margin-top: 5px;
+    font-size: 14px;
+  }
+  #motm-admin {
+    display: none;
+    max-width: 720px;
+    margin: 20px auto;
+    padding: 18px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-family: Arial, sans-serif;
+    background: #fff;
+    color: #111;
+  }
+  #motm-admin input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin: 7px 0 13px;
+    border: 1px solid #bbb;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+  #motm-admin button {
+    padding: 12px 18px;
+    background: #a90018;
+    color: white;
+    border: 0;
+    border-radius: 8px;
+    font-weight: bold;
+  }
+  #motm-status {
+    font-size: 14px;
+    margin-top: 12px;
+    overflow-wrap: anywhere;
+  }
+</style>
+
+<section id="motm-public" aria-live="polite">
+  <h2>🏆 MAN OF THE MATCH</h2>
+  <div class="motm-player">
+    <img id="motm-photo" alt="Man of the Match player photo"
+      src="https://placehold.co/160x160/eeeeee/555555?text=PLAYER">
+    <div>
+      <div id="motm-player-name">Awaiting announcement</div>
+      <div id="motm-team">Team: To be announced</div>
+      <div id="motm-number">Jersey No.: —</div>
+    </div>
+  </div>
+</section>
+
+<section id="motm-admin">
+  <h3>Referee Admin — Publish Man of the Match</h3>
+  <p>Enter the player's details and a publicly accessible photo URL.</p>
+
+  <label for="motm-input-name">Player's full name</label>
+  <input id="motm-input-name" maxlength="100" placeholder="e.g. Mohamed Kamara">
+
+  <label for="motm-input-team">Team / Club</label>
+  <input id="motm-input-team" maxlength="100" placeholder="e.g. Example FC">
+
+  <label for="motm-input-number">Jersey number</label>
+  <input id="motm-input-number" type="number" min="0" max="999"
+    placeholder="e.g. 10">
+
+  <label for="motm-input-photo">Player photo URL</label>
+  <input id="motm-input-photo" type="url"
+    placeholder="https://example.com/player.jpg">
+
+  <button id="motm-save-button" type="button">Publish Announcement</button>
+  <div id="motm-status" role="status"></div>
+</section>
+<!-- END MAN OF THE MATCH FEATURE -->
+
 </body>
 </html>
