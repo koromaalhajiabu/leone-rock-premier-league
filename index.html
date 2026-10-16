@@ -2319,64 +2319,67 @@
             tbody.innerHTML = html;
         }
 
-        const defaultTopScorers = [
-            { player: "Mohamed Bangura", club: "Bo Rangers FC", goals: 12 },
-            { player: "Alpha Jalloh", club: "Freetown FC", goals: 9 },
-            { player: "Ibrahim Conteh", club: "Eastern Lions", goals: 8 },
-            { player: "Musa Kamara", club: "Mighty Blackpool", goals: 7 }
-        ];
+        // Award tables use database records only. Never substitute fictional demo
+        // names when a table is empty or temporarily unavailable.
+        function renderAwardEmptyState(tbody, message) {
+            if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="muted-cell" style="padding:24px 14px;">${esc(message)}</td></tr>`;
+        }
 
         async function loadTopScorers() {
             const tbody = document.getElementById('topScorersTableBody');
             if (!tbody) return;
-            let scorersToRender = defaultTopScorers;
-            let fromDatabase = false;
+            renderAwardEmptyState(tbody, 'Loading official goalscorer records…');
             try {
-                const { data } = await db.from('top_scorers').select('*').order('goals', { ascending: false });
-                if (data && data.length > 0) { scorersToRender = data; fromDatabase = true; }
-            } catch (err) {}
-            scorersToRender = await attachLeaderboardPhotos(scorersToRender, 'player');
-            tbody.innerHTML = leaderboardRows(scorersToRender, 'player', 'goals', 'top_scorers', fromDatabase);
+                const { data, error } = await db.from('top_scorers').select('*').order('goals', { ascending: false });
+                if (error) throw error;
+                if (!Array.isArray(data) || data.length === 0) {
+                    renderAwardEmptyState(tbody, 'No official goalscorer records have been published yet.');
+                    return;
+                }
+                const rows = await attachLeaderboardPhotos(data, 'player');
+                tbody.innerHTML = leaderboardRows(rows, 'player', 'goals', 'top_scorers', true);
+            } catch (err) {
+                console.warn('Could not load official goalscorer records.', err);
+                renderAwardEmptyState(tbody, 'Goalscorer records are temporarily unavailable. Please try again.');
+            }
         }
-
-        const defaultTopAssists = [
-            { player: "Musa Kamara", club: "Bo Rangers FC", assists: 8 },
-            { player: "Alpha Jalloh", club: "Freetown FC", assists: 7 },
-            { player: "Mohamed Bangura", club: "Bo Rangers FC", assists: 6 },
-            { player: "Ibrahim Conteh", club: "Eastern Lions", assists: 5 }
-        ];
 
         async function loadTopAssists() {
             const tbody = document.getElementById('topAssistsTableBody');
             if (!tbody) return;
-            let assistsToRender = defaultTopAssists;
-            let fromDatabase = false;
+            renderAwardEmptyState(tbody, 'Loading official playmaker records…');
             try {
-                const { data } = await db.from('top_assists').select('*').order('assists', { ascending: false });
-                if (data && data.length > 0) { assistsToRender = data; fromDatabase = true; }
-            } catch (err) {}
-            assistsToRender = await attachLeaderboardPhotos(assistsToRender, 'player');
-            tbody.innerHTML = leaderboardRows(assistsToRender, 'player', 'assists', 'top_assists', fromDatabase);
+                const { data, error } = await db.from('top_assists').select('*').order('assists', { ascending: false });
+                if (error) throw error;
+                if (!Array.isArray(data) || data.length === 0) {
+                    renderAwardEmptyState(tbody, 'No official playmaker records have been published yet.');
+                    return;
+                }
+                const rows = await attachLeaderboardPhotos(data, 'player');
+                tbody.innerHTML = leaderboardRows(rows, 'player', 'assists', 'top_assists', true);
+            } catch (err) {
+                console.warn('Could not load official playmaker records.', err);
+                renderAwardEmptyState(tbody, 'Playmaker records are temporarily unavailable. Please try again.');
+            }
         }
-
-        const defaultCleanSheets = [
-            { goalkeeper: "Mohamed Kamara", club: "Bo Rangers FC", clean_sheets: 6 },
-            { goalkeeper: "Donald Wellington", club: "Freetown FC", clean_sheets: 5 },
-            { goalkeeper: "Unisa Conteh", club: "Eastern Lions", clean_sheets: 4 },
-            { goalkeeper: "Prince Koroma", club: "Mighty Blackpool", clean_sheets: 3 }
-        ];
 
         async function loadCleanSheets() {
             const tbody = document.getElementById('cleanSheetsTableBody');
             if (!tbody) return;
-            let sheetsToRender = defaultCleanSheets;
-            let fromDatabase = false;
+            renderAwardEmptyState(tbody, 'Loading official goalkeeper records…');
             try {
-                const { data } = await db.from('clean_sheets').select('*').order('clean_sheets', { ascending: false });
-                if (data && data.length > 0) { sheetsToRender = data; fromDatabase = true; }
-            } catch (err) {}
-            sheetsToRender = await attachLeaderboardPhotos(sheetsToRender, 'goalkeeper');
-            tbody.innerHTML = leaderboardRows(sheetsToRender, 'goalkeeper', 'clean_sheets', 'clean_sheets', fromDatabase);
+                const { data, error } = await db.from('clean_sheets').select('*').order('clean_sheets', { ascending: false });
+                if (error) throw error;
+                if (!Array.isArray(data) || data.length === 0) {
+                    renderAwardEmptyState(tbody, 'No official clean-sheet records have been published yet.');
+                    return;
+                }
+                const rows = await attachLeaderboardPhotos(data, 'goalkeeper');
+                tbody.innerHTML = leaderboardRows(rows, 'goalkeeper', 'clean_sheets', 'clean_sheets', true);
+            } catch (err) {
+                console.warn('Could not load official goalkeeper records.', err);
+                renderAwardEmptyState(tbody, 'Goalkeeper records are temporarily unavailable. Please try again.');
+            }
         }
 
         // ------------------------------------------------------------------
