@@ -1737,10 +1737,38 @@
             return `<span class="badge ${entry[1]}">${esc(entry[0])}</span>`;
         }
 
+        // Resolve leaderboard headshots from saved stats first, then the club squad register.
+        // The avatar falls back to player initials until a photo is uploaded for that player.
+        async function attachLeaderboardPhotos(rows, nameKey) {
+            let squadPhotos = new Map();
+            try {
+                const { data, error } = await db.from('club_squad').select('player_name, photo_url');
+                if (!error && Array.isArray(data)) {
+                    data.forEach(player => {
+                        if (player.player_name && isSafePhotoUrl(player.photo_url)) {
+                            squadPhotos.set(String(player.player_name).trim().toLowerCase(), player.photo_url);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn('Player headshots unavailable; showing initials instead.', err);
+            }
+            return rows.map(row => ({
+                ...row,
+                photo_url: isSafePhotoUrl(row.photo_url) ? row.photo_url :
+                    (squadPhotos.get(String(row[nameKey] || '').trim().toLowerCase()) || null)
+            }));
+        }
+
         function leaderboardRows(rows, nameKey, valueKey) {
             let html = '';
             rows.forEach((row, index) => {
-                html += `<tr><td class="c">${rankBadge(index)}</td><td><div class="pl-name">${esc(row[nameKey])}</div><div class="pl-club">${esc(row.club)}</div></td><td class="stat">${esc(row[valueKey])}</td></tr>`;
+                const name = row[nameKey] || 'Player';
+                html += `<tr>
+                    <td class="c">${rankBadge(index)}</td>
+                    <td><div class="person leaderboard-person">${avatarHtml(row.photo_url, name, 'avatar-sm')}<div><div class="pl-name">${esc(name)}</div><div class="pl-club">${esc(row.club || 'Club not set')}</div></div></div></td>
+                    <td class="stat">${esc(row[valueKey] ?? 0)}</td>
+                </tr>`;
             });
             return html;
         }
@@ -1944,6 +1972,7 @@
                 const { data } = await db.from('top_scorers').select('*').order('goals', { ascending: false });
                 if (data && data.length > 0) scorersToRender = data;
             } catch (err) {}
+            scorersToRender = await attachLeaderboardPhotos(scorersToRender, 'player');
             tbody.innerHTML = leaderboardRows(scorersToRender, 'player', 'goals');
         }
 
@@ -1962,6 +1991,7 @@
                 const { data } = await db.from('top_assists').select('*').order('assists', { ascending: false });
                 if (data && data.length > 0) assistsToRender = data;
             } catch (err) {}
+            assistsToRender = await attachLeaderboardPhotos(assistsToRender, 'player');
             tbody.innerHTML = leaderboardRows(assistsToRender, 'player', 'assists');
         }
 
@@ -1980,6 +2010,7 @@
                 const { data } = await db.from('clean_sheets').select('*').order('clean_sheets', { ascending: false });
                 if (data && data.length > 0) sheetsToRender = data;
             } catch (err) {}
+            sheetsToRender = await attachLeaderboardPhotos(sheetsToRender, 'goalkeeper');
             tbody.innerHTML = leaderboardRows(sheetsToRender, 'goalkeeper', 'clean_sheets');
         }
 
