@@ -1748,6 +1748,7 @@
             if (wSub) wSub.textContent = WORKSPACE_HINTS[real] || '';
 
             show('developerDataExportPanel', isDev);
+            show('developerBoardManagerPanel', isDev);
             show('awardBackupPanel', isDev);
             show('themeSettingsPanel', isDev);
             show('masterUserDirectoryPanel', isDev);
@@ -1767,6 +1768,8 @@
             show('menuSignOut', !!currentUser);
 
             renderSessionInfo();
+            if (typeof syncBoardManagerEntryPoint === 'function') syncBoardManagerEntryPoint();
+            if (isDev && typeof loadBoardMembers === 'function') loadBoardMembers();
 
             if (isDev) fetchMasterUserDirectory();
             if (isDev || role === 'CLUB_ADMIN') loadClubRoster();
