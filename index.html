@@ -1755,6 +1755,14 @@
             }
         }
 
+        // The main application script is wrapped in a closure, so inline HTML
+        // handlers and the separate mobile form binder cannot see this function
+        // unless it is deliberately exported.
+        window.handleAuthSubmit = handleAuthSubmit;
+        window.openAuthModal = openAuthModal;
+        window.closeAuthModal = closeAuthModal;
+        window.toggleAuthMode = toggleAuthMode;
+
         async function logoutSystem() {
             try { await db.auth.signOut(); } catch (err) {}
             alert("You have been signed out.");
