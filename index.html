@@ -1853,8 +1853,10 @@
             show('verificationSubmitArea', !isDev);
             if (isDev) { const fm = document.getElementById('verificationFormMessage'); if (fm) fm.textContent = 'Developer oversight is read-only here. The Super Admin is responsible for reviewing and deciding submissions.'; }
             if (working && (isDev || isAdmin || role === 'CLUB_ADMIN')) loadLeagueVerificationRequests();
-            show('clubAdminPanelContainer', role === 'CLUB_ADMIN');
-            show('refereePanelContainer', role === 'REFEREE');
+            // Hard role separation: these portals must never appear in the General Overseer workspace.
+            show('clubAdminPanelContainer', working && role === 'CLUB_ADMIN');
+            show('refereePanelContainer', working && role === 'REFEREE');
+            show('awardBackupPanel', false);
             if (isDev || role === 'SUPER_ADMIN' || role === 'REFEREE') loadRefereeMatchOptions();
             show('staffActionControls', isDev || isAdmin);
             if (!(isDev || isAdmin)) show('staffFormPanel', false);
@@ -3648,7 +3650,7 @@
           if (realRole() !== 'DEVELOPER') { alert('Developer access is required.'); return; }
           const el = document.getElementById(id);
           const roleRestrictedPanels = ['awardBackupPanel', 'clubAdminPanelContainer', 'refereePanelContainer'];
-          if (roleRestrictedPanels.includes(id)) { alert('This panel belongs to the relevant award administrator, Club Admin, or Referee role and cannot be opened from the General Overseer panel.'); return; }
+          if (roleRestrictedPanels.includes(id)) { alert('This panel is not part of the General Overseer workspace. Sign in with the appropriate authorized role to access it.'); return; }
           if (!el) { alert('That panel is not present in this page build yet.'); return; }
           if (id === 'publicArea') {
             setView('public', true);
