@@ -464,7 +464,7 @@
                 <p class="hero-lead">Official league management for clubs, match officials and administrators. Follow the table, the scorers and every match incident as it is recorded.</p>
                 <div class="hero-actions">
                     <a href="#standings" class="btn btn-light" style="text-decoration:none;">View standings</a>
-                    <button type="button" class="btn btn-ghost" onclick="openAuthModal('signin')">Staff sign in</button>
+                    <button type="button" id="staffSignInButton" class="btn btn-ghost">Staff sign in</button>
                 </div>
                 <span id="dbStatus" class="db-status hidden" role="status"></span>
                 <div id="readOnlyNotice" class="readonly-notice hidden" role="status">
@@ -2707,6 +2707,22 @@ const defaultCleanSheets = [];
 <script>
     // Bind the sign-in and create-account menu items explicitly.
     // This avoids relying on inline onclick handlers on mobile browsers.
+    function bindStaffSignInButton() {
+      const button = document.getElementById("staffSignInButton");
+      if (!button || button.dataset.staffAuthBound === "yes") return;
+      button.dataset.staffAuthBound = "yes";
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const modal = document.getElementById("authModal");
+        if (typeof window.openAuthModal === "function") {
+          window.openAuthModal("signin");
+        } else if (modal) {
+          modal.classList.remove("hidden");
+        }
+      });
+    }
+
     function bindAuthMenuItems() {
       const signIn = document.getElementById("menuSignIn");
       const signUp = document.getElementById("menuSignUp");
@@ -2766,6 +2782,7 @@ const defaultCleanSheets = [];
     }
 
     bindAuthMenuItems();
+    bindStaffSignInButton();
     bindAuthCancel();
 
     // Bind the sign-in form explicitly. This avoids depending on an inline
