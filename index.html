@@ -1514,12 +1514,31 @@
         async function applySession(session) {
             currentUser = session ? session.user : null;
             currentProfile = null;
+            let profileLoadMessage = '';
+
             if (currentUser) {
                 try {
-                    const { data, error } = await db.from('user_profiles').select('*').eq('id', currentUser.id).single();
-                    if (!error) currentProfile = data;
-                } catch (err) {}
+                    const { data, error } = await db
+                        .from('user_profiles')
+                        .select('*')
+                        .eq('id', currentUser.id)
+                        .maybeSingle();
+
+                    if (error) {
+                        console.error('User profile lookup failed:', error);
+                        profileLoadMessage = 'Profile lookup failed: ' + (error.message || 'database error');
+                    } else if (!data) {
+                        profileLoadMessage = 'No user_profiles row matches this signed-in account ID. The Developer role must be assigned to the matching profile in Supabase.';
+                    } else {
+                        currentProfile = data;
+                    }
+                } catch (err) {
+                    console.error('User profile lookup exception:', err);
+                    profileLoadMessage = 'Could not load your profile. Check the Supabase connection and user_profiles access policies.';
+                }
             }
+
+            window.__profileLoadMessage = profileLoadMessage;
             applyRoleUI();
             loadStaffData();
         }
@@ -1572,7 +1591,12 @@
             if (!info) return;
             if (!currentUser) { info.classList.add('hidden'); return; }
             let line;
-            if (!currentProfile) line = 'No role found for this account yet.';
+            if (!currentProfile) {
+                line = 'No role found for this account yet.';
+                if (window.__profileLoadMessage) {
+                    line += '<br><span class="muted-cell">' + esc(window.__profileLoadMessage) + '</span>';
+                }
+            }
             else if (currentProfile.status === 'Suspended') line = 'This account is <strong>suspended</strong>. Contact the league office.';
             else if (currentProfile.system_role === 'VIEWER') line = 'Role: <strong>Viewer</strong>. Waiting for a Developer to assign your role.';
             else line = 'Role: <strong>' + esc(ROLE_LABELS[currentProfile.system_role] || currentProfile.system_role) + '</strong>';
