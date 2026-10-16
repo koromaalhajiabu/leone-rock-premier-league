@@ -2049,18 +2049,52 @@
         // ------------------------------------------------------------------
         // PUBLIC LEADERBOARDS
         // ------------------------------------------------------------------
-        const defaultLeagueStandings = [];
+        // Official 2026/27 Leone Rock Premier League clubs.
+        // Zeroed statistics are placeholders until verified match results are entered.
+        const defaultLeagueStandings = [
+            { club: "Bai Bureh Warriors FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Bhantal FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Bo Rangers FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Bullom Stars FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Diamond Stars FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "East End Lions FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "FC Kallon", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Kamboi Eagles FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Mighty Blackpool FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Old Edwardians FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Ports Authority FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Star SA", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Waterloo FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Western United FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Wilberforce Strikers FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+            { club: "Wusum Stars FC", mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }
+        ];
 const defaultTopScorers = [];
 const defaultTopAssists = [];
 const defaultCleanSheets = [];
         async function loadLeagueStandings() {
             const tbody = document.getElementById('leagueStandingsTableBody');
             if (!tbody) return;
-            let standingsToRender = defaultLeagueStandings;
+            // Always show all 16 clubs; use saved database statistics when available.
+            let savedStandings = [];
             try {
-                const { data } = await db.from('league_standings').select('*').order('pts', { ascending: false });
-                if (data && data.length > 0) standingsToRender = data;
-            } catch (err) {}
+                const { data, error } = await db.from('league_standings').select('*').order('pts', { ascending: false });
+                if (!error && Array.isArray(data)) savedStandings = data;
+            } catch (err) {
+                console.warn('Using the built-in 2026/27 club list because standings could not be loaded:', err);
+            }
+            const savedByClub = new Map(savedStandings.map(team => [String(team.club || '').trim().toLowerCase(), team]));
+            const standingsToRender = defaultLeagueStandings.map(base => {
+                const saved = savedByClub.get(base.club.toLowerCase());
+                return saved ? { ...base, ...saved } : base;
+            });
+            // Include any additional club that an administrator has saved.
+            savedStandings.forEach(team => {
+                if (!defaultLeagueStandings.some(base => base.club.toLowerCase() === String(team.club || '').trim().toLowerCase())) {
+                    standingsToRender.push(team);
+                }
+            });
+            standingsToRender.sort((a, b) => (Number(b.pts) || 0) - (Number(a.pts) || 0) || (Number(b.gf) || 0) - (Number(a.gf) || 0) || a.club.localeCompare(b.club));
 
             let html = '';
             standingsToRender.forEach((team, index) => {
