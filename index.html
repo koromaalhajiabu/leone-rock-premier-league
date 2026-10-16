@@ -2745,10 +2745,14 @@ const defaultCleanSheets = [];
         // depend on the large application script having completed successfully.
         let client = window.__leagueSupabaseClient;
         function makeClient() {
-          if (window.__leagueSupabaseClient && window.__leagueSupabaseClient.auth) {
-            return window.__leagueSupabaseClient;
-          }
+          // Prefer the real Supabase library. The main app may have installed
+          // an offline placeholder in __leagueSupabaseClient after a CDN failure.
           if (window.supabase && typeof window.supabase.createClient === "function") {
+            const existing = window.__leagueSupabaseClient;
+            if (existing && existing.auth && typeof existing.auth.signInWithPassword === "function") {
+              // The placeholder's sign-in always returns a "Database not connected" error.
+              // Build a real client whenever the Supabase library is available.
+            }
             const created = window.supabase.createClient(
               "https://ticcaervmjdzbprdpxxv.supabase.co",
               "sb_publishable_WSlNd0DeyV4Z0vM3fM28iA_c5BIYRiL"
