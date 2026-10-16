@@ -2675,6 +2675,43 @@ const defaultCleanSheets = [];
     }
 
     bindAuthMenuItems();
+
+    // Bind the sign-in form explicitly. This avoids depending on an inline
+    // onsubmit attribute and gives a visible message if the main handler failed.
+    function bindAuthForm() {
+      const form = document.getElementById("authForm");
+      const button = document.getElementById("authSubmitBtn");
+      if (!form || form.dataset.explicitSubmitBound === "yes") return;
+
+      form.removeAttribute("onsubmit");
+      form.dataset.explicitSubmitBound = "yes";
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const message = document.getElementById("authMessage");
+
+        if (typeof window.handleAuthSubmit !== "function") {
+          if (message) {
+            message.textContent = "Sign-in script did not load correctly. Please refresh this page and try again.";
+            message.className = "auth-message auth-error";
+          }
+          return;
+        }
+
+        Promise.resolve(window.handleAuthSubmit(event)).catch(function (error) {
+          if (message) {
+            message.textContent = "Sign-in failed: " + (error && error.message ? error.message : "Unexpected error");
+            message.className = "auth-message auth-error";
+          }
+        });
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", bindAuthForm);
+    } else {
+      bindAuthForm();
+    }
 </script>
 
 
