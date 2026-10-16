@@ -1042,7 +1042,7 @@
                     </div>
                 </div>
 
-                <div class="form-panel">
+                <div class="form-panel hidden" id="developerGoldenBootEditor">
                     <h3>Update Golden Boot goalscorers</h3>
                     <div class="grid-2" style="margin-top:12px;">
                         <label class="field"><span>Player full name</span><input type="text" id="scorerPlayerName"></label>
@@ -1055,7 +1055,7 @@
                     </div>
                 </div>
 
-                <div class="form-panel">
+                <div class="form-panel hidden" id="developerPlaymakerEditor">
                     <h3>Update playmaker assists</h3>
                     <div class="grid-2" style="margin-top:12px;">
                         <label class="field"><span>Player full name</span><input type="text" id="assistPlayerName"></label>
@@ -1068,7 +1068,7 @@
                     </div>
                 </div>
 
-                <div class="form-panel">
+                <div class="form-panel hidden" id="developerGoldenGloveEditor">
                     <h3>Update Golden Glove clean sheets</h3>
                     <div class="grid-2" style="margin-top:12px;">
                         <label class="field"><span>Goalkeeper full name</span><input type="text" id="gkPlayerName"></label>
@@ -1843,7 +1843,10 @@
             show('generalOverseerCommandCentre', isDev);
             show('developerDataExportPanel', isDev);
             show('developerBoardManagerPanel', isDev);
-            show('awardBackupPanel', false); // Award management and award backups are not General Overseer duties.
+            show('awardBackupPanel', false);
+            show('developerGoldenBootEditor', false);
+            show('developerPlaymakerEditor', false);
+            show('developerGoldenGloveEditor', false); // Award management and award backups are not General Overseer duties.
             show('themeSettingsPanel', isDev);
             show('masterUserDirectoryPanel', isDev);
             show('developerPanelFinder', isDev);
