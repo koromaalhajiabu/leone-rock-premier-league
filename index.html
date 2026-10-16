@@ -783,8 +783,8 @@
         </section>
 
         <section id="developerPanelFinder" class="form-panel hidden" style="margin:0 0 18px;border:1px solid var(--line);border-radius:14px;padding:16px">
-          <h3>Developer — Search any panel</h3>
-          <p class="section-hint">Find panels across the system, open them, or export the information currently available to your account. Database permissions still apply.</p>
+          <h3>General Overseer — Panel Directory</h3>
+          <p class="section-hint">Private panel directory. Only the General Overseer should access these controls; database permissions remain the security boundary.</p>
           <label class="field" style="display:block"><span>Search panel names and descriptions</span><input id="developerPanelSearch" type="search" placeholder="Search clubs, fixtures, players, finance, staff, awards…" oninput="searchDeveloperPanels(this.value)" autocomplete="off"></label>
           <div id="developerPanelSearchResults" class="verification-grid" style="margin-top:12px"><p class="section-hint">Enter a search term to find panels.</p></div>
           <div class="verification-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadDeveloperPanelIndex()">Download panel directory (CSV)</button></div>
@@ -794,6 +794,23 @@
             <h2 id="workspaceTitle">My panel</h2>
             <p id="workspaceSub"></p>
         </div>
+        <section id="generalOverseerCommandCentre" class="accordion-card hidden" style="--accent: var(--gold);border:1px solid var(--gold-soft);">
+            <div class="accordion-header" style="cursor:default">
+                <div><h2>General Overseer Command Centre</h2><p>Private platform governance and system oversight</p></div>
+                <div class="card-meta"><span class="badge badge-warning">Restricted access</span></div>
+            </div>
+            <div class="accordion-content">
+                <p class="section-hint">Use these shortcuts to reach your existing management tools. Role changes and sensitive operations must still be authorized by Supabase policies; this dashboard does not replace database security.</p>
+                <div class="verification-grid" style="margin-top:14px">
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('masterUserDirectoryPanel')?.scrollIntoView({behavior:'smooth',block:'start'})">Personnel & role assignments</button>
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('developerBoardManagerPanel')?.scrollIntoView({behavior:'smooth',block:'start'})">Governance & board management</button>
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('developerDataExportPanel')?.scrollIntoView({behavior:'smooth',block:'start'})">Data backup & export</button>
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('themeSettingsPanel')?.scrollIntoView({behavior:'smooth',block:'start'})">Platform appearance</button>
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('awardBackupPanel')?.scrollIntoView({behavior:'smooth',block:'start'})">Awards & records backup</button>
+                </div>
+                <p class="section-hint" style="margin-top:12px"><strong>System suspension / restoration:</strong> this control will only be enabled after database-level write blocking and audit logging are implemented and verified. No records are changed by this panel.</p>
+            </div>
+        </section>
         <section id="themeSettingsPanel" class="accordion-card hidden" style="--accent: var(--gold);">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="themeSettingsContent" onclick="toggleAccordion('themeSettingsContent', this)" onkeydown="accordionKey(event, 'themeSettingsContent', this)">
                 <div><h2>Premium appearance & theme</h2><p>Only the Developer can change the system colours on this device.</p></div>
@@ -1401,7 +1418,7 @@
         let dbState = null;
 
         const ROLE_LABELS = {
-            DEVELOPER: 'Master Developer',
+            DEVELOPER: 'General Overseer',
             SUPER_ADMIN: 'Super Admin',
             CLUB_ADMIN: 'Club Manager',
             REFEREE: 'Match Official',
@@ -1443,13 +1460,13 @@
         let lastViewUserId = null;
 
         const WORKSPACE_NAMES = {
-            DEVELOPER: 'Developer panel',
+            DEVELOPER: 'General Overseer Command Centre',
             SUPER_ADMIN: 'Super Admin panel',
             CLUB_ADMIN: 'Club manager panel',
             REFEREE: 'Referee panel'
         };
         const WORKSPACE_HINTS = {
-            DEVELOPER: 'System oversight: assign authorised roles, maintain league settings, manage league records, review backups, and preview public pages. Database permissions still enforce access.',
+            DEVELOPER: 'Private system oversight: assign authorised roles, maintain league settings, manage league records, review backups, and preview public pages. Database permissions still enforce access.',
             SUPER_ADMIN: 'League administration: maintain authorised executive and staff records and complete assigned administrative tasks. Developer-only controls remain restricted.',
             CLUB_ADMIN: 'Club operations: register and maintain your club squad and player details. Access to other clubs and league-wide settings must remain blocked by database policies.',
             REFEREE: 'Match operations: submit authorised match incidents and Man of the Match records. Only records permitted by your referee assignment should be editable.'
@@ -1658,7 +1675,7 @@
         // ------------------------------------------------------------------
         async function checkConnection() {
             if (!dbOnline) {
-                dbState = { cls: 'db-off', text: 'Not connected to Supabase. Showing demo data.' };
+                dbState = { cls: 'db-off', text: 'Not connected to Supabase. Live records are unavailable.' };
                 renderDbStatus();
                 return;
             }
@@ -1824,6 +1841,7 @@
             if (wTitle) wTitle.textContent = WORKSPACE_NAMES[real] || 'My panel';
             if (wSub) wSub.textContent = WORKSPACE_HINTS[real] || '';
 
+            show('generalOverseerCommandCentre', isDev);
             show('developerDataExportPanel', isDev);
             show('developerBoardManagerPanel', isDev);
             show('awardBackupPanel', isDev);
@@ -2424,20 +2442,19 @@
         }
 
         async function loadStaffData() {
-            const defaultStaff = [
-                { id: 1, name: "Alhaji Abu Koroma", role: "Master Developer & Tech Lead", department: "Operations and IT", status: "Active" },
-                { id: 2, name: "Yayah Koroma", role: "Executive Operations Partner", department: "Administration", status: "Active" },
-                { id: 3, name: "Dr. Brima", role: "Executive Board", department: "Executive Board", status: "Active" },
-                { id: 4, name: "Mr. Foday Turay", role: "Club Admin & Operations", department: "Administration", status: "Active" }
-            ];
+            // Never insert fictional staff into a clean installation. The directory
+            // displays only records that actually exist in Supabase.
+            const grid = document.getElementById('staffGridContainer');
+            if (grid) grid.innerHTML = '<p class="section-hint">Loading saved staff records…</p>';
 
             try {
+                if (!dbOnline || !db) throw new Error('Supabase is not connected.');
                 const { data, error } = await db.from('staff_registry').select('*').order('id', { ascending: true });
                 if (error) throw error;
-                if (data && data.length > 0) renderStaffGrid(data, false);
-                else renderStaffGrid(defaultStaff, true);
+                renderStaffGrid(Array.isArray(data) ? data : [], false);
             } catch (err) {
-                renderStaffGrid(defaultStaff, true);
+                console.warn('Staff directory could not be loaded:', err.message);
+                if (grid) grid.innerHTML = '<p class="section-hint">Staff records could not be loaded. Check the Supabase connection and permissions.</p>';
             }
         }
 
@@ -2559,6 +2576,11 @@
             });
             const order = STAFF_DEPARTMENTS.filter(d => groups[d])
                 .concat(Object.keys(groups).filter(d => STAFF_DEPARTMENTS.indexOf(d) === -1));
+
+            if (!staffList || staffList.length === 0) {
+                grid.innerHTML = '<p class="section-hint">No staff records have been added yet.</p>';
+                return;
+            }
 
             grid.innerHTML = order.map(dept =>
                 `<div class="dept-block"><h3 class="dept-title">${esc(dept)} <span class="dept-count">${groups[dept].length}</span></h3>` +
