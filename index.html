@@ -1771,17 +1771,58 @@
             }));
         }
 
-        function leaderboardRows(rows, nameKey, valueKey) {
+        function leaderboardRows(rows, nameKey, valueKey, tableName, fromDatabase) {
             let html = '';
             rows.forEach((row, index) => {
                 const name = row[nameKey] || 'Player';
+                const photoControl = fromDatabase && row.id && canEditForReal() && !previewAsVisitor
+                    ? `<label class="btn btn-outline btn-sm" style="margin-top:6px;cursor:pointer;">${row.photo_url ? 'Change headshot' : 'Upload headshot'}<input type="file" accept="image/jpeg,image/png,image/webp" style="display:none" aria-label="Upload round player photo for ${esc(name)}" onchange="uploadLeaderboardHeadshot('${tableName}', ${Number(row.id)}, this)"></label>`
+                    : '';
                 html += `<tr>
                     <td class="c">${rankBadge(index)}</td>
-                    <td><div class="person leaderboard-person">${avatarHtml(row.photo_url, name, 'avatar-sm')}<div><div class="pl-name">${esc(name)}</div><div class="pl-club">${esc(row.club || 'Club not set')}</div></div></div></td>
+                    <td><div class="person leaderboard-person">${avatarHtml(row.photo_url, name, 'avatar-sm')}<div><div class="pl-name">${esc(name)}</div><div class="pl-club">${esc(row.club || 'Club not set')}</div>${photoControl}</div></div></td>
                     <td class="stat">${esc(row[valueKey] ?? 0)}</td>
                 </tr>`;
             });
             return html;
+        }
+
+        async function uploadLeaderboardHeadshot(tableName, rowId, input) {
+            if (!input || !input.files || !input.files[0]) return;
+            if (!canEditForReal() || previewAsVisitor) {
+                alert('Sign in with an authorized editor account to upload player photos.');
+                input.value = '';
+                return;
+            }
+            if (!['top_scorers', 'top_assists', 'clean_sheets'].includes(tableName)) {
+                alert('This leaderboard does not support photo uploads.');
+                input.value = '';
+                return;
+            }
+            let uploadedUrl = null;
+            let oldUrl = null;
+            try {
+                const file = input.files[0];
+                const blob = await prepareImage(file);
+                if (!blob) throw new Error('Choose a photo first.');
+                const table = tableName;
+                const { data: currentRow, error: readError } = await db.from(table).select('id,photo_url').eq('id', rowId).maybeSingle();
+                if (readError) throw readError;
+                oldUrl = currentRow && currentRow.photo_url;
+                uploadedUrl = await uploadPhotoBlob('leaderboards/' + table, blob);
+                const { error: updateError } = await db.from(table).update({ photo_url: uploadedUrl }).eq('id', rowId);
+                if (updateError) throw updateError;
+                if (oldUrl && oldUrl !== uploadedUrl) removePhotoByUrl(oldUrl);
+                alert('Player headshot saved.');
+                if (tableName === 'top_assists') await loadTopAssists();
+                else if (tableName === 'clean_sheets') await loadCleanSheets();
+                else await loadTopScorers();
+            } catch (err) {
+                if (uploadedUrl) removePhotoByUrl(uploadedUrl);
+                alert('Could not save the player photo: ' + friendlyError(err));
+            } finally {
+                input.value = '';
+            }
         }
 
         // ------------------------------------------------------------------
@@ -2049,12 +2090,13 @@
             const tbody = document.getElementById('topScorersTableBody');
             if (!tbody) return;
             let scorersToRender = defaultTopScorers;
+            let fromDatabase = false;
             try {
                 const { data } = await db.from('top_scorers').select('*').order('goals', { ascending: false });
-                if (data && data.length > 0) scorersToRender = data;
+                if (data && data.length > 0) { scorersToRender = data; fromDatabase = true; }
             } catch (err) {}
             scorersToRender = await attachLeaderboardPhotos(scorersToRender, 'player');
-            tbody.innerHTML = leaderboardRows(scorersToRender, 'player', 'goals');
+            tbody.innerHTML = leaderboardRows(scorersToRender, 'player', 'goals', 'top_scorers', fromDatabase);
         }
 
         const defaultTopAssists = [
@@ -2068,12 +2110,13 @@
             const tbody = document.getElementById('topAssistsTableBody');
             if (!tbody) return;
             let assistsToRender = defaultTopAssists;
+            let fromDatabase = false;
             try {
                 const { data } = await db.from('top_assists').select('*').order('assists', { ascending: false });
-                if (data && data.length > 0) assistsToRender = data;
+                if (data && data.length > 0) { assistsToRender = data; fromDatabase = true; }
             } catch (err) {}
             assistsToRender = await attachLeaderboardPhotos(assistsToRender, 'player');
-            tbody.innerHTML = leaderboardRows(assistsToRender, 'player', 'assists');
+            tbody.innerHTML = leaderboardRows(assistsToRender, 'player', 'assists', 'top_assists', fromDatabase);
         }
 
         const defaultCleanSheets = [
@@ -2087,12 +2130,13 @@
             const tbody = document.getElementById('cleanSheetsTableBody');
             if (!tbody) return;
             let sheetsToRender = defaultCleanSheets;
+            let fromDatabase = false;
             try {
                 const { data } = await db.from('clean_sheets').select('*').order('clean_sheets', { ascending: false });
-                if (data && data.length > 0) sheetsToRender = data;
+                if (data && data.length > 0) { sheetsToRender = data; fromDatabase = true; }
             } catch (err) {}
             sheetsToRender = await attachLeaderboardPhotos(sheetsToRender, 'goalkeeper');
-            tbody.innerHTML = leaderboardRows(sheetsToRender, 'goalkeeper', 'clean_sheets');
+            tbody.innerHTML = leaderboardRows(sheetsToRender, 'goalkeeper', 'clean_sheets', 'clean_sheets', fromDatabase);
         }
 
         // ------------------------------------------------------------------
