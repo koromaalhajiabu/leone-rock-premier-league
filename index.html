@@ -771,6 +771,7 @@
                 <div class="form-panel">
                     <h3>Record an incident</h3>
                     <div class="grid-2" style="margin-top:12px;">
+                        <label class="field span-all"><span>Assigned fixture</span><select id="refMatchId" required><option value="">Loading assigned matches…</option></select></label>
                         <label class="field"><span>Incident type</span>
                             <select id="refEventType">
                                 <option value="GOAL">Goal scored</option>
@@ -1686,6 +1687,7 @@
             show('masterUserDirectoryPanel', isDev);
             show('clubAdminPanelContainer', isDev || role === 'CLUB_ADMIN');
             show('refereePanelContainer', isDev || role === 'REFEREE');
+            if (isDev || role === 'SUPER_ADMIN' || role === 'REFEREE') loadRefereeMatchOptions();
             show('staffActionControls', isDev || isAdmin);
             if (!(isDev || isAdmin)) show('staffFormPanel', false);
             show('menuPhoto', !!currentUser && !isReadOnly());
@@ -2796,13 +2798,63 @@
             const event_type = document.getElementById('refEventType').value;
             const team_name = document.getElementById('refTeamName').value.trim();
             const player_name = document.getElementById('refPlayerName').value.trim();
-            const minute = document.getElementById('refMinute').value;
-            if (!team_name || !player_name || !minute) { alert("Complete all incident fields."); return; }
+            const minuteText = document.getElementById('refMinute').value;
+            const matchIdEl = document.getElementById('refMatchId');
+            const match_id = matchIdEl ? matchIdEl.value : '';
+            const minute = Number(minuteText);
+            if (!currentUser || !['DEVELOPER', 'SUPER_ADMIN', 'REFEREE'].includes(realRole())) {
+                alert('Sign in with an authorized league or referee account first.'); return;
+            }
+            if (!match_id) { alert('Select an assigned match first.'); return; }
+            if (!team_name || !player_name || !minuteText || !Number.isInteger(minute) || minute < 1 || minute > 120) {
+                alert('Complete all incident fields. Match minute must be between 1 and 120.'); return;
+            }
+            if (realRole() === 'REFEREE') {
+                const { data: assignment, error: assignmentError } = await db.from('match_referee_assignments')
+                    .select('id').eq('match_id', match_id).eq('referee_user_id', currentUser.id)
+                    .eq('assignment_status', 'ACTIVE').maybeSingle();
+                if (assignmentError || !assignment) {
+                    alert('You are not assigned to this match, or the assignment could not be verified.'); return;
+                }
+            }
             const recorded_by = (currentProfile && (currentProfile.full_name || currentProfile.email)) || 'Match Official';
-            const { error } = await db.from('match_events').insert([{ match_id: 'match_01', event_type, team_name, player_name, minute: parseInt(minute), recorded_by }]);
-            if (error) { alert("Could not record the incident: " + error.message); return; }
-            alert("Incident recorded.");
+            const { error } = await db.from('match_events').insert([{ match_id: String(match_id), event_type, team_name, player_name, minute, recorded_by }]);
+            if (error) { alert('Could not record the incident: ' + error.message); return; }
+            alert('Incident recorded.');
             loadMatchEvents();
+        }
+
+        async function loadRefereeMatchOptions() {
+            const select = document.getElementById('refMatchId');
+            if (!select) return;
+            select.innerHTML = '<option value="">Loading assigned matches…</option>';
+            if (!currentUser || !['DEVELOPER', 'SUPER_ADMIN', 'REFEREE'].includes(realRole())) {
+                select.innerHTML = '<option value="">Sign in as an authorized official</option>'; return;
+            }
+            try {
+                let query = db.from('matches').select('*').order('id', { ascending: true });
+                const { data: matches, error } = await query;
+                if (error) throw error;
+                let allowed = matches || [];
+                if (realRole() === 'REFEREE') {
+                    const { data: assignments, error: assignmentError } = await db.from('match_referee_assignments')
+                        .select('match_id').eq('referee_user_id', currentUser.id).eq('assignment_status', 'ACTIVE');
+                    if (assignmentError) throw assignmentError;
+                    const assignedIds = new Set((assignments || []).map(a => String(a.match_id)));
+                    allowed = allowed.filter(m => assignedIds.has(String(m.id)));
+                }
+                select.innerHTML = '<option value="">Select match…</option>' + allowed.map(m => {
+                    const home = m.home_team || m.home_club || m.home || m.home_club_name || 'Home team';
+                    const away = m.away_team || m.away_club || m.away || m.away_club_name || 'Away team';
+                    const date = m.match_date || m.date || m.kickoff_date || '';
+                    return '<option value="' + String(m.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' +
+                        esc(date ? date + ' — ' : '') + esc(home + ' vs ' + away) + ' (ID ' + esc(m.id) + ')</option>';
+                }).join('');
+                if (!allowed.length) select.innerHTML = '<option value="">No assigned matches available</option>';
+            } catch (err) {
+                select.innerHTML = '<option value="">Could not load matches — check table schema and RLS</option>';
+                console.warn('Could not load referee match options:', err);
+            }
         }
 
         async function loadMatchEvents() {
