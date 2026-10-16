@@ -1339,6 +1339,91 @@
         }
 
         // ------------------------------------------------------------------
+        // SUPABASE REALTIME SUBSCRIPTIONS
+        // Public league data only. Finance subscriptions are intentionally
+        // excluded here and must be added only after role-specific access is
+        // confirmed. Database RLS remains the source of authorization.
+        // ------------------------------------------------------------------
+        let leagueRealtimeChannel = null;
+        let realtimeRestartTimer = null;
+        let realtimeRefreshTimer = null;
+        let realtimeStarted = false;
+
+        function queueRealtimeRefresh(tableName) {
+            if (realtimeRefreshTimer) clearTimeout(realtimeRefreshTimer);
+            realtimeRefreshTimer = setTimeout(() => {
+                realtimeRefreshTimer = null;
+                // Refresh only the screen data related to the changed table.
+                // These are reads, so they do not create a write-event loop.
+                const refreshers = {
+                    matches: [loadLeagueStandings, loadMatchEvents, loadMotm],
+                    match_events: [loadMatchEvents, loadMotm, loadLeagueStandings],
+                    league_standings: [loadLeagueStandings],
+                    top_scorers: [loadTopScorers],
+                    top_assists: [loadTopAssists],
+                    clean_sheets: [loadCleanSheets],
+                    man_of_the_match: [loadMotm],
+                    app_settings: [loadSystemBanner],
+                    club_squad: [loadClubRoster]
+                };
+                (refreshers[tableName] || []).forEach(fn => {
+                    try {
+                        if (typeof fn === 'function') fn();
+                    } catch (err) {
+                        console.warn('Realtime refresh failed for ' + tableName, err);
+                    }
+                });
+            }, 250);
+        }
+
+        function startLeagueRealtime() {
+            if (!dbOnline || !db || typeof db.channel !== 'function') return;
+            if (leagueRealtimeChannel) {
+                try { db.removeChannel(leagueRealtimeChannel); } catch (_) {}
+                leagueRealtimeChannel = null;
+            }
+
+            const publicTables = [
+                'matches',
+                'match_events',
+                'league_standings',
+                'top_scorers',
+                'top_assists',
+                'clean_sheets',
+                'man_of_the_match',
+                'app_settings',
+                'club_squad'
+            ];
+
+            let channel = db.channel('leone-rock-public-league-live');
+            publicTables.forEach(tableName => {
+                channel = channel.on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: tableName },
+                    payload => {
+                        console.info('League Realtime update:', tableName, payload.eventType);
+                        queueRealtimeRefresh(tableName);
+                    }
+                );
+            });
+
+            leagueRealtimeChannel = channel.subscribe(status => {
+                if (status === 'SUBSCRIBED') {
+                    realtimeStarted = true;
+                    console.info('Leone Rock Premier League Realtime connected.');
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                    realtimeStarted = false;
+                    console.warn('League Realtime status:', status);
+                    if (realtimeRestartTimer) clearTimeout(realtimeRestartTimer);
+                    realtimeRestartTimer = setTimeout(() => {
+                        realtimeRestartTimer = null;
+                        startLeagueRealtime();
+                    }, 5000);
+                }
+            });
+        }
+
+        // ------------------------------------------------------------------
         // PAGE START
         // ------------------------------------------------------------------
         window.addEventListener('DOMContentLoaded', () => {
@@ -1364,6 +1449,7 @@
             loadFinanceDashboard();
             resetMotmForm();
             checkConnection();
+            startLeagueRealtime();
             checkSystemFreeze();
             loadStaffData();
             loadSystemBanner();
