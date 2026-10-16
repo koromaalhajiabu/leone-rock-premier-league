@@ -671,6 +671,18 @@
         </div>
 
         <!-- My panel: opens automatically after sign-in -->
+        
+        <section id="publicLeagueBoards" class="accordion-card" style="--accent:var(--gold);">
+          <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="publicLeagueBoardsContent" onclick="toggleAccordion('publicLeagueBoardsContent',this)" onkeydown="accordionKey(event,'publicLeagueBoardsContent',this)">
+            <div><h2>Administrative & Executive Board</h2><p>League leadership and administration</p></div>
+            <div class="card-meta"><span class="badge badge-info">Official leadership</span></div>
+          </div>
+          <div id="publicLeagueBoardsContent" class="accordion-content">
+            <div class="board-manager-grid"><div class="board-manager-card"><h3>Administrative Board</h3><div id="publicAdministrativeBoard"><p class="section-hint">Loading board members…</p></div></div>
+            <div class="board-manager-card"><h3>Executive Board</h3><div id="publicExecutiveBoard"><p class="section-hint">Loading board members…</p></div></div></div>
+          </div>
+        </section>
+
         <div id="workspaceArea" class="hidden">
 
         <section id="developerBoardManagerPanel" class="accordion-card hidden" style="--accent:var(--gold);">
@@ -3295,6 +3307,25 @@
             const {error}=await db.from('league_board_members').delete().eq('id',m.id);
             if(error)return boardManagerStatus('Delete failed: '+friendlyError(error),true);
             await loadBoardMembers();
+        }
+
+
+        async function loadPublicLeagueBoards() {
+            try {
+                const {data,error}=await db.from('league_board_members').select('id,board_type,full_name,position_title,photo_url,biography,display_order')
+                  .eq('is_active',true).order('display_order').order('full_name');
+                if(error) throw error;
+                const rows=data||[];
+                const render=(type,targetId)=>{
+                  const target=document.getElementById(targetId); if(!target)return;
+                  const members=rows.filter(m=>m.board_type===type);
+                  target.innerHTML=members.length?members.map(m=>'<div class="board-manager-row">'+boardMemberPhotoHtml(m.photo_url,m.full_name)+'<div><strong>'+esc(m.full_name)+'</strong><div class="section-hint">'+esc(m.position_title)+'</div>'+(m.biography?'<p>'+esc(m.biography)+'</p>':'')+'</div></div>').join(''):'<p class="section-hint">Board members will be announced here.</p>';
+                };
+                render('ADMINISTRATIVE','publicAdministrativeBoard'); render('EXECUTIVE','publicExecutiveBoard');
+            } catch(err) {
+                ['publicAdministrativeBoard','publicExecutiveBoard'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<p class="section-hint">Board information is temporarily unavailable.</p>';});
+                console.warn('Could not load public board members',err);
+            }
         }
 
 </script>
