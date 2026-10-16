@@ -446,6 +446,12 @@
             <form id="authForm" onsubmit="handleAuthSubmit(event)">
                 <p id="authSubtitle">Use your league account to open your portal.</p>
                 <label class="field hidden" id="authFullNameField"><span>Full name</span><input type="text" id="authFullName" autocomplete="name"></label>
+                <div id="clubRegistrationFields" class="hidden">
+                    <label class="field"><span>Club name</span><input type="text" id="authClubName" maxlength="120" autocomplete="organization"></label>
+                    <label class="field"><span>Contact phone (optional)</span><input type="tel" id="authClubPhone" maxlength="40" autocomplete="tel"></label>
+                    <label class="field"><span>Application note (optional)</span><textarea id="authClubNotes" rows="2" maxlength="1000" placeholder="League affiliation or contact details"></textarea></label>
+                    <p class="section-hint">Your application will remain pending until the Super Admin verifies and approves your club. Registration does not grant management access.</p>
+                </div>
                 <label class="field"><span>Email address</span><input type="email" id="authEmail" autocomplete="email" required></label>
                 <label class="field"><span>Password</span><input type="password" id="authPassword" autocomplete="current-password" minlength="8" required></label>
                 <div id="authMessage" class="auth-message" aria-live="polite"></div>
@@ -706,6 +712,18 @@
 
         <div id="workspaceArea" class="hidden">
  
+        <!-- Controlled Club Admin registration review: visible to Super Admin only -->
+        <section id="clubRegistrationReviewPanel" class="accordion-card hidden" style="--accent:var(--gold);">
+          <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="clubRegistrationReviewContent" onclick="toggleAccordion('clubRegistrationReviewContent',this)" onkeydown="accordionKey(event,'clubRegistrationReviewContent',this)">
+            <div><h2>Club Registration Applications</h2><p>Verify club applications before activating Club Admin access.</p></div>
+          </div>
+          <div id="clubRegistrationReviewContent" class="accordion-content">
+            <p class="section-hint">Only the Super Admin can approve or reject applications. Approval assigns the applicant to the approved club.</p>
+            <button type="button" class="btn btn-outline btn-sm" onclick="loadClubRegistrationApplications()">Refresh applications</button>
+            <div id="clubRegistrationApplicationsList" style="margin-top:12px"><p class="section-hint">Loading applications…</p></div>
+          </div>
+        </section>
+
         <!-- Shared club/player verification queue -->
         <section id="leagueVerificationPanel" class="accordion-card hidden" style="--accent:var(--blue);">
           <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="leagueVerificationContent" onclick="toggleAccordion('leagueVerificationContent',this)" onkeydown="accordionKey(event,'leagueVerificationContent',this)">
@@ -1813,6 +1831,8 @@
             show('masterUserDirectoryPanel', isDev);
             show('developerPanelFinder', isDev);
             show('leagueVerificationPanel', isDev || isAdmin || role === 'CLUB_ADMIN');
+            show('clubRegistrationReviewPanel', isAdmin);
+            if (working && isAdmin) loadClubRegistrationApplications();
             show('verificationSubmitArea', !isDev);
             if (isDev) { const fm = document.getElementById('verificationFormMessage'); if (fm) fm.textContent = 'Developer oversight is read-only here. The Super Admin is responsible for reviewing and deciding submissions.'; }
             if (working && (isDev || isAdmin || role === 'CLUB_ADMIN')) loadLeagueVerificationRequests();
@@ -1966,6 +1986,14 @@
             document.getElementById('authFullName').classList.toggle('hidden', !signup);
             const nameField = document.getElementById('authFullNameField');
             if (nameField) nameField.classList.toggle('hidden', !signup);
+            const clubFields = document.getElementById('clubRegistrationFields');
+            if (clubFields) clubFields.classList.toggle('hidden', !signup);
+            const clubNameField = document.getElementById('authClubName');
+            if (clubNameField) clubNameField.required = signup;
+            if (signup) {
+                document.getElementById('authSubtitle').textContent = 'Apply for Club Admin access. Your application must be approved by the Super Admin before you can manage a club.';
+                document.getElementById('authSwitchLink').textContent = 'Already registered? Sign in';
+            }
             document.getElementById('authPassword').setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
             setAuthMessage('', false);
         }
@@ -1998,6 +2026,9 @@
             const email = document.getElementById('authEmail').value.trim().toLowerCase();
             const password = document.getElementById('authPassword').value;
             const fullName = document.getElementById('authFullName').value.trim();
+            const clubName = (document.getElementById('authClubName') || {}).value?.trim() || '';
+            const clubPhone = (document.getElementById('authClubPhone') || {}).value?.trim() || '';
+            const clubNotes = (document.getElementById('authClubNotes') || {}).value?.trim() || '';
             const btn = document.getElementById('authSubmitBtn');
             btn.disabled = true;
             setAuthMessage('Please wait...', false);
@@ -2008,19 +2039,89 @@
                     closeAuthModal();
                 } else {
                     if (!fullName) throw new Error('Enter your full name.');
-                    const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+                    if (!clubName) throw new Error('Enter the club name you are applying to represent.');
+                    const { data, error } = await db.auth.signUp({
+                        email, password,
+                        options: { data: {
+                            full_name: fullName,
+                            registration_type: 'club_admin',
+                            club_name: clubName,
+                            contact_phone: clubPhone,
+                            application_notes: clubNotes
+                        } }
+                    });
                     if (error) throw error;
                     if (data && data.session) {
                         closeAuthModal();
-                        alert('Account created. A Developer must assign your role before any portal opens for you.');
+                        alert('Application submitted and pending Super Admin approval. You cannot manage a club until your application is approved.');
                     } else {
-                        setAuthMessage('Account created. Check your email to confirm it, then sign in and add your photo from the Administration menu. A Developer must assign your role before any portal opens for you.', false);
+                        setAuthMessage('Application submitted. Check your email to confirm your account. Your Club Admin access will remain pending until the Super Admin approves the club application.', false);
                     }
                 }
             } catch (err) {
                 setAuthMessage(err.message || 'Something went wrong. Try again.', true);
             } finally {
                 btn.disabled = false;
+            }
+        }
+
+        async function loadClubRegistrationApplications() {
+            const host = document.getElementById('clubRegistrationApplicationsList');
+            if (!host) return;
+            if (realRole() !== 'SUPER_ADMIN' || !currentUser) {
+                host.innerHTML = '<p class="section-hint">Only the signed-in Super Admin can review applications.</p>';
+                return;
+            }
+            host.innerHTML = '<p class="section-hint">Loading applications…</p>';
+            try {
+                const { data, error } = await db.from('club_registration_applications')
+                    .select('id,club_name,contact_name,contact_email,contact_phone,application_notes,status,created_at')
+                    .in('status', ['pending','changes_requested'])
+                    .order('created_at', { ascending: true });
+                if (error) throw error;
+                if (!data || !data.length) {
+                    host.innerHTML = '<p class="section-hint">There are no pending club applications.</p>';
+                    return;
+                }
+                host.innerHTML = data.map(app => {
+                    const safe = value => esc(value == null ? '' : String(value));
+                    return '<article class="verification-request">' +
+                      '<h3>' + safe(app.club_name) + '</h3>' +
+                      '<div class="verification-meta"><span>Applicant: ' + safe(app.contact_name) + '</span><span>Email: ' + safe(app.contact_email) + '</span>' +
+                      (app.contact_phone ? '<span>Phone: ' + safe(app.contact_phone) + '</span>' : '') +
+                      '<span>Status: ' + safe(app.status) + '</span></div>' +
+                      (app.application_notes ? '<p>' + safe(app.application_notes) + '</p>' : '') +
+                      '<div class="verification-actions">' +
+                      '<button type="button" class="btn btn-primary btn-sm" onclick="reviewClubRegistrationApplication(\'' + safe(app.id) + '\',\'approved\')">Approve & assign club</button>' +
+                      '<button type="button" class="btn btn-outline btn-sm" onclick="reviewClubRegistrationApplication(\'' + safe(app.id) + '\',\'changes_requested\')">Request changes</button>' +
+                      '<button type="button" class="btn btn-outline btn-sm" onclick="reviewClubRegistrationApplication(\'' + safe(app.id) + '\',\'rejected\')">Reject</button>' +
+                      '</div></article>';
+                }).join('');
+            } catch (err) {
+                host.innerHTML = '<p class="auth-error">Could not load applications: ' + esc(friendlyError(err)) + '</p>';
+            }
+        }
+
+        async function reviewClubRegistrationApplication(applicationId, decision) {
+            if (realRole() !== 'SUPER_ADMIN') {
+                alert('Only the Super Admin can review club applications.');
+                return;
+            }
+            const labels = { approved: 'approve and activate access for', rejected: 'reject', changes_requested: 'request changes for' };
+            if (!confirm('Are you sure you want to ' + labels[decision] + ' this application?')) return;
+            const notes = prompt('Optional review note (leave blank if none):', '') || '';
+            try {
+                const { error } = await db.rpc('review_club_registration_application', {
+                    p_application_id: applicationId,
+                    p_decision: decision,
+                    p_review_notes: notes
+                });
+                if (error) throw error;
+                alert('Application updated: ' + decision.replace('_',' ') + '.');
+                await loadClubRegistrationApplications();
+                applyRoleUI();
+            } catch (err) {
+                alert('Could not update application: ' + friendlyError(err));
             }
         }
 
