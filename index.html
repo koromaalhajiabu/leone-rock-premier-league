@@ -453,6 +453,12 @@ th{font-weight:800}
 .role-responsibility-details strong{color:var(--ui-ink,#14213d)}
 @media(max-width:640px){.role-responsibility-dropdown>summary{padding:14px 12px;gap:8px}.role-responsibility-details{padding:12px}}
 
+
+/* Role-specific admin quick task menu */
+.admin-quick-menu{border:1px solid var(--ui-line,#dfe6e2);border-top:4px solid var(--ui-gold,#c6a24a)}
+.admin-quick-menu label{display:block;margin-bottom:8px;color:var(--ui-ink,#14213d)}
+.admin-quick-menu select{width:100%;max-width:100%;background:#fff}
+
 </style>
 </head>
 <body>
@@ -855,6 +861,19 @@ th{font-weight:800}
             <h2 id="workspaceTitle">My panel</h2>
             <p id="workspaceSub"></p>
         </div>
+        <section id="adminQuickMenu" class="accordion-card admin-quick-menu hidden" aria-label="Administrator task menu">
+          <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="adminQuickMenuContent" onclick="toggleAccordion('adminQuickMenuContent',this)" onkeydown="accordionKey(event,'adminQuickMenuContent',this)">
+            <div><h2>My role & tasks</h2><p>Choose a task available to your signed-in role.</p></div>
+            <div class="card-meta"><span class="badge badge-info">Quick menu</span></div>
+          </div>
+          <div id="adminQuickMenuContent" class="accordion-content">
+            <label for="adminTaskSelect"><strong>Go to a task</strong></label>
+            <select id="adminTaskSelect" onchange="navigateAdminTask(this.value)">
+              <option value="">Select a task…</option>
+            </select>
+            <p id="adminTaskHint" class="section-hint" role="status">Only tasks available to your current role are listed.</p>
+          </div>
+        </section>
         <section id="generalOverseerCommandCentre" class="accordion-card hidden" style="--accent: var(--gold);border:1px solid var(--gold-soft);">
             <div class="accordion-header" style="cursor:default">
                 <div><h2>General Overseer Command Centre</h2><p>Private platform governance and system oversight</p></div>
@@ -1870,6 +1889,52 @@ th{font-weight:800}
             catch (e) { applyThemeValues(SYSTEM_THEMES.emerald, SYSTEM_THEMES.emerald.name); }
         }
 
+        function navigateAdminTask(id) {
+            if (!id) return;
+            const target = document.getElementById(id);
+            if (!target || target.classList.contains('hidden')) return;
+            const content = target.querySelector('.accordion-content');
+            if (content && content.classList.contains('hidden')) content.classList.remove('hidden');
+            target.scrollIntoView({behavior:'smooth',block:'start'});
+            const select = document.getElementById('adminTaskSelect');
+            if (select) select.value = '';
+        }
+        function refreshAdminQuickMenu() {
+            const menu = document.getElementById('adminQuickMenu');
+            const select = document.getElementById('adminTaskSelect');
+            const hint = document.getElementById('adminTaskHint');
+            if (!menu || !select) return;
+            const role = realRole();
+            const entries = {
+              DEVELOPER: [
+                ['developerBoardManagerPanel','Governance & executive board'],
+                ['masterUserDirectoryPanel','User accounts & role oversight'],
+                ['developerDataExportPanel','Authorised data export & backups'],
+                ['themeSettingsPanel','System appearance'],
+                ['leagueVerificationPanel','View verification requests']
+              ],
+              SUPER_ADMIN: [
+                ['clubRegistrationReviewPanel','Review club applications'],
+                ['leagueVerificationPanel','Review club/team verification'],
+                ['staff-directory','Executive & staff directory']
+              ],
+              CLUB_ADMIN: [
+                ['clubAdminPanelContainer','Manage club & squad']
+              ],
+              REFEREE: [
+                ['refereePanelContainer','Assigned matches, incidents & Man of the Match']
+              ]
+            };
+            const allowed = (entries[role] || []).filter(([id]) => {
+              const el = document.getElementById(id);
+              return !!el && !el.classList.contains('hidden');
+            });
+            select.innerHTML = '<option value="">Select a task…</option>' + allowed.map(([id,label]) =>
+              '<option value="'+id+'">'+esc(label)+'</option>').join('');
+            menu.classList.toggle('hidden', !inWorkspace() || allowed.length === 0);
+            if (hint) hint.textContent = allowed.length ? 'Choose a task to jump directly to that section. Only tasks available to your current role are shown.' : 'No task shortcuts are available for this role yet.';
+        }
+
         function applyRoleUI() {
             const role = getRole();
             const isDev = role === 'DEVELOPER';
@@ -1924,6 +1989,7 @@ th{font-weight:800}
             show('awardBackupPanel', false);
             if (isDev || role === 'SUPER_ADMIN' || role === 'REFEREE') loadRefereeMatchOptions();
             show('staffActionControls', isDev || isAdmin);
+            refreshAdminQuickMenu();
             if (!(isDev || isAdmin)) show('staffFormPanel', false);
             show('menuPhoto', !!currentUser && !isReadOnly());
             show('menuPreview', !!currentUser && canEditForReal());
