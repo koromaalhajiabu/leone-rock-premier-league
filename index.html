@@ -769,6 +769,18 @@
             </div>
             <div id="refereeAccordionContent" class="accordion-content">
                 <div class="form-panel">
+                    <h3>Confirm final match result</h3>
+                    <p class="section-hint">Only submit the final score after the match has ended. The SQL setup in the companion migration file is required for automatic standings.</p>
+                    <div class="grid-2" style="margin-top:12px;">
+                        <label class="field span-all"><span>Assigned fixture</span><select id="resultMatchId" required><option value="">Loading assigned matches…</option></select></label>
+                        <label class="field"><span>Home goals</span><input type="number" id="resultHomeGoals" min="0" max="30" step="1" inputmode="numeric" placeholder="0"></label>
+                        <label class="field"><span>Away goals</span><input type="number" id="resultAwayGoals" min="0" max="30" step="1" inputmode="numeric" placeholder="0"></label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="saveFinalResultBtn" onclick="submitFinalMatchResult()" class="btn btn-success">Confirm final result</button>
+                    </div>
+                </div>
+                <div class="form-panel">
                     <h3>Record an incident</h3>
                     <div class="grid-2" style="margin-top:12px;">
                         <label class="field span-all"><span>Assigned fixture</span><select id="refMatchId" required><option value="">Loading assigned matches…</option></select></label>
@@ -2825,6 +2837,55 @@
         // ------------------------------------------------------------------
         // MATCH INCIDENTS
         // ------------------------------------------------------------------
+        async function submitFinalMatchResult() {
+            const matchId = document.getElementById('resultMatchId')?.value || '';
+            const homeGoalsText = document.getElementById('resultHomeGoals')?.value ?? '';
+            const awayGoalsText = document.getElementById('resultAwayGoals')?.value ?? '';
+            const home_goals = Number(homeGoalsText);
+            const away_goals = Number(awayGoalsText);
+            if (!currentUser || !['DEVELOPER', 'SUPER_ADMIN', 'REFEREE'].includes(realRole())) {
+                alert('Sign in with an authorized league or referee account first.'); return;
+            }
+            if (!matchId || homeGoalsText === '' || awayGoalsText === '' ||
+                !Number.isInteger(home_goals) || !Number.isInteger(away_goals) ||
+                home_goals < 0 || away_goals < 0 || home_goals > 30 || away_goals > 30) {
+                alert('Select a match and enter valid final scores from 0 to 30.'); return;
+            }
+            if (realRole() === 'REFEREE') {
+                const { data: assignment, error: assignmentError } = await db.from('match_referee_assignments')
+                    .select('id').eq('match_id', matchId).eq('referee_user_id', currentUser.id)
+                    .eq('assignment_status', 'ACTIVE').maybeSingle();
+                if (assignmentError || !assignment) {
+                    alert('You are not assigned to this match, or the assignment could not be verified.'); return;
+                }
+            }
+            const option = document.querySelector('#resultMatchId option:checked');
+            const home_team = option?.dataset.home || '';
+            const away_team = option?.dataset.away || '';
+            if (!home_team || !away_team) {
+                alert('The selected fixture does not include recognized home and away team names.'); return;
+            }
+            const recorded_by = (currentProfile && (currentProfile.full_name || currentProfile.email)) || 'Match Official';
+            const btn = document.getElementById('saveFinalResultBtn');
+            if (btn) btn.disabled = true;
+            try {
+                const { error } = await db.from('match_results').upsert([{
+                    match_id: String(matchId), home_team, away_team, home_goals, away_goals,
+                    status: 'CONFIRMED', recorded_by, confirmed_by: currentUser.id,
+                    confirmed_at: new Date().toISOString()
+                }], { onConflict: 'match_id' });
+                if (error) throw error;
+                alert('Final result confirmed. The database trigger will recalculate the league table.');
+                document.getElementById('resultHomeGoals').value = '';
+                document.getElementById('resultAwayGoals').value = '';
+                loadLeagueStandings();
+            } catch (err) {
+                alert('Could not save final result. Run the companion Supabase SQL setup first. Details: ' + friendlyError(err));
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
         async function submitMatchIncident() {
             const event_type = document.getElementById('refEventType').value;
             const team_name = document.getElementById('refTeamName').value.trim();
@@ -2857,10 +2918,14 @@
 
         async function loadRefereeMatchOptions() {
             const select = document.getElementById('refMatchId');
-            if (!select) return;
-            select.innerHTML = '<option value="">Loading assigned matches…</option>';
+            const resultSelect = document.getElementById('resultMatchId');
+            if (!select && !resultSelect) return;
+            if (select) select.innerHTML = '<option value="">Loading assigned matches…</option>';
+            if (resultSelect) resultSelect.innerHTML = '<option value="">Loading assigned matches…</option>';
             if (!currentUser || !['DEVELOPER', 'SUPER_ADMIN', 'REFEREE'].includes(realRole())) {
-                select.innerHTML = '<option value="">Sign in as an authorized official</option>'; return;
+                if (select) select.innerHTML = '<option value="">Sign in as an authorized official</option>';
+                if (resultSelect) resultSelect.innerHTML = '<option value="">Sign in as an authorized official</option>';
+                return;
             }
             try {
                 let query = db.from('matches').select('*').order('id', { ascending: true });
@@ -2874,16 +2939,19 @@
                     const assignedIds = new Set((assignments || []).map(a => String(a.match_id)));
                     allowed = allowed.filter(m => assignedIds.has(String(m.id)));
                 }
-                select.innerHTML = '<option value="">Select match…</option>' + allowed.map(m => {
-                    const home = m.home_team || m.home_club || m.home || m.home_club_name || 'Home team';
-                    const away = m.away_team || m.away_club || m.away || m.away_club_name || 'Away team';
+                const optionsHtml = '<option value="">Select match…</option>' + allowed.map(m => {
+                    const home = m.home_team || m.home_club || m.home || m.home_club_name || '';
+                    const away = m.away_team || m.away_club || m.away || m.away_club_name || '';
                     const date = m.match_date || m.date || m.kickoff_date || '';
-                    return '<option value="' + String(m.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' +
-                        esc(date ? date + ' — ' : '') + esc(home + ' vs ' + away) + ' (ID ' + esc(m.id) + ')</option>';
+                    const value = String(m.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+                    return '<option value="' + value + '" data-home="' + esc(home).replace(/"/g,'&quot;') + '" data-away="' + esc(away).replace(/"/g,'&quot;') + '">' +
+                        esc(date ? date + ' — ' : '') + esc((home || 'Home team') + ' vs ' + (away || 'Away team')) + ' (ID ' + esc(m.id) + ')</option>';
                 }).join('');
-                if (!allowed.length) select.innerHTML = '<option value="">No assigned matches available</option>';
+                if (select) select.innerHTML = allowed.length ? optionsHtml : '<option value="">No assigned matches available</option>';
+                if (resultSelect) resultSelect.innerHTML = allowed.length ? optionsHtml : '<option value="">No assigned matches available</option>';
             } catch (err) {
-                select.innerHTML = '<option value="">Could not load matches — check table schema and RLS</option>';
+                if (select) select.innerHTML = '<option value="">Could not load matches — check table schema and RLS</option>';
+                if (resultSelect) resultSelect.innerHTML = '<option value="">Could not load matches — check table schema and RLS</option>';
                 console.warn('Could not load referee match options:', err);
             }
         }
