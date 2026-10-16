@@ -2043,6 +2043,10 @@ th{font-weight:800}
             show('viewTabs', canEditForReal() && !previewAsVisitor);
             show('publicArea', !working);
             show('workspaceArea', working);
+            // Keep governance directories out of the default public/Viewer panel.
+            // Authorized management tools remain available in the private workspace.
+            show('publicLeagueBoards', working && (isDev || isAdmin));
+            show('staff-directory', working && (isDev || isAdmin));
             show('staff-directory', !working || isDev || isAdmin);
             const tabW = document.getElementById('tabWorkspace');
             const tabP = document.getElementById('tabPublic');
