@@ -852,16 +852,7 @@ th{font-weight:800}
         </section>
 
 
-        <section class="accordion-card" id="roleResponsibilitiesSection" style="--accent:var(--gold);">
-          <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="roleResponsibilitiesContent" onclick="toggleAccordion('roleResponsibilitiesContent',this)" onkeydown="accordionKey(event,'roleResponsibilitiesContent',this)">
-            <div><h2>Official Roles & Responsibilities</h2><p>Role duties, authority and accountability for league operations.</p></div>
-            <div class="card-meta"><span class="badge badge-info">Governance reference</span></div>
-          </div>
-          <div id="roleResponsibilitiesContent" class="accordion-content">
-            <p class="section-hint">This is the proposed operational responsibility register. Names and appointments on the Administrative and Executive Boards must be confirmed by SLFA/league leadership before being treated as official appointments.</p>
-            <div id="roleResponsibilitiesList" class="board-manager-grid"><p class="section-hint">Loading role responsibilities…</p></div>
-          </div>
-        </section>
+        <!-- Role-responsibility register temporarily hidden; access roles and permissions remain unchanged. -->
 
         <div id="workspaceArea" class="hidden">
  
@@ -3831,6 +3822,7 @@ th{font-weight:800}
           }).join('');
         }
         async function loadRoleResponsibilities() {
+          return; // Temporarily disabled; role-based access control is unchanged.
           renderRoleResponsibilities(ROLE_RESPONSIBILITIES_FALLBACK);
           try {
             if (!db) return;
