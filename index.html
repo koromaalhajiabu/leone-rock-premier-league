@@ -3378,6 +3378,40 @@ th{font-weight:800}
             }
         }
 
+        // Device-local queue for incidents captured during network loss.
+        const REF_INCIDENT_QUEUE_KEY = 'lrpl_ref_incidents_pending_v1';
+        function getPendingRefIncidents() {
+            try { return JSON.parse(localStorage.getItem(REF_INCIDENT_QUEUE_KEY) || '[]'); }
+            catch (_) { return []; }
+        }
+        function setPendingRefIncidents(items) {
+            localStorage.setItem(REF_INCIDENT_QUEUE_KEY, JSON.stringify(items));
+        }
+        async function syncPendingRefIncidents() {
+            if (!navigator.onLine || !currentUser) return;
+            const pending = getPendingRefIncidents();
+            if (!pending.length) return;
+            const keep = [];
+            for (const item of pending) {
+                if (item.userId !== currentUser.id) { keep.push(item); continue; }
+                try {
+                    if (item.role === 'REFEREE') {
+                        const { data: assignment, error: aerr } = await db.from('match_referee_assignments')
+                            .select('id').eq('match_id', item.payload.match_id)
+                            .eq('referee_user_id', currentUser.id).eq('assignment_status', 'ACTIVE').maybeSingle();
+                        if (aerr || !assignment) { keep.push(item); continue; }
+                    }
+                    const { error } = await db.from('match_events').upsert([item.payload], {
+                        onConflict: 'client_event_id', ignoreDuplicates: true
+                    });
+                    if (error) { keep.push(item); continue; }
+                } catch (_) { keep.push(item); }
+            }
+            setPendingRefIncidents(keep);
+            if (keep.length < pending.length) loadMatchEvents();
+        }
+        window.addEventListener('online', syncPendingRefIncidents);
+
         async function submitMatchIncident() {
             const event_type = document.getElementById('refEventType').value;
             const team_name = document.getElementById('refTeamName').value.trim();
@@ -3389,11 +3423,16 @@ th{font-weight:800}
             if (!currentUser || !['DEVELOPER', 'SUPER_ADMIN', 'REFEREE'].includes(realRole())) {
                 alert('Sign in with an authorized league or referee account first.'); return;
             }
-            if (!match_id) { alert('Select an assigned match first.'); return; }
+            if (!match_id) { alert('Select a match loaded while online before recording an incident offline.'); return; }
             if (!team_name || !player_name || !minuteText || !Number.isInteger(minute) || minute < 1 || minute > 120) {
                 alert('Complete all incident fields. Match minute must be between 1 and 120.'); return;
             }
-            if (realRole() === 'REFEREE') {
+            const recorded_by = (currentProfile && (currentProfile.full_name || currentProfile.email)) || 'Match Official';
+            const payload = {
+                client_event_id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'evt-' + Date.now() + '-' + Math.random().toString(16).slice(2),
+                match_id: String(match_id), event_type, team_name, player_name, minute, recorded_by
+            };
+            if (realRole() === 'REFEREE' && navigator.onLine) {
                 const { data: assignment, error: assignmentError } = await db.from('match_referee_assignments')
                     .select('id').eq('match_id', match_id).eq('referee_user_id', currentUser.id)
                     .eq('assignment_status', 'ACTIVE').maybeSingle();
@@ -3401,10 +3440,28 @@ th{font-weight:800}
                     alert('You are not assigned to this match, or the assignment could not be verified.'); return;
                 }
             }
-            const recorded_by = (currentProfile && (currentProfile.full_name || currentProfile.email)) || 'Match Official';
-            const { error } = await db.from('match_events').insert([{ match_id: String(match_id), event_type, team_name, player_name, minute, recorded_by }]);
-            if (error) { alert('Could not record the incident: ' + error.message); return; }
-            alert('Incident recorded.');
+            if (!navigator.onLine) {
+                const queue = getPendingRefIncidents();
+                queue.push({ userId: currentUser.id, role: realRole(), payload, queuedAt: new Date().toISOString() });
+                setPendingRefIncidents(queue);
+                alert('Incident saved on this device. It is pending sync until internet returns. Assignment will be rechecked online.');
+            } else {
+                const { error } = await db.from('match_events').upsert([payload], { onConflict: 'client_event_id', ignoreDuplicates: true });
+                if (error) {
+                    if (!navigator.onLine || /network|fetch|offline/i.test(error.message || '')) {
+                        const queue = getPendingRefIncidents();
+                        queue.push({ userId: currentUser.id, role: realRole(), payload, queuedAt: new Date().toISOString() });
+                        setPendingRefIncidents(queue);
+                        alert('Connection interrupted. Incident saved locally and queued for sync.');
+                    } else {
+                        alert('Could not record the incident: ' + error.message); return;
+                    }
+                } else {
+                    alert('Incident recorded successfully.');
+                }
+            }
+            document.getElementById('refPlayerName').value = '';
+            document.getElementById('refMinute').value = '';
             loadMatchEvents();
         }
 
