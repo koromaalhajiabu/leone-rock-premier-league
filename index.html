@@ -1164,8 +1164,46 @@
             db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             dbOnline = true;
         } catch (err) {
-            console.warn('Running without database: ' + err.message);
+            console.warn('Primary Supabase library did not initialise; using offline placeholder temporarily: ' + err.message);
             db = createOfflineDb();
+
+            // Recover the full application if the primary Supabase CDN was blocked
+            // or unavailable. Replacing the offline placeholder is essential:
+            // otherwise successful fallback login still returns to the Viewer panel.
+            const recoverySources = [
+                'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
+                'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
+            ];
+            const loadSupabaseRecovery = (index) => {
+                if (index >= recoverySources.length) {
+                    console.error('Supabase library could not be loaded from the recovery CDNs.');
+                    return;
+                }
+                const script = document.createElement('script');
+                script.src = recoverySources[index];
+                script.async = true;
+                script.onload = () => {
+                    try {
+                        if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
+                            throw new Error('Supabase createClient is unavailable after loading the recovery library.');
+                        }
+                        db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                        dbOnline = true;
+                        window.__leagueSupabaseClient = db;
+                        console.info('Supabase recovery succeeded; refreshing the signed-in profile.');
+                        initAuth().then(() => {
+                            checkConnection();
+                            applyRoleUI();
+                        }).catch(error => console.error('Recovered auth initialisation failed:', error));
+                    } catch (recoveryError) {
+                        console.error('Supabase recovery initialisation failed:', recoveryError);
+                        loadSupabaseRecovery(index + 1);
+                    }
+                };
+                script.onerror = () => loadSupabaseRecovery(index + 1);
+                document.head.appendChild(script);
+            };
+            loadSupabaseRecovery(0);
         }
         // Expose the configured client for the standalone mobile auth recovery handler.
         window.__leagueSupabaseClient = db;
