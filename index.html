@@ -3802,55 +3802,7 @@ th{font-weight:800}
         // Public-facing role/responsibility directory removed for a cleaner, professional interface.
         // Operational access roles remain managed separately by the secure role system.
 
-        function renderRoleResponsibilities(rows) {
-          const target = document.getElementById('roleResponsibilitiesList');
-          if (!target) return;
-          const list = rows && rows.length ? rows : ROLE_RESPONSIBILITIES_FALLBACK;
-          target.innerHTML = list.map((r, index) => {
-            const title = esc(r.role_title || r.role_code || 'Role');
-            const code = esc(r.role_code || '');
-            const duties = esc(r.responsibilities || 'Responsibilities have not been specified yet.');
-            const scope = esc(r.authority_scope || 'Only duties authorised by league rules and database permissions.');
-            const reports = esc(r.reports_to || 'Designated league authority');
-            return '<details class="role-responsibility-dropdown"'+(index === 0 ? ' open' : '')+'>' +
-              '<summary><span class="role-responsibility-title">'+title+'</span>' +
-              (code ? '<span class="role-responsibility-code">'+code+'</span>' : '') +
-              '<span class="role-responsibility-chevron" aria-hidden="true">⌄</span></summary>' +
-              '<div class="role-responsibility-details"><p><strong>Responsibilities</strong><br>'+duties+'</p>' +
-              '<p><strong>Authority boundary</strong><br>'+scope+'</p>' +
-              '<p class="section-hint"><strong>Reports to:</strong> '+reports+'</p></div></details>';
-          }).join('');
-        }
-        async function loadRoleResponsibilities() {
-          return; // Temporarily disabled; role-based access control is unchanged.
-          renderRoleResponsibilities(ROLE_RESPONSIBILITIES_FALLBACK);
-          try {
-            if (!db) return;
-            const {data,error}=await db.from('league_role_responsibilities').select('role_code,role_title,responsibilities,authority_scope,reports_to,is_active').eq('is_active',true).order('display_order').order('role_title');
-            if (error) throw error;
-            if (data && data.length) renderRoleResponsibilities(data);
-          } catch (e) {
-            console.warn('Using built-in role responsibilities until the Supabase role register is installed.', e);
-          }
-        }
-
-
-
-        // ------------------------------------------------------------------
-        // SHARED VERIFICATION QUEUE
-        // RLS is authoritative; these role checks are for clear UI only.
-        // ------------------------------------------------------------------
-
-        // Developer panel finder: navigation is broad, data access remains protected by RLS.
-        const developerPanelDirectory = [
-          {id:'publicArea', name:'Public league panels', description:'Public league tables, fixtures, match results, clubs, players and awards', keywords:'public league table fixtures results clubs players awards stats'},
-          {id:'developerDataExportPanel', name:'Full system data access & downloads', description:'Existing authorised system data export tools', keywords:'download export data backup accounts finance staff'},
-          {id:'developerBoardManagerPanel', name:'Executive board and governance', description:'Board members, governance and responsibilities', keywords:'executive board governance responsibility'},
-          {id:'themeSettingsPanel', name:'Premium appearance and theme', description:'System appearance settings', keywords:'theme appearance colours design'},
-          {id:'masterUserDirectoryPanel', name:'Developer control center and accounts', description:'Registered profiles, roles and account management', keywords:'users accounts roles permissions developer'},
-          {id:'leagueVerificationPanel', name:'Club and team verification', description:'View submissions and verification status; review work belongs to Super Admin', keywords:'verification club team player submissions approval'},
-          {id:'staff-directory', name:'Staff directory', description:'Staff information and departments', keywords:'staff departments personnel'}
-        ];
+        // Role/responsibility directory removed; access permissions remain enforced by the role system.
 
         function searchDeveloperPanels(value) {
           const results = document.getElementById('developerPanelSearchResults');
