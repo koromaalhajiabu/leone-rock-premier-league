@@ -383,6 +383,15 @@
 .board-manager-actions{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .board-manager-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 
+
+/* League verification workflow */
+.verification-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.verification-request{border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;background:#fff}
+.verification-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:12px;margin:6px 0 10px}
+.verification-json{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f7f5;border:1px solid var(--line-soft);padding:10px;border-radius:8px;font:12px/1.5 ui-monospace,monospace;max-height:220px;overflow:auto}
+.verification-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.verification-status{display:inline-block;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;background:#f3e3a6;color:#604900}
+
 </style>
 </head>
 <body>
@@ -696,6 +705,34 @@
         </section>
 
         <div id="workspaceArea" class="hidden">
+ 
+        <!-- Shared club/player verification queue -->
+        <section id="leagueVerificationPanel" class="accordion-card hidden" style="--accent:var(--blue);">
+          <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="leagueVerificationContent" onclick="toggleAccordion('leagueVerificationContent',this)" onkeydown="accordionKey(event,'leagueVerificationContent',this)">
+            <div><h2>Club & Team Verification</h2><p>Submit club/player information for review or review pending submissions.</p></div>
+            <div class="card-meta"><span class="badge badge-role">Role restricted</span><svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </div>
+          <div id="leagueVerificationContent" class="accordion-content">
+            <div class="form-panel">
+              <h3>Submit information for verification</h3>
+              <p class="section-hint">Club Admin submissions are restricted to the club assigned to their account. Include only the fields that should be reviewed. Do not enter passwords or unnecessary sensitive information.</p>
+              <form id="leagueVerificationForm" onsubmit="submitLeagueVerification(event)">
+                <div class="verification-grid">
+                  <label class="field"><span>Information type</span><select id="verificationEntityType" required><option value="team">Team information</option><option value="club">Club information</option><option value="player">Player information</option></select></label>
+                  <label class="field"><span>Existing record ID (optional)</span><input id="verificationEntityId" maxlength="120" placeholder="Record ID, if updating an existing record"></label>
+                </div>
+                <label class="field" style="display:block;margin-top:12px"><span>Information to review (JSON format)</span><textarea id="verificationProposedData" rows="5" required maxlength="12000" placeholder='{"club_name":"Example FC","notes":"Please verify this information"}' style="width:100%;font:13px/1.5 ui-monospace,monospace"></textarea></label>
+                <div class="form-actions"><button type="submit" class="btn btn-primary" id="verificationSubmitBtn">Submit for verification</button></div>
+              </form>
+              <p id="verificationFormMessage" class="section-hint" role="status" aria-live="polite"></p>
+            </div>
+            <div class="form-panel" style="margin-top:16px">
+              <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><h3>Verification requests</h3><p class="section-hint">Review decisions are stored in the audit log. Only authorised roles can approve or reject requests.</p></div><button type="button" class="btn btn-outline btn-sm" onclick="loadLeagueVerificationRequests()">Refresh requests</button></div>
+              <div id="leagueVerificationRequestsList"><p class="section-hint">Sign in with an authorised account to load requests.</p></div>
+            </div>
+          </div>
+        </section>
+
 
         <section id="developerBoardManagerPanel" class="accordion-card hidden" style="--accent:var(--gold);">
           <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="developerBoardManagerContent" onclick="toggleAccordion('developerBoardManagerContent',this)" onkeydown="accordionKey(event,'developerBoardManagerContent',this)">
@@ -1764,6 +1801,8 @@
             show('awardBackupPanel', isDev);
             show('themeSettingsPanel', isDev);
             show('masterUserDirectoryPanel', isDev);
+            show('leagueVerificationPanel', isDev || isAdmin || role === 'CLUB_ADMIN');
+            if (working && (isDev || isAdmin || role === 'CLUB_ADMIN')) loadLeagueVerificationRequests();
             show('clubAdminPanelContainer', isDev || role === 'CLUB_ADMIN');
             show('refereePanelContainer', isDev || role === 'REFEREE');
             if (isDev || role === 'SUPER_ADMIN' || role === 'REFEREE') loadRefereeMatchOptions();
@@ -3486,6 +3525,161 @@
           }
         }
 
+
+
+        // ------------------------------------------------------------------
+        // SHARED VERIFICATION QUEUE
+        // RLS is authoritative; these role checks are for clear UI only.
+        // ------------------------------------------------------------------
+        function canReviewLeagueVerification() {
+          const role = realRole();
+          return !!currentUser && (role === 'DEVELOPER' || role === 'SUPER_ADMIN');
+        }
+
+        function setVerificationMessage(message, isError) {
+          const el = document.getElementById('verificationFormMessage');
+          if (!el) return;
+          el.textContent = message || '';
+          el.style.color = isError ? 'var(--danger)' : 'var(--muted)';
+        }
+
+        async function submitLeagueVerification(event) {
+          if (event) event.preventDefault();
+          if (!currentUser || !currentProfile || !['DEVELOPER','SUPER_ADMIN','CLUB_ADMIN'].includes(realRole())) {
+            setVerificationMessage('Please sign in with an authorised league account.', true);
+            return;
+          }
+          const button = document.getElementById('verificationSubmitBtn');
+          const type = document.getElementById('verificationEntityType').value;
+          const entityId = document.getElementById('verificationEntityId').value.trim();
+          const raw = document.getElementById('verificationProposedData').value.trim();
+          let proposedData;
+          try {
+            proposedData = JSON.parse(raw);
+            if (!proposedData || typeof proposedData !== 'object' || Array.isArray(proposedData)) {
+              throw new Error('Enter a JSON object, for example {"club_name":"Example FC"}.');
+            }
+          } catch (err) {
+            setVerificationMessage('Invalid JSON: ' + (err.message || 'Please check the format.'), true);
+            return;
+          }
+          if (raw.length > 12000) {
+            setVerificationMessage('The submission is too large. Please shorten it.', true);
+            return;
+          }
+          const payload = {
+            entity_type: type,
+            entity_id: entityId || null,
+            club_id: currentProfile.club_id || null,
+            submitted_by: currentUser.id,
+            proposed_data: proposedData,
+            status: 'pending'
+          };
+          if (realRole() === 'CLUB_ADMIN' && !payload.club_id) {
+            setVerificationMessage('Your account has no assigned club. Ask a league administrator to assign your club before submitting.', true);
+            return;
+          }
+          if (button) button.disabled = true;
+          setVerificationMessage('Submitting…', false);
+          try {
+            const { error } = await db.from('league_verification_requests').insert(payload);
+            if (error) throw error;
+            document.getElementById('verificationEntityId').value = '';
+            document.getElementById('verificationProposedData').value = '';
+            setVerificationMessage('Submission received and marked pending verification.', false);
+            await loadLeagueVerificationRequests();
+          } catch (err) {
+            setVerificationMessage('Submission failed: ' + friendlyError(err) + '. Check the Supabase verification policies and trigger setup.', true);
+          } finally {
+            if (button) button.disabled = false;
+          }
+        }
+
+        async function decideLeagueVerification(requestId, status) {
+          if (!canReviewLeagueVerification()) {
+            alert('Only the Super Admin or Developer can review submissions.');
+            return;
+          }
+          if (!['approved','rejected','changes_requested'].includes(status)) return;
+          const notesEl = document.getElementById('verification-note-' + requestId);
+          const notes = notesEl ? notesEl.value.trim() : '';
+          if (status !== 'approved' && !notes) {
+            alert('Add a review note when rejecting a request or requesting corrections.');
+            if (notesEl) notesEl.focus();
+            return;
+          }
+          const labels = {approved:'approve', rejected:'reject', changes_requested:'request corrections for'};
+          if (!confirm('Are you sure you want to ' + labels[status] + ' this submission?')) return;
+          try {
+            const { data: existing, error: readError } = await db.from('league_verification_requests')
+              .select('id,status,submitted_by').eq('id', requestId).maybeSingle();
+            if (readError) throw readError;
+            if (!existing) throw new Error('Request not found or your account cannot access it.');
+            if (existing.submitted_by === currentUser.id) throw new Error('You cannot review your own submission. Ask another authorised reviewer.');
+            if (existing.status !== 'pending') throw new Error('This request has already been reviewed.');
+            const { error } = await db.from('league_verification_requests')
+              .update({status:status, review_notes:notes || null})
+              .eq('id', requestId).eq('status','pending');
+            if (error) throw error;
+            alert('Review decision saved.');
+            await loadLeagueVerificationRequests();
+          } catch (err) {
+            alert('Could not save review decision: ' + friendlyError(err));
+          }
+        }
+
+        async function loadLeagueVerificationRequests() {
+          const target = document.getElementById('leagueVerificationRequestsList');
+          if (!target || !currentUser || !currentProfile) return;
+          const role = realRole();
+          if (!['DEVELOPER','SUPER_ADMIN','CLUB_ADMIN'].includes(role)) {
+            target.innerHTML = '<p class="section-hint">This area is available to Club Admin, Super Admin and Developer accounts only.</p>';
+            return;
+          }
+          target.innerHTML = '<p class="section-hint">Loading verification requests…</p>';
+          try {
+            let query = db.from('league_verification_requests').select('id,entity_type,entity_id,club_id,submitted_by,proposed_data,status,reviewer_id,review_notes,created_at,reviewed_at');
+            if (role === 'CLUB_ADMIN') {
+              if (!currentProfile.club_id) {
+                target.innerHTML = '<p class="section-hint">Your account has no assigned club. Contact league administration.</p>';
+                return;
+              }
+              query = query.eq('club_id', currentProfile.club_id);
+            }
+            const { data, error } = await query.order('created_at', {ascending:false}).limit(100);
+            if (error) throw error;
+            if (!data || !data.length) {
+              target.innerHTML = '<p class="section-hint">No verification requests are visible to this account yet.</p>';
+              return;
+            }
+            target.innerHTML = data.map(req => {
+              const isPending = req.status === 'pending';
+              const own = req.submitted_by === currentUser.id;
+              const canReview = canReviewLeagueVerification() && isPending && !own;
+              const payload = esc(JSON.stringify(req.proposed_data || {}, null, 2));
+              const noteId = 'verification-note-' + req.id;
+              let actions = '';
+              if (canReview) {
+                actions = '<label class="field" style="display:block;margin-top:10px"><span>Reviewer note (required for rejection/corrections)</span><textarea id="' + noteId + '" rows="2" maxlength="2000" style="width:100%" placeholder="Explain the decision or required corrections"></textarea></label>' +
+                  '<div class="verification-actions">' +
+                  '<button type="button" class="btn btn-primary" onclick="decideLeagueVerification(\'' + req.id + '\',\'approved\')">Approve</button>' +
+                  '<button type="button" class="btn btn-outline" onclick="decideLeagueVerification(\'' + req.id + '\',\'changes_requested\')">Request corrections</button>' +
+                  '<button type="button" class="btn btn-outline" onclick="decideLeagueVerification(\'' + req.id + '\',\'rejected\')">Reject</button></div>';
+              } else if (isPending && own && canReviewLeagueVerification()) {
+                actions = '<p class="section-hint">You submitted this request; another authorised reviewer must make the decision.</p>';
+              }
+              return '<article class="verification-request"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><strong>' + esc((req.entity_type || 'record').toUpperCase()) + ' submission</strong><span class="verification-status">' + esc((req.status || 'pending').replaceAll('_',' ')) + '</span></div>' +
+                '<div class="verification-meta"><span>Submitted: ' + esc(req.created_at ? new Date(req.created_at).toLocaleString() : 'Unknown') + '</span>' +
+                (req.entity_id ? '<span>Record ID: ' + esc(req.entity_id) + '</span>' : '') +
+                '<span>Request: ' + esc(req.id) + '</span></div>' +
+                '<details><summary>View submitted information</summary><pre class="verification-json">' + payload + '</pre></details>' +
+                (req.review_notes ? '<p style="margin-top:8px"><strong>Review notes:</strong> ' + esc(req.review_notes) + '</p>' : '') +
+                actions + '</article>';
+            }).join('');
+          } catch (err) {
+            target.innerHTML = '<p class="section-hint" style="color:var(--danger)">Could not load requests: ' + esc(friendlyError(err)) + '</p>';
+          }
+        }
 
         loadRoleResponsibilities();
 </script>
