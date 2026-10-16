@@ -675,7 +675,7 @@
         <section id="publicLeagueBoards" class="accordion-card" style="--accent:var(--gold);">
           <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="publicLeagueBoardsContent" onclick="toggleAccordion('publicLeagueBoardsContent',this)" onkeydown="accordionKey(event,'publicLeagueBoardsContent',this)">
             <div><h2>Administrative & Executive Board</h2><p>League leadership and administration</p></div>
-            <div class="card-meta"><span class="badge badge-info">Official leadership</span></div>
+            <div class="card-meta"><span class="badge badge-info">Official leadership</span><button id="openBoardManagerBtn" class="btn btn-primary btn-sm hidden" type="button" onclick="event.stopPropagation();openBoardManager()">Manage / Edit Board</button></div>
           </div>
           <div id="publicLeagueBoardsContent" class="accordion-content">
             <div class="board-manager-grid"><div class="board-manager-card"><h3>Administrative Board</h3><div id="publicAdministrativeBoard"><p class="section-hint">Loading board members…</p></div></div>
@@ -3220,6 +3220,27 @@
             }
         }
     
+        function syncBoardManagerEntryPoint() {
+            const btn = document.getElementById('openBoardManagerBtn');
+            if (btn) btn.classList.toggle('hidden', !boardManagerIsDeveloper());
+        }
+        function openBoardManager() {
+            if (!boardManagerIsDeveloper()) return alert('Developer access only.');
+            const workspace = document.getElementById('workspaceArea');
+            const panel = document.getElementById('developerBoardManagerPanel');
+            if (workspace) workspace.classList.remove('hidden');
+            if (panel) {
+                panel.classList.remove('hidden');
+                const content = document.getElementById('developerBoardManagerContent');
+                if (content) content.classList.remove('collapsed');
+                const header = panel.querySelector('.accordion-header');
+                if (header) header.classList.remove('collapsed');
+                header?.setAttribute('aria-expanded', 'true');
+                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            loadBoardMembers();
+        }
+
         // Developer-only Administrative and Executive Board manager
         let boardMemberCache = [];
         function boardManagerIsDeveloper() {
@@ -3330,10 +3351,12 @@
 
 
         document.addEventListener('DOMContentLoaded', function () {
+            if (typeof syncBoardManagerEntryPoint === 'function') syncBoardManagerEntryPoint();
             if (typeof loadPublicLeagueBoards === 'function') loadPublicLeagueBoards();
             if (typeof db !== 'undefined' && db && db.auth) {
                 db.auth.onAuthStateChange(function () {
                     setTimeout(function () {
+                        if (typeof syncBoardManagerEntryPoint === 'function') syncBoardManagerEntryPoint();
                         if (typeof loadPublicLeagueBoards === 'function') loadPublicLeagueBoards();
                         if (typeof loadBoardMembers === 'function') loadBoardMembers();
                     }, 0);
