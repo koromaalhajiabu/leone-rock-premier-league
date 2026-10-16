@@ -2458,31 +2458,6 @@
             }
         }
 
-        async function promoteDemoStaffToDatabase() {
-            if (!['DEVELOPER', 'SUPER_ADMIN'].includes(realRole())) return alert('Developer or Super Admin access is required.');
-            const defaults = [
-                { name: "Alhaji Abu Koroma", role: "Master Developer & Tech Lead", department: "Operations and IT", status: "Active" },
-                { name: "Yayah Koroma", role: "Executive Operations Partner", department: "Administration", status: "Active" },
-                { name: "Dr. Brima", role: "Executive Board", department: "Executive Board", status: "Active" },
-                { name: "Mr. Foday Turay", role: "Club Admin & Operations", department: "Administration", status: "Active" }
-            ];
-            if (!confirm('Save the four currently displayed example personnel as real staff_registry records so you can edit them later? This will not delete existing records.')) return;
-            try {
-                const { data: existing, error: readError } = await db.from('staff_registry').select('name');
-                if (readError) throw readError;
-                const present = new Set((existing || []).map(row => String(row.name || '').trim().toLowerCase()));
-                const missing = defaults.filter(row => !present.has(row.name.toLowerCase()));
-                if (missing.length) {
-                    const { error } = await db.from('staff_registry').insert(missing);
-                    if (error) throw error;
-                }
-                alert('Directory saved. Existing records were kept; missing default personnel were added. Refreshing the list now.');
-                await loadStaffData();
-            } catch (err) {
-                alert('Could not save the directory: ' + friendlyError(err));
-            }
-        }
-
         // Finance dashboard reads the finance tables created in Supabase.
         // Row-level security (RLS) remains the real security boundary.
         function canViewFinanceDashboard() {
@@ -2708,60 +2683,40 @@
         // ------------------------------------------------------------------
         // Official 2026/2027 Leone Rock Premier League participants.
         // These are zeroed placeholders only: real results from Supabase override them.
-        const registeredLeagueClubs = [
-            "Bai Bureh Warriors FC", "Bhantal FC", "Bo Rangers FC", "Bullom Stars FC",
-            "Diamond Stars FC", "East End Lions FC", "FC Kallon", "Kamboi Eagles FC",
-            "Mighty Blackpool FC", "Old Edwardians FC", "Ports Authority FC", "Star SA",
-            "Waterloo FC", "Western United FC", "Wilberforce Strikers FC", "Wusum Stars FC"
-        ];
-        const defaultLeagueStandings = registeredLeagueClubs.map(club => ({
-            club, mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0
-        }));
-
         async function loadLeagueStandings() {
             const tbody = document.getElementById('leagueStandingsTableBody');
             if (!tbody) return;
-            let standingsToRender = defaultLeagueStandings;
+            tbody.innerHTML = '<tr><td colspan="8" class="muted-cell" style="padding:24px 14px;">Loading official league standings…</td></tr>';
             try {
                 const { data, error } = await db.from('league_standings').select('*');
                 if (error) throw error;
-                const savedRows = Array.isArray(data) ? data : [];
-                const savedByName = new Map(savedRows.map(row => [String(row.club || row.club_name || '').trim().toLowerCase(), row]));
-                standingsToRender = defaultLeagueStandings.map(base => {
-                    const key = base.club.trim().toLowerCase();
-                    // tolerate common legacy spelling variations in stored club names
-                    const aliases = {
-                        "east end lions fc": ["east end lions", "east end lions fc"],
-                        "star sa": ["star sport academy", "star sa"],
-                        "waterloo fc": ["waterloo"]
-                    };
-                    const match = [key, ...(aliases[key] || [])].map(name => savedByName.get(name)).find(Boolean);
-                    return match ? { ...base, ...match, club: base.club } : base;
-                });
+                const rows = Array.isArray(data) ? data : [];
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="muted-cell" style="padding:24px 14px;">No official standings have been published yet.</td></tr>';
+                    return;
+                }
+                const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
+                const standingsToRender = rows.map(row => ({
+                    ...row,
+                    club: String(row.club || row.club_name || 'Unnamed club'),
+                    mp: number(row.mp), w: number(row.w), d: number(row.d), l: number(row.l),
+                    gf: number(row.gf), ga: number(row.ga), pts: number(row.pts)
+                })).sort((a, b) =>
+                    b.pts - a.pts ||
+                    (b.gf - b.ga) - (a.gf - a.ga) ||
+                    b.gf - a.gf ||
+                    a.club.localeCompare(b.club)
+                );
+                tbody.innerHTML = standingsToRender.map((team, index) => {
+                    const goalDiff = team.gf - team.ga;
+                    const gdDisplay = goalDiff > 0 ? `+${goalDiff}` : goalDiff;
+                    const gdClass = goalDiff > 0 ? 'gd-pos' : (goalDiff < 0 ? 'gd-neg' : '');
+                    return `<tr${index === 0 && team.pts > 0 ? ' class="leader"' : ''}><td class="c">${rankBadge(index)}</td><td>${clubCell(team.club)}</td><td class="c">${esc(team.mp)}</td><td class="c">${esc(team.w)}</td><td class="c">${esc(team.d)}</td><td class="c">${esc(team.l)}</td><td class="c ${gdClass}">${esc(gdDisplay)}</td><td class="c pts">${esc(team.pts)}</td></tr>`;
+                }).join('');
             } catch (err) {
-                console.warn('Could not load saved league standings; showing the 16 registered clubs with zeroed statistics.', err);
+                console.warn('Could not load official league standings.', err);
+                tbody.innerHTML = '<tr><td colspan="8" class="muted-cell" style="padding:24px 14px;">League standings are temporarily unavailable. Please check the database connection and permissions.</td></tr>';
             }
-
-            const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
-            standingsToRender = standingsToRender.map(team => ({
-                ...team,
-                mp: number(team.mp), w: number(team.w), d: number(team.d), l: number(team.l),
-                gf: number(team.gf), ga: number(team.ga), pts: number(team.pts)
-            })).sort((a, b) =>
-                b.pts - a.pts ||
-                (b.gf - b.ga) - (a.gf - a.ga) ||
-                b.gf - a.gf ||
-                a.club.localeCompare(b.club)
-            );
-
-            let html = '';
-            standingsToRender.forEach((team, index) => {
-                const goalDiff = team.gf - team.ga;
-                const gdDisplay = goalDiff > 0 ? `+${goalDiff}` : goalDiff;
-                const gdClass = goalDiff > 0 ? 'gd-pos' : (goalDiff < 0 ? 'gd-neg' : '');
-                html += `<tr${index === 0 && team.pts > 0 ? ' class="leader"' : ''}><td class="c">${rankBadge(index)}</td><td>${clubCell(team.club)}</td><td class="c">${esc(team.mp)}</td><td class="c">${esc(team.w)}</td><td class="c">${esc(team.d)}</td><td class="c">${esc(team.l)}</td><td class="c ${gdClass}">${esc(gdDisplay)}</td><td class="c pts">${esc(team.pts)}</td></tr>`;
-            });
-            tbody.innerHTML = html;
         }
 
         // Award tables use database records only. Never substitute fictional demo
