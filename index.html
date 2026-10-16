@@ -567,6 +567,7 @@
                 </div>
             </div>
             <div id="goldenBootContent" class="accordion-content">
+                <div class="section-toolbar"><span>All saved goalscorer records</span><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadLeaderboardPanel('top_scorers')">Save CSV</button><button type="button" class="btn btn-primary btn-sm" onclick="downloadLeaderboardPanel('top_scorers', 'json')">Save JSON</button></div></div>
                 <div class="table-container">
                     <table>
                         <thead><tr><th class="c" style="width:56px;">Rank</th><th>Player</th><th class="r">Goals</th></tr></thead>
@@ -587,6 +588,7 @@
                 </div>
             </div>
             <div id="playmakersContent" class="accordion-content">
+                <div class="section-toolbar"><span>All saved playmaker records</span><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadLeaderboardPanel('top_assists')">Save CSV</button><button type="button" class="btn btn-primary btn-sm" onclick="downloadLeaderboardPanel('top_assists', 'json')">Save JSON</button></div></div>
                 <div class="table-container">
                     <table>
                         <thead><tr><th class="c" style="width:56px;">Rank</th><th>Player</th><th class="r">Assists</th></tr></thead>
@@ -607,6 +609,7 @@
                 </div>
             </div>
             <div id="goldenGloveContent" class="accordion-content">
+                <div class="section-toolbar"><span>All saved goalkeeper records</span><div class="section-toolbar-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadLeaderboardPanel('clean_sheets')">Save CSV</button><button type="button" class="btn btn-primary btn-sm" onclick="downloadLeaderboardPanel('clean_sheets', 'json')">Save JSON</button></div></div>
                 <div class="table-container">
                     <table>
                         <thead><tr><th class="c" style="width:56px;">Rank</th><th>Goalkeeper</th><th class="r">Clean sheets</th></tr></thead>
@@ -1776,6 +1779,80 @@
                 photo_url: isSafePhotoUrl(row.photo_url) ? row.photo_url :
                     (squadPhotos.get(String(row[nameKey] || '').trim().toLowerCase()) || null)
             }));
+        }
+
+        // Download a copy of the saved award-panel records to this phone or computer.
+        const leaderboardExportTables = {
+            top_scorers: { label: 'golden-boot', order: 'goals' },
+            top_assists: { label: 'playmakers', order: 'assists' },
+            clean_sheets: { label: 'golden-glove', order: 'clean_sheets' }
+        };
+
+        function downloadExportFile(filename, content, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+
+        function exportCsvCell(value) {
+            if (value === null || value === undefined) return '';
+            const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+            return '"' + text.replace(/"/g, '""') + '"';
+        }
+
+        async function downloadLeaderboardPanel(tableName, format = 'csv') {
+            const config = leaderboardExportTables[tableName];
+            if (!config) { alert('Unknown award panel.'); return; }
+            try {
+                const { data, error } = await db.from(tableName).select('*').order(config.order, { ascending: false });
+                if (error) throw error;
+                const rows = data || [];
+                if (!rows.length) {
+                    alert('There are no saved database records in this panel to download yet.');
+                    return;
+                }
+                const stamp = new Date().toISOString().slice(0, 10);
+                if (format === 'json') {
+                    downloadExportFile(config.label + '-records-' + stamp + '.json', JSON.stringify(rows, null, 2), 'application/json;charset=utf-8');
+                } else {
+                    const columns = Array.from(rows.reduce((set, row) => {
+                        Object.keys(row).forEach(key => set.add(key));
+                        return set;
+                    }, new Set()));
+                    const csv = [columns.map(exportCsvCell).join(','), ...rows.map(row => columns.map(key => exportCsvCell(row[key])).join(','))].join('\r\n');
+                    downloadExportFile(config.label + '-records-' + stamp + '.csv', '\ufeff' + csv, 'text/csv;charset=utf-8');
+                }
+            } catch (err) {
+                alert('Could not download these records. Please sign in with permission to read this panel and try again. ' + friendlyError(err));
+            }
+        }
+
+        async function downloadAllAwardRecords() {
+            try {
+                const names = Object.keys(leaderboardExportTables);
+                const results = await Promise.all(names.map(async table => {
+                    const { data, error } = await db.from(table).select('*');
+                    if (error) throw error;
+                    return [table, data || []];
+                }));
+                const backup = {
+                    system: 'Leone Rock Premier League',
+                    backup_type: 'award-panels',
+                    exported_at: new Date().toISOString(),
+                    records: Object.fromEntries(results)
+                };
+                const stamp = new Date().toISOString().slice(0, 10);
+                downloadExportFile('leone-rock-award-panels-backup-' + stamp + '.json', JSON.stringify(backup, null, 2), 'application/json;charset=utf-8');
+            } catch (err) {
+                alert('Could not back up all three award panels. Check your connection and account permissions, then try again. ' + friendlyError(err));
+            }
         }
 
         function leaderboardRows(rows, nameKey, valueKey, tableName, fromDatabase) {
