@@ -1369,8 +1369,9 @@
                 // Refresh only the screen data related to the changed table.
                 // These are reads, so they do not create a write-event loop.
                 const refreshers = {
-                    matches: [loadLeagueStandings, loadMatchEvents, loadMotm],
+                    matches: [loadRefereeMatchOptions, loadLeagueStandings, loadMatchEvents, loadMotm],
                     match_events: [loadMatchEvents, loadMotm, loadLeagueStandings],
+                    match_results: [loadLeagueStandings],
                     league_standings: [loadLeagueStandings],
                     top_scorers: [loadTopScorers],
                     top_assists: [loadTopAssists],
@@ -1399,6 +1400,7 @@
             const publicTables = [
                 'matches',
                 'match_events',
+                'match_results',
                 'league_standings',
                 'top_scorers',
                 'top_assists',
