@@ -2047,7 +2047,7 @@ th{font-weight:800}
             // Authorized management tools remain available in the private workspace.
             show('publicLeagueBoards', working && (isDev || isAdmin));
             show('staff-directory', working && (isDev || isAdmin));
-            show('staff-directory', !working || isDev || isAdmin);
+            // Do not expose the executive/staff directory in the public Viewer panel.
             const tabW = document.getElementById('tabWorkspace');
             const tabP = document.getElementById('tabPublic');
             if (tabW) {
