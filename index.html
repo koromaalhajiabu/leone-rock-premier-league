@@ -416,7 +416,7 @@
                 <div id="authMessage" class="auth-message" aria-live="polite"></div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button type="submit" id="authSubmitBtn" class="btn btn-primary">Sign in</button>
-                    <button type="button" class="btn btn-outline" onclick="closeAuthModal()">Cancel</button>
+                    <button type="button" id="authCancelBtn" class="btn btn-outline">Cancel</button>
                 </div>
                 <div style="margin-top:16px;">
                     <button type="button" id="authSwitchLink" class="auth-link" onclick="toggleAuthMode()">No account yet? Create one</button>
@@ -2682,7 +2682,31 @@ const defaultCleanSheets = [];
       }
     }
 
+    // Cancel must work even if the main application script fails to expose its functions.
+    function bindAuthCancel() {
+      const cancel = document.getElementById("authCancelBtn");
+      const modal = document.getElementById("authModal");
+      if (cancel && cancel.dataset.cancelBound !== "yes") {
+        cancel.dataset.cancelBound = "yes";
+        cancel.addEventListener("click", function (event) {
+          event.preventDefault();
+          if (modal) modal.classList.add("hidden");
+          const password = document.getElementById("authPassword");
+          if (password) password.value = "";
+          const message = document.getElementById("authMessage");
+          if (message) { message.textContent = ""; message.className = "auth-message"; }
+        });
+      }
+      if (modal && modal.dataset.backdropBound !== "yes") {
+        modal.dataset.backdropBound = "yes";
+        modal.addEventListener("click", function (event) {
+          if (event.target === modal) modal.classList.add("hidden");
+        });
+      }
+    }
+
     bindAuthMenuItems();
+    bindAuthCancel();
 
     // Bind the sign-in form explicitly. This avoids depending on an inline
     // onsubmit attribute and gives a visible message if the main handler failed.
