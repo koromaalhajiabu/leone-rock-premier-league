@@ -1675,7 +1675,7 @@
         // ------------------------------------------------------------------
         async function checkConnection() {
             if (!dbOnline) {
-                dbState = { cls: 'db-off', text: 'Not connected to Supabase. Showing demo data.' };
+                dbState = { cls: 'db-off', text: 'Not connected to Supabase. Live records are unavailable.' };
                 renderDbStatus();
                 return;
             }
@@ -2442,20 +2442,19 @@
         }
 
         async function loadStaffData() {
-            const defaultStaff = [
-                { id: 1, name: "Alhaji Abu Koroma", role: "Master Developer & Tech Lead", department: "Operations and IT", status: "Active" },
-                { id: 2, name: "Yayah Koroma", role: "Executive Operations Partner", department: "Administration", status: "Active" },
-                { id: 3, name: "Dr. Brima", role: "Executive Board", department: "Executive Board", status: "Active" },
-                { id: 4, name: "Mr. Foday Turay", role: "Club Admin & Operations", department: "Administration", status: "Active" }
-            ];
+            // Never insert fictional staff into a clean installation. The directory
+            // displays only records that actually exist in Supabase.
+            const grid = document.getElementById('staffGridContainer');
+            if (grid) grid.innerHTML = '<p class="section-hint">Loading saved staff records…</p>';
 
             try {
+                if (!dbOnline || !db) throw new Error('Supabase is not connected.');
                 const { data, error } = await db.from('staff_registry').select('*').order('id', { ascending: true });
                 if (error) throw error;
-                if (data && data.length > 0) renderStaffGrid(data, false);
-                else renderStaffGrid(defaultStaff, true);
+                renderStaffGrid(Array.isArray(data) ? data : [], false);
             } catch (err) {
-                renderStaffGrid(defaultStaff, true);
+                console.warn('Staff directory could not be loaded:', err.message);
+                if (grid) grid.innerHTML = '<p class="section-hint">Staff records could not be loaded. Check the Supabase connection and permissions.</p>';
             }
         }
 
@@ -2577,6 +2576,11 @@
             });
             const order = STAFF_DEPARTMENTS.filter(d => groups[d])
                 .concat(Object.keys(groups).filter(d => STAFF_DEPARTMENTS.indexOf(d) === -1));
+
+            if (!staffList || staffList.length === 0) {
+                grid.innerHTML = '<p class="section-hint">No staff records have been added yet.</p>';
+                return;
+            }
 
             grid.innerHTML = order.map(dept =>
                 `<div class="dept-block"><h3 class="dept-title">${esc(dept)} <span class="dept-count">${groups[dept].length}</span></h3>` +
