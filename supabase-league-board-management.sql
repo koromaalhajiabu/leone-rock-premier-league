@@ -35,7 +35,7 @@ USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles up
     WHERE up.id = auth.uid()
-      AND upper(coalesce(up.role, '')) = 'DEVELOPER'
+      AND upper(coalesce(up.system_role, '')) IN ('DEVELOPER', 'SUPER_ADMIN')
   )
 );
 
@@ -48,7 +48,7 @@ WITH CHECK (
   AND EXISTS (
     SELECT 1 FROM public.user_profiles up
     WHERE up.id = auth.uid()
-      AND upper(coalesce(up.role, '')) = 'DEVELOPER'
+      AND upper(coalesce(up.system_role, '')) IN ('DEVELOPER', 'SUPER_ADMIN')
   )
 );
 
@@ -60,7 +60,7 @@ USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles up
     WHERE up.id = auth.uid()
-      AND upper(coalesce(up.role, '')) = 'DEVELOPER'
+      AND upper(coalesce(up.system_role, '')) IN ('DEVELOPER', 'SUPER_ADMIN')
   )
 )
 WITH CHECK (
@@ -68,7 +68,7 @@ WITH CHECK (
   AND EXISTS (
     SELECT 1 FROM public.user_profiles up
     WHERE up.id = auth.uid()
-      AND upper(coalesce(up.role, '')) = 'DEVELOPER'
+      AND upper(coalesce(up.system_role, '')) IN ('DEVELOPER', 'SUPER_ADMIN')
   )
 );
 
@@ -80,7 +80,7 @@ USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles up
     WHERE up.id = auth.uid()
-      AND upper(coalesce(up.role, '')) = 'DEVELOPER'
+      AND upper(coalesce(up.system_role, '')) IN ('DEVELOPER', 'SUPER_ADMIN')
   )
 );
 
