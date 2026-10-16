@@ -3110,8 +3110,8 @@
             const awayGoalsText = document.getElementById('resultAwayGoals')?.value ?? '';
             const home_goals = Number(homeGoalsText);
             const away_goals = Number(awayGoalsText);
-            if (!currentUser || !['DEVELOPER', 'SUPER_ADMIN', 'REFEREE'].includes(realRole())) {
-                alert('Sign in with an authorized league or referee account first.'); return;
+            if (!currentUser || realRole() !== 'REFEREE') {
+                alert('Only a signed-in referee can submit a final match result.'); return;
             }
             if (!matchId || homeGoalsText === '' || awayGoalsText === '' ||
                 !Number.isInteger(home_goals) || !Number.isInteger(away_goals) ||
@@ -3710,7 +3710,7 @@
 
         function canReviewLeagueVerification() {
           const role = realRole();
-          return !!currentUser && role === 'SUPER_ADMIN';
+          return !!currentUser && ['SUPER_ADMIN', 'DEVELOPER'].includes(role);
         }
 
         function setVerificationMessage(message, isError) {
