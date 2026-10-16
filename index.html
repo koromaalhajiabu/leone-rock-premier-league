@@ -2594,5 +2594,52 @@ const defaultCleanSheets = [];
 </section>
 <!-- END MAN OF THE MATCH FEATURE -->
 
+<!-- ADMIN DROPDOWN TAP FIX -->
+<script>
+(function () {
+  function bindAdministrationMenu() {
+    const button = document.getElementById("adminMenuBtn");
+    const dropdown = document.getElementById("adminDropdownContent");
+
+    if (!button || !dropdown ||
+        button.dataset.tapFixBound === "yes") return;
+
+    const container = button.closest(".dropdown-menu-container");
+    if (!container) return;
+
+    button.removeAttribute("onclick");
+    button.dataset.tapFixBound = "yes";
+    button.setAttribute("aria-expanded", "false");
+
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const opening =
+        !dropdown.classList.contains("show-dropdown");
+
+      dropdown.classList.toggle("show-dropdown", opening);
+      button.setAttribute("aria-expanded", String(opening));
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!container.contains(event.target)) {
+        dropdown.classList.remove("show-dropdown");
+        button.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      bindAdministrationMenu
+    );
+  } else {
+    bindAdministrationMenu();
+  }
+})();
+</script>
+
 </body>
 </html>
