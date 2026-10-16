@@ -1852,8 +1852,8 @@
             show('masterUserDirectoryPanel', isDev);
             show('developerPanelFinder', isDev);
             show('leagueVerificationPanel', isDev || isAdmin || role === 'CLUB_ADMIN');
-            show('clubRegistrationReviewPanel', isAdmin);
-            if (working && isAdmin) loadClubRegistrationApplications();
+            show('clubRegistrationReviewPanel', real === 'SUPER_ADMIN' || isAdmin);
+            if (working && (real === 'SUPER_ADMIN' || isAdmin)) loadClubRegistrationApplications();
             show('verificationSubmitArea', !isDev);
             if (isDev) { const fm = document.getElementById('verificationFormMessage'); if (fm) fm.textContent = 'Developer oversight is read-only here. The Super Admin is responsible for reviewing and deciding submissions.'; }
             if (working && (isDev || isAdmin || role === 'CLUB_ADMIN')) loadLeagueVerificationRequests();
