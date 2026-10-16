@@ -2741,9 +2741,23 @@ const defaultCleanSheets = [];
         // Recovery path: authenticate directly if the main app's handler failed
         // to initialise. The page reload then lets its normal session/profile
         // code decide which panels this account is authorised to see.
-        const client = window.__leagueSupabaseClient;
+        // Initialise a separate authentication client here so login does not
+        // depend on the large application script having completed successfully.
+        let client = window.__leagueSupabaseClient;
+        if ((!client || !client.auth) && window.supabase && typeof window.supabase.createClient === "function") {
+          try {
+            client = window.supabase.createClient(
+              "https://ticcaervmjdzbprdpxxv.supabase.co",
+              "sb_publishable_WSlNd0DeyV4Z0vM3fM28iA_c5BIYRiL"
+            );
+            window.__leagueSupabaseClient = client;
+          } catch (initError) {
+            showError("Could not initialise sign-in: " + (initError && initError.message ? initError.message : "Supabase client error"));
+            return;
+          }
+        }
         if (!client || !client.auth) {
-          showError("Sign-in is unavailable because the app script or Supabase client did not initialise. Reload the page and try again.");
+          showError("Supabase's login library did not load. Check your internet connection, then reload this page.");
           return;
         }
 
