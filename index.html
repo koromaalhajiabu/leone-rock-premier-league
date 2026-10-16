@@ -1281,9 +1281,11 @@
             return previewAsVisitor ? null : realRole();
         }
 
+        // Only explicitly recognised operational roles may enter a workspace.
+        // Unknown or future role values fail closed until permissions are reviewed.
         function canEditForReal() {
             const role = realRole();
-            return !!role && role !== 'VIEWER' && role !== 'STAFF';
+            return ['DEVELOPER', 'SUPER_ADMIN', 'CLUB_ADMIN', 'REFEREE'].includes(role);
         }
 
         function setVisitorPreview(on) {
@@ -1305,10 +1307,10 @@
             REFEREE: 'Referee panel'
         };
         const WORKSPACE_HINTS = {
-            DEVELOPER: 'Assign roles, update the league tables, publish notices, and manage squads and match records.',
-            SUPER_ADMIN: 'Manage the executive and staff directory below.',
-            CLUB_ADMIN: 'Register and manage the players of your club.',
-            REFEREE: 'Record match incidents and post the Man of the Match for the public pages.'
+            DEVELOPER: 'System oversight: assign authorised roles, maintain league settings, manage league records, review backups, and preview public pages. Database permissions still enforce access.',
+            SUPER_ADMIN: 'League administration: maintain authorised executive and staff records and complete assigned administrative tasks. Developer-only controls remain restricted.',
+            CLUB_ADMIN: 'Club operations: register and maintain your club squad and player details. Access to other clubs and league-wide settings must remain blocked by database policies.',
+            REFEREE: 'Match operations: submit authorised match incidents and Man of the Match records. Only records permitted by your referee assignment should be editable.'
         };
 
         function inWorkspace() {
