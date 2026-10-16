@@ -1,0 +1,2486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0A2E1F">
+    <title>Sierra Leone Premier League | Enterprise Management Suite</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* ------------------------------------------------------------
+           Design tokens
+           Pitch green + flag green + flag blue, with gold reserved for leaders.
+           ------------------------------------------------------------ */
+        :root {
+            --pitch: #0A2E1F;
+            --pitch-2: #0F3D2A;
+            --green: #0E8A3E;
+            --green-bright: #1EB53A;
+            --blue: #0B5FA5;
+            --blue-dark: #084677;
+            --gold: #B8921F;
+            --gold-soft: #F3E3A6;
+            --chalk: #F3F6F2;
+            --paper: #FFFFFF;
+            --ink: #0E1B16;
+            --muted: #586861;
+            --line: #DCE3DD;
+            --line-soft: #E9EEE9;
+            --danger: #B42318;
+            --amber: #B54708;
+            --radius-card: 16px;
+            --radius-panel: 12px;
+            --radius-field: 10px;
+            --shadow-card: 0 1px 0 rgba(10,46,31,0.04), 0 10px 28px -14px rgba(10,46,31,0.22);
+            --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--chalk);
+            color: var(--ink);
+            font-family: var(--font);
+            font-size: 15px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, h4, p { margin: 0; }
+        h1, h2, h3 { font-stretch: 108%; letter-spacing: -0.01em; }
+
+        :focus-visible { outline: 3px solid #6FB3F2; outline-offset: 2px; border-radius: 6px; }
+        .hidden { display: none !important; }
+
+        /* ------------------------------------------------------------
+           Buttons
+           ------------------------------------------------------------ */
+        .btn {
+            font: inherit; font-weight: 600; font-size: 14px; line-height: 1.2;
+            border: 1px solid transparent; border-radius: var(--radius-field);
+            padding: 10px 16px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary { background: var(--blue); color: #fff; }
+        .btn-primary:hover { background: var(--blue-dark); }
+        .btn-success { background: var(--green); color: #fff; }
+        .btn-success:hover { background: #0B7433; }
+        .btn-warning { background: var(--amber); color: #fff; }
+        .btn-warning:hover { background: #93390A; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: #912018; }
+        .btn-light { background: #fff; color: var(--pitch); }
+        .btn-light:hover { background: #E8F1EA; }
+        .btn-ghost { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.28); color: #fff; }
+        .btn-ghost:hover { background: rgba(255,255,255,0.16); }
+        .btn-outline { background: #fff; border-color: var(--line); color: var(--ink); }
+        .btn-outline:hover { background: #F3F6F2; border-color: #C5CFC7; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+        .text-danger { color: var(--danger); }
+        .text-success { color: var(--green); }
+
+        /* ------------------------------------------------------------
+           Banner + top bar
+           ------------------------------------------------------------ */
+        .banner {
+            background: var(--blue); color: #fff; padding: 10px 20px;
+            font-weight: 600; font-size: 14px;
+            display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        }
+        .banner button { background: none; border: 0; color: #fff; font-size: 18px; cursor: pointer; line-height: 1; padding: 4px 8px; }
+
+        .topbar {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(10,46,31,0.94);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .topbar-inner {
+            max-width: 1180px; margin: 0 auto; padding: 10px 20px;
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; color: #fff; min-width: 0; }
+        .brand svg { flex-shrink: 0; }
+        .brand-name { font-stretch: 112%; font-weight: 800; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+        .dropdown-menu-container { position: relative; }
+        .dropdown-content {
+            display: none; position: absolute; right: 0; top: calc(100% + 10px);
+            width: 300px; max-width: calc(100vw - 32px);
+            background: #fff; color: var(--ink);
+            border: 1px solid var(--line); border-radius: 14px;
+            box-shadow: 0 24px 48px -16px rgba(10,46,31,0.45);
+            padding: 8px; z-index: 60;
+        }
+        .show-dropdown { display: block !important; }
+        .menu-item {
+            display: flex; width: 100%; align-items: center; gap: 10px; text-align: left;
+            font: inherit; font-size: 14px; font-weight: 600; color: var(--ink);
+            background: none; border: 0; border-radius: 8px; padding: 10px 12px; cursor: pointer;
+        }
+        .menu-item:hover { background: #F0F5F1; }
+        .session-info { font-size: 13px; line-height: 1.5; padding: 10px 12px 12px; color: var(--muted); word-break: break-word; border-bottom: 1px solid var(--line-soft); margin-bottom: 6px; }
+        .session-info strong { color: var(--ink); }
+
+        /* ------------------------------------------------------------
+           Hero: a matchday board on mown pitch stripes
+           ------------------------------------------------------------ */
+        .hero {
+            position: relative; overflow: hidden; color: #fff;
+            background:
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.028) 0 90px, rgba(255,255,255,0) 90px 180px),
+                linear-gradient(160deg, var(--pitch-2) 0%, var(--pitch) 62%);
+        }
+        .hero .pitch { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 1; pointer-events: none; }
+        .hero-inner {
+            position: relative; max-width: 1180px; margin: 0 auto; padding: 56px 20px 64px;
+            display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr); gap: 40px; align-items: center;
+        }
+        .hero h1 { font-stretch: 118%; font-weight: 900; font-size: clamp(36px, 6vw, 64px); line-height: 0.98; letter-spacing: -0.025em; }
+        .hero-lead { margin-top: 18px; max-width: 46ch; color: #C9DDD0; font-size: 17px; line-height: 1.55; }
+        .hero-actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+        .db-status { display: inline-block; margin-top: 18px; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+        .db-ok { background: #D7F2DF; color: #0B5A28; }
+        .db-warn { background: #FDE8C8; color: #8A3B07; }
+        .db-off { background: #FBD9D5; color: #8E1F15; }
+        .readonly-notice { display: flex; width: fit-content; max-width: 100%; align-items: center; gap: 8px; margin-top: 12px; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; line-height: 1.35; background: rgba(255,255,255,0.12); color: #EAF4EC; border: 1px solid rgba(255,255,255,0.24); }
+        .readonly-notice svg { flex-shrink: 0; }
+        .readonly-notice.is-editing { background: rgba(30,181,58,0.22); border-color: rgba(30,181,58,0.6); }
+        .notice-action { background: none; border: 0; padding: 0 0 0 4px; font: inherit; font-weight: 700; color: #fff; text-decoration: underline; cursor: pointer; white-space: nowrap; }
+
+        .scoreboard {
+            position: relative; background: #061F15; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px; padding: 26px 24px 20px;
+            box-shadow: 0 30px 60px -30px rgba(0,0,0,0.6);
+        }
+        .scoreboard::before {
+            content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; border-radius: 18px 18px 0 0;
+            background: linear-gradient(90deg, #1EB53A 0 33.33%, #FFFFFF 33.33% 66.66%, #0072C6 66.66% 100%);
+            transform-origin: left center; animation: draw-stripe 0.9s cubic-bezier(.2,.7,.2,1) both;
+        }
+        @keyframes draw-stripe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        .sb-status { display: flex; align-items: center; gap: 8px; color: #BFD6C6; font-size: 13px; font-weight: 600; }
+        .live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green-bright); box-shadow: 0 0 0 0 rgba(30,181,58,0.6); animation: pulse 1.8s ease-out infinite; }
+        @keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(30,181,58,0); } 100% { box-shadow: 0 0 0 0 rgba(30,181,58,0); } }
+        .sb-match { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; margin: 22px 0 20px; }
+        .sb-team { font-stretch: 110%; font-weight: 700; font-size: 17px; line-height: 1.2; }
+        .sb-team:last-child { text-align: right; }
+        .sb-score { font-stretch: 125%; font-weight: 900; font-size: 44px; line-height: 1; letter-spacing: -0.02em; padding: 8px 16px; border-radius: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); font-variant-numeric: tabular-nums; }
+        .sb-next { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px; }
+        .sb-next h2 { font-size: 13px; font-weight: 600; color: #9FBCAA; margin-bottom: 8px; font-stretch: 100%; letter-spacing: 0; }
+        .sb-next ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; color: #E3EEE6; }
+
+        /* ------------------------------------------------------------
+           Content cards (accordions)
+           ------------------------------------------------------------ */
+        .app-shell { max-width: 1180px; width: 100%; margin: 0 auto; padding: 32px 20px 72px; flex: 1; }
+
+        .accordion-card {
+            background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card); margin-bottom: 20px; overflow: hidden;
+        }
+        .accordion-header {
+            display: flex; justify-content: space-between; align-items: center; gap: 16px;
+            padding: 20px 24px; cursor: pointer; user-select: none;
+            border-left: 5px solid var(--accent, var(--green)); background: #fff;
+            transition: background-color 0.15s ease;
+        }
+        .accordion-header:hover { background: #F8FAF7; }
+        .accordion-header h2 { font-size: 19px; font-weight: 800; }
+        .accordion-header p { color: var(--muted); font-size: 14px; margin-top: 2px; }
+        .card-meta { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        .accordion-arrow { color: var(--muted); transition: transform 0.2s ease; }
+        .accordion-header.collapsed .accordion-arrow { transform: rotate(-90deg); }
+        .accordion-content { padding: 24px; border-top: 1px solid var(--line); display: block; }
+        .accordion-content.collapsed { display: none; }
+
+        .section-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+        .section-hint { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+        .block { margin-bottom: 28px; }
+        .section-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; color: var(--muted); font-size: 14px; }
+        .section-toolbar-actions { display: flex; gap: 8px; }
+        .accordion-card { scroll-margin-top: 84px; }
+        .board-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px; margin-bottom: 28px; }
+        .board { border: 1px solid var(--line); border-radius: var(--radius-panel); overflow: hidden; background: #fff; }
+        .board-head { padding: 14px 16px 12px; }
+        .board-head h3 { font-size: 15px; font-weight: 800; }
+        .board-head p { color: var(--muted); font-size: 13px; margin-top: 1px; }
+        .toolbar { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+
+        /* ------------------------------------------------------------
+           Tables
+           ------------------------------------------------------------ */
+        .table-container { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-panel); background: #fff; }
+        .board .table-container { border: 0; border-top: 1px solid var(--line-soft); border-radius: 0; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; font-variant-numeric: tabular-nums; }
+        th { font-weight: 600; font-size: 12.5px; color: var(--muted); background: #F6F8F5; padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: 0; }
+        tbody tr:hover td { background: #F8FAF7; }
+        .c { text-align: center; }
+        .r { text-align: right; }
+        .leader td:first-child { box-shadow: inset 3px 0 0 var(--gold); }
+        .pts { font-weight: 800; font-size: 15px; }
+        .gd-pos { color: var(--green); font-weight: 600; }
+        .gd-neg { color: var(--danger); font-weight: 600; }
+        .pl-name { font-weight: 700; }
+        .pl-club { color: var(--muted); font-size: 12.5px; }
+        .stat { font-weight: 800; font-size: 18px; text-align: right; font-stretch: 110%; }
+        .muted-cell { text-align: center; color: var(--muted); }
+
+        .rank { display: inline-grid; place-items: center; min-width: 28px; height: 28px; border-radius: 8px; font-weight: 700; font-size: 13px; color: var(--muted); }
+        .rank-1 { background: var(--gold-soft); color: #4F3B00; }
+        .club { display: inline-flex; align-items: center; gap: 10px; }
+        .crest { width: 30px; height: 30px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0; }
+        .t0 { background: #0E8A3E; } .t1 { background: #0B5FA5; } .t2 { background: #0A2E1F; } .t3 { background: #7A5C0B; } .t4 { background: #44588C; }
+
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .badge-success { background: #D7F2DF; color: #0B5A28; }
+        .badge-danger { background: #FBD9D5; color: #8E1F15; }
+        .badge-warning { background: #FDE8C8; color: #8A3B07; }
+        .badge-info { background: #D6E8F8; color: #0A4C86; }
+        .badge-role { background: #EEF2EE; color: #3B4A42; border: 1px solid var(--line); }
+
+        /* ------------------------------------------------------------
+           Staff directory
+           ------------------------------------------------------------ */
+        .staff-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+        .staff-card { background: #F8FAF7; border: 1px solid var(--line); border-radius: var(--radius-panel); padding: 16px; display: flex; align-items: center; gap: 14px; }
+        .staff-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--pitch); color: #fff; font-weight: 800; font-size: 15px; display: grid; place-items: center; flex-shrink: 0; box-shadow: inset 0 0 0 2px rgba(30,181,58,0.55); }
+        .staff-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .staff-role { color: var(--muted); font-size: 13px; }
+        .staff-foot { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+        /* Photos and avatars */
+        .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--pitch); color: #fff; font-weight: 800; font-size: 15px; display: grid; place-items: center; flex-shrink: 0; object-fit: cover; box-shadow: 0 0 0 2px rgba(30,181,58,0.55); }
+        .avatar-sm { width: 36px; height: 36px; font-size: 12px; }
+        .avatar-lg { width: 72px; height: 72px; font-size: 22px; }
+        .person { display: inline-flex; align-items: center; gap: 10px; }
+        .photo-field { display: flex; align-items: center; gap: 14px; }
+        .photo-field .hint { color: var(--muted); font-size: 13px; margin-top: 6px; max-width: 360px; }
+        .photo-preview { background-color: #E3EAE4; background-size: cover; background-position: center; color: var(--muted); font-size: 26px; font-weight: 400; }
+        .photo-preview.has-photo { box-shadow: 0 0 0 2px rgba(30,181,58,0.55); }
+        .photo-btn { position: relative; cursor: pointer; }
+        .photo-btn:focus-within { outline: 3px solid rgba(11,95,165,0.45); outline-offset: 2px; }
+        img.avatar { display: block; }
+        .staff-card { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px 14px; }
+        .staff-foot { flex-wrap: wrap; justify-content: flex-start; margin-top: 6px; }
+        .staff-card .staff-foot.has-actions { grid-column: 1 / -1; margin-top: 0; padding-top: 12px; border-top: 1px solid var(--line-soft); justify-content: space-between; gap: 8px; }
+        .staff-card .staff-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+        .dept-block + .dept-block { margin-top: 26px; }
+        .dept-title { font-size: 15px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .dept-count { font-size: 12px; font-weight: 700; color: var(--muted); background: #EEF2EE; border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; }
+        .session-person { display: flex; align-items: center; gap: 10px; }
+
+        /* ------------------------------------------------------------
+           Forms
+           ------------------------------------------------------------ */
+        input, select {
+            width: 100%; height: 42px; padding: 0 12px; font: inherit; font-size: 14px; color: var(--ink);
+            background: #fff; border: 1px solid #C9D3CB; border-radius: var(--radius-field);
+        }
+        input:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(11,95,165,0.18); }
+        .field { display: grid; gap: 6px; }
+        .field > span { font-size: 13px; font-weight: 600; color: var(--ink); }
+        .form-panel { background: #F7F9F6; border: 1px solid var(--line); border-radius: var(--radius-panel); padding: 18px; margin-bottom: 20px; }
+        .form-panel h3 { font-size: 15px; font-weight: 800; }
+        .form-panel .section-hint { margin-top: 2px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+        .span-all { grid-column: 1 / -1; }
+        .form-actions { margin-top: 14px; display: flex; justify-content: flex-end; }
+        .flex-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+        .inline-row { display: flex; gap: 10px; }
+        .inline-row input { flex: 1; }
+
+        /* ------------------------------------------------------------
+           Sign in / create account window
+           ------------------------------------------------------------ */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(6,31,21,0.62); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
+        .modal-card { position: relative; background: #fff; border-radius: 18px; padding: 30px 26px 24px; width: 100%; max-width: 400px; box-shadow: 0 30px 70px -20px rgba(0,0,0,0.5); overflow: hidden; }
+        .modal-card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: linear-gradient(90deg, #1EB53A 0 33.33%, #E6EBE6 33.33% 66.66%, #0072C6 66.66% 100%); }
+        .modal-card h2 { font-size: 22px; font-weight: 800; }
+        .modal-card > p, .modal-card form > p { color: var(--muted); font-size: 14px; margin: 4px 0 18px; }
+        .modal-card .field { margin-bottom: 12px; }
+        .auth-message { font-size: 13px; min-height: 18px; line-height: 1.4; margin: 2px 0 14px; }
+        .auth-error { color: var(--danger); }
+        .auth-ok { color: #0B5A28; }
+        .auth-link { font-size: 14px; color: var(--blue); font-weight: 600; cursor: pointer; text-decoration: underline; background: none; border: 0; padding: 0; font-family: inherit; }
+
+        /* ------------------------------------------------------------
+           Footer
+           ------------------------------------------------------------ */
+        footer { background: var(--pitch); color: #B6CDBE; margin-top: auto; border-top: 4px solid transparent; border-image: linear-gradient(90deg, #1EB53A 0 33.33%, #FFFFFF 33.33% 66.66%, #0072C6 66.66% 100%) 1; }
+        .footer-inner { max-width: 1180px; margin: 0 auto; padding: 28px 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; font-size: 14px; }
+        .footer-credit { color: #fff; font-weight: 700; font-stretch: 108%; font-size: 15px; }
+
+        /* ------------------------------------------------------------
+           Responsive + motion
+           ------------------------------------------------------------ */
+
+        /* ------------------------------------------------------------
+           My panel / public view switch, Man of the Match
+           ------------------------------------------------------------ */
+        .view-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 14px; width: fit-content; max-width: 100%; scroll-margin-top: 84px; box-shadow: 0 1px 2px rgba(10,46,31,0.05); }
+        .view-tab { font: inherit; font-size: 14px; font-weight: 700; padding: 9px 18px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+        .view-tab:hover { background: #EEF2EE; color: var(--ink); }
+        .view-tab.is-active { background: var(--pitch); color: #fff; }
+        .view-tab:focus-visible { outline: 3px solid rgba(11,95,165,0.45); outline-offset: 2px; }
+        .workspace-head { margin-bottom: 16px; }
+        .workspace-head h2 { font-size: 22px; font-weight: 800; }
+        .workspace-head p { color: var(--muted); font-size: 14px; margin-top: 2px; }
+        .avatar-xl { width: 96px; height: 96px; font-size: 30px; box-shadow: 0 0 0 3px var(--gold-soft), 0 0 0 4px var(--gold); }
+        .motm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+        .motm-card { display: grid; grid-template-columns: auto 1fr; gap: 12px 16px; align-items: center; padding: 16px; border-radius: var(--radius-panel); border: 1px solid var(--gold-soft); background: linear-gradient(135deg, #FFFBEA 0%, #F8FAF7 70%); }
+        .motm-label { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+        .motm-name { font-size: 18px; font-weight: 800; line-height: 1.2; margin-top: 2px; overflow-wrap: anywhere; }
+        .motm-team { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 14px; font-weight: 600; }
+        .motm-shirt { display: inline-grid; place-items: center; min-width: 30px; height: 26px; padding: 0 8px; border-radius: 8px; background: var(--pitch); color: #fff; font-size: 13px; font-weight: 800; }
+        .motm-match { margin-top: 6px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+        .motm-card .motm-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+        .motm-empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 18px 8px; }
+
+        @media (max-width: 860px) {
+            .hero-inner { grid-template-columns: 1fr; padding: 40px 20px 48px; gap: 32px; }
+            .brand-name { font-size: 14px; }
+        }
+        @media (max-width: 560px) {
+            .accordion-header { padding: 16px; }
+            .accordion-content { padding: 16px; }
+            .card-meta .badge { display: none; }
+            .brand-name { font-size: 13px; white-space: normal; line-height: 1.15; overflow: visible; text-overflow: clip; }
+            .sb-score { font-size: 34px; padding: 6px 12px; }
+            .sb-team { font-size: 15px; }
+            #logoutBtn { display: none !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .scoreboard::before, .live-dot { animation: none; }
+            .accordion-arrow, .btn { transition: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notification banner -->
+    <div id="systemNotificationBanner" class="banner hidden" role="status">
+        <span id="bannerTextContent">Matchday broadcast notice</span>
+        <button type="button" onclick="dismissBanner()" aria-label="Dismiss notice">&times;</button>
+    </div>
+
+    <!-- Top bar -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <svg width="34" height="38" viewBox="0 0 24 27" role="img" aria-label="Sierra Leone Premier League crest">
+                    <defs><clipPath id="crestShape"><path d="M12 1.2 22 4.6v8.2c0 6.2-4.5 10.4-10 12.2C6.5 23.2 2 19 2 12.8V4.6z"/></clipPath></defs>
+                    <g clip-path="url(#crestShape)">
+                        <rect x="0" y="0" width="24" height="9" fill="#1EB53A"/>
+                        <rect x="0" y="9" width="24" height="8" fill="#FFFFFF"/>
+                        <rect x="0" y="17" width="24" height="10" fill="#0072C6"/>
+                    </g>
+                    <path d="M12 1.2 22 4.6v8.2c0 6.2-4.5 10.4-10 12.2C6.5 23.2 2 19 2 12.8V4.6z" fill="none" stroke="#fff" stroke-width="1.2"/>
+                    <circle cx="12" cy="13" r="3.6" fill="#0A2E1F"/>
+                    <path d="M12 10.4l1.7 1.2-.65 2h-2.1l-.65-2z" fill="#fff"/>
+                </svg>
+                <span class="brand-name">Sierra Leone Premier League</span>
+            </div>
+            <div class="topbar-actions">
+                <button type="button" id="logoutBtn" onclick="logoutSystem()" class="btn btn-ghost btn-sm hidden">Sign out</button>
+                <div class="dropdown-menu-container">
+                    <button type="button" id="adminMenuBtn" onclick="toggleAdminDropdown(event)" class="btn btn-light" aria-haspopup="true">
+                        Administration
+                        <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div id="adminDropdownContent" class="dropdown-content">
+                        <div id="sessionInfo" class="session-info hidden"></div>
+                        <button type="button" id="menuPhoto" onclick="openPhotoModal()" class="menu-item hidden">My profile photo</button>
+                        <button type="button" id="menuPreview" onclick="setVisitorPreview(!previewAsVisitor)" class="menu-item hidden">View as visitor (read-only)</button>
+                        <button type="button" id="menuSignIn" onclick="openAuthModal('signin')" class="menu-item">Sign in</button>
+                        <button type="button" id="menuSignUp" onclick="openAuthModal('signup')" class="menu-item">Create account</button>
+                        <button type="button" id="menuSignOut" onclick="logoutSystem()" class="menu-item hidden">Sign out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sign in / create account window -->
+    <div id="authModal" class="modal-overlay hidden" onclick="if (event.target === this) closeAuthModal()">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+            <h2 id="authTitle">Sign in</h2>
+            <form id="authForm" onsubmit="handleAuthSubmit(event)">
+                <p id="authSubtitle">Use your league account to open your portal.</p>
+                <label class="field hidden" id="authFullNameField"><span>Full name</span><input type="text" id="authFullName" autocomplete="name"></label>
+                <label class="field"><span>Email address</span><input type="email" id="authEmail" autocomplete="email" required></label>
+                <label class="field"><span>Password</span><input type="password" id="authPassword" autocomplete="current-password" minlength="8" required></label>
+                <div id="authMessage" class="auth-message" aria-live="polite"></div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="submit" id="authSubmitBtn" class="btn btn-primary">Sign in</button>
+                    <button type="button" class="btn btn-outline" onclick="closeAuthModal()">Cancel</button>
+                </div>
+                <div style="margin-top:16px;">
+                    <button type="button" id="authSwitchLink" class="auth-link" onclick="toggleAuthMode()">No account yet? Create one</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile photo window -->
+    <div id="photoModal" class="modal-overlay hidden" onclick="if (event.target === this) closePhotoModal()">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="photoTitle">
+            <h2 id="photoTitle">My profile photo</h2>
+            <p>Use a clear photo of your face. League administrators see it next to your name.</p>
+            <div class="photo-field" style="margin-bottom:14px;">
+                <span class="avatar avatar-lg photo-preview" id="myPhotoPreview" aria-hidden="true">+</span>
+                <label class="btn btn-outline btn-sm photo-btn">Choose photo<input type="file" id="myPhotoInput" accept="image/*" class="sr-only" onchange="onPhotoChosen(this, 'myPhotoPreview')"></label>
+            </div>
+            <div id="photoMessage" class="auth-message" aria-live="polite"></div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="button" id="photoSaveBtn" class="btn btn-primary" onclick="saveMyPhoto()">Save photo</button>
+                <button type="button" class="btn btn-outline" onclick="closePhotoModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="hero">
+        <svg class="pitch" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <g fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="2">
+                <rect x="40" y="30" width="1120" height="460" rx="4"/>
+                <line x1="600" y1="30" x2="600" y2="490"/>
+                <circle cx="600" cy="260" r="86"/>
+                <circle cx="600" cy="260" r="4" fill="rgba(255,255,255,0.09)"/>
+                <rect x="40" y="140" width="170" height="240"/>
+                <rect x="40" y="200" width="64" height="120"/>
+                <rect x="990" y="140" width="170" height="240"/>
+                <rect x="1096" y="200" width="64" height="120"/>
+                <path d="M210 215 A86 86 0 0 1 210 305"/>
+                <path d="M990 215 A86 86 0 0 0 990 305"/>
+            </g>
+        </svg>
+        <div class="hero-inner">
+            <div>
+                <h1>Sierra Leone<br>Premier League</h1>
+                <p class="hero-lead">Official league management for clubs, match officials and administrators. Follow the table, the scorers and every match incident as it is recorded.</p>
+                <div class="hero-actions">
+                    <a href="#standings" class="btn btn-light" style="text-decoration:none;">View standings</a>
+                    <button type="button" class="btn btn-ghost" onclick="openAuthModal('signin')">Staff sign in</button>
+                </div>
+                <span id="dbStatus" class="db-status hidden" role="status"></span>
+                <div id="readOnlyNotice" class="readonly-notice hidden" role="status">
+                    <svg width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9V6.5a4 4 0 1 1 8 0V9M5 9h10v8H5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span id="readOnlyText"></span>
+                    <button type="button" id="noticeAction" class="notice-action hidden" onclick="setVisitorPreview(!previewAsVisitor)"></button>
+                </div>
+            </div>
+            <div class="scoreboard">
+                <div class="sb-status"><span class="live-dot"></span> 82' live at the National Stadium</div>
+                <div class="sb-match">
+                    <div class="sb-team">Freetown FC</div>
+                    <div class="sb-score">2 - 1</div>
+                    <div class="sb-team">Eastern Lions</div>
+                </div>
+                <div class="sb-next">
+                    <h2>Next fixtures</h2>
+                    <ul>
+                        <li>Bo Rangers vs Mighty Blackpool, Saturday 16:00 GMT</li>
+                        <li>Kano Table vs Diamond Stars, Sunday 16:30 GMT</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="app-shell">
+
+        <!-- Switch between "My panel" and the public pages (only for signed-in editors) -->
+        <nav id="viewTabs" class="view-tabs hidden" aria-label="Choose what to show">
+            <button type="button" id="tabWorkspace" class="view-tab" onclick="setView('workspace', true)">My panel</button>
+            <button type="button" id="tabPublic" class="view-tab" onclick="setView('public', true)">Public view</button>
+        </nav>
+
+        <div id="publicArea">
+        <!-- 1. Public league sections: each has its own dropdown -->
+        <div class="section-toolbar" id="publicSectionControls">
+            <span>Tap a heading to open or close that section.</span>
+            <div class="section-toolbar-actions">
+                <button type="button" class="btn btn-outline btn-sm" onclick="setPublicSections(true)">Open all</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="setPublicSections(false)">Close all</button>
+            </div>
+        </div>
+
+        <section id="standings" class="accordion-card" style="--accent: var(--green);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="standingsContent" onclick="toggleAccordion('standingsContent', this)" onkeydown="accordionKey(event, 'standingsContent', this)">
+                <div>
+                    <h2>League standings</h2>
+                    <p>Points table for every club</p>
+                </div>
+                <div class="card-meta">
+                    <span class="badge badge-success">Open to everyone</span><svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="standingsContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="c" style="width:56px;">Pos</th>
+                                <th>Club</th>
+                                <th class="c">MP</th>
+                                <th class="c">W</th>
+                                <th class="c">D</th>
+                                <th class="c">L</th>
+                                <th class="c">GD</th>
+                                <th class="c">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leagueStandingsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="golden-boot" class="accordion-card" style="--accent: var(--amber);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="goldenBootContent" onclick="toggleAccordion('goldenBootContent', this)" onkeydown="accordionKey(event, 'goldenBootContent', this)">
+                <div>
+                    <h2>Golden Boot</h2>
+                    <p>Top goalscorers</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="goldenBootContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th class="c" style="width:56px;">Rank</th><th>Player</th><th class="r">Goals</th></tr></thead>
+                        <tbody id="topScorersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="playmakers" class="accordion-card" style="--accent: var(--blue);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="playmakersContent" onclick="toggleAccordion('playmakersContent', this)" onkeydown="accordionKey(event, 'playmakersContent', this)">
+                <div>
+                    <h2>Playmakers</h2>
+                    <p>Most assists</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="playmakersContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th class="c" style="width:56px;">Rank</th><th>Player</th><th class="r">Assists</th></tr></thead>
+                        <tbody id="topAssistsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="golden-glove" class="accordion-card" style="--accent: var(--green-bright);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="goldenGloveContent" onclick="toggleAccordion('goldenGloveContent', this)" onkeydown="accordionKey(event, 'goldenGloveContent', this)">
+                <div>
+                    <h2>Golden Glove</h2>
+                    <p>Goalkeepers with the most clean sheets</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="goldenGloveContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th class="c" style="width:56px;">Rank</th><th>Goalkeeper</th><th class="r">Clean sheets</th></tr></thead>
+                        <tbody id="cleanSheetsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Man of the Match (posted by match officials) -->
+        <section id="man-of-the-match" class="accordion-card" style="--accent: var(--gold);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="motmContent" onclick="toggleAccordion('motmContent', this)" onkeydown="accordionKey(event, 'motmContent', this)">
+                <div>
+                    <h2>Man of the Match</h2>
+                    <p>The standout player of each match, chosen by the match officials</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="motmContent" class="accordion-content">
+                <div id="publicMotmGrid" class="motm-grid"><p class="motm-empty">Loading Man of the Match...</p></div>
+            </div>
+        </section>
+
+        <section id="incidents" class="accordion-card" style="--accent: var(--danger);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="incidentsContent" onclick="toggleAccordion('incidentsContent', this)" onkeydown="accordionKey(event, 'incidentsContent', this)">
+                <div>
+                    <h2>Recent match incidents</h2>
+                    <p>Goals, cards and substitutions as they are recorded</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="incidentsContent" class="accordion-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Minute</th><th>Incident</th><th>Team</th><th>Player</th><th>Logged by</th></tr>
+                        </thead>
+                        <tbody id="publicMatchEventsBody">
+                            <tr><td colspan="5" class="muted-cell">Loading match incidents...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        </div>
+
+        <!-- My panel: opens automatically after sign-in -->
+        <div id="workspaceArea" class="hidden">
+        <div class="workspace-head">
+            <h2 id="workspaceTitle">My panel</h2>
+            <p id="workspaceSub"></p>
+        </div>
+
+        <!-- 3. Club administration (Club Admin and Developer) -->
+        <section id="clubAdminPanelContainer" class="accordion-card hidden" style="--accent: var(--amber);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="clubAccordionContent" onclick="toggleAccordion('clubAccordionContent', this)" onkeydown="accordionKey(event, 'clubAccordionContent', this)">
+                <div>
+                    <h2>Club administration and squad</h2>
+                    <p>Register players with their National ID number (NIN)</p>
+                </div>
+                <div class="card-meta">
+                    <span class="badge badge-warning">Club manager</span>
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="clubAccordionContent" class="accordion-content">
+                <div class="form-panel">
+                    <h3>Register a squad player</h3>
+                    <p class="section-hint">Each NIN can be registered once.</p>
+                    <div class="grid-2">
+                        <label class="field"><span>Player full name</span><input type="text" id="clubPlayerName" placeholder="e.g., Ibrahim Conteh"></label>
+                        <label class="field"><span>National ID number (NIN)</span><input type="text" id="clubPlayerNIN" placeholder="e.g., SL123456789"></label>
+                        <label class="field"><span>Position</span><input type="text" id="clubPlayerPosition" placeholder="e.g., Forward"></label>
+                        <div class="photo-field">
+                            <span class="avatar avatar-lg photo-preview" id="clubPlayerPhotoPreview" aria-hidden="true">+</span>
+                            <div>
+                                <label class="btn btn-outline btn-sm photo-btn">Attach photo<input type="file" id="clubPlayerPhotoInput" accept="image/*" class="sr-only" onchange="onPhotoChosen(this, 'clubPlayerPhotoPreview')"></label>
+                                <div class="hint">A real, clear photo of the player (JPG, PNG or WebP).</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="clubSubmitBtn" onclick="submitClubPlayer()" class="btn btn-warning">Register player</button>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Squad roster</h3>
+                <div class="table-container" style="margin-top:10px;">
+                    <table>
+                        <thead>
+                            <tr><th>Player</th><th>National ID (NIN)</th><th>Position</th><th>Status</th><th class="r">Actions</th></tr>
+                        </thead>
+                        <tbody id="clubRosterTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Match official portal (Referee and Developer) -->
+        <section id="refereePanelContainer" class="accordion-card hidden" style="--accent: var(--green-bright);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="refereeAccordionContent" onclick="toggleAccordion('refereeAccordionContent', this)" onkeydown="accordionKey(event, 'refereeAccordionContent', this)">
+                <div>
+                    <h2>Match official portal</h2>
+                    <p>Record match incidents and post the Man of the Match</p>
+                </div>
+                <div class="card-meta">
+                    <span class="badge badge-success">Match official</span>
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="refereeAccordionContent" class="accordion-content">
+                <div class="form-panel">
+                    <h3>Record an incident</h3>
+                    <div class="grid-2" style="margin-top:12px;">
+                        <label class="field"><span>Incident type</span>
+                            <select id="refEventType">
+                                <option value="GOAL">Goal scored</option>
+                                <option value="YELLOW_CARD">Yellow card</option>
+                                <option value="RED_CARD">Red card</option>
+                                <option value="SUB">Substitution</option>
+                            </select>
+                        </label>
+                        <label class="field"><span>Team</span><input type="text" id="refTeamName" placeholder="e.g., Freetown FC"></label>
+                        <label class="field"><span>Player and shirt number</span><input type="text" id="refPlayerName" placeholder="e.g., Alpha Jalloh, 9"></label>
+                        <label class="field"><span>Match minute</span><input type="number" id="refMinute" placeholder="e.g., 45" min="1" max="120"></label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="submitMatchIncident()" class="btn btn-success">Record incident</button>
+                    </div>
+                </div>
+
+                <div class="form-panel" id="motmFormPanel">
+                    <h3 id="motmFormTitle">Post Man of the Match</h3>
+                    <p class="section-hint">Everything you post here appears in the public "Man of the Match" section for all visitors.</p>
+                    <div class="grid-2" style="margin-top:12px;">
+                        <label class="field span-all"><span>Match</span><input type="text" id="motmMatch" maxlength="120" placeholder="e.g., Freetown FC vs Eastern Lions" autocomplete="off"></label>
+                        <label class="field"><span>Match date</span><input type="date" id="motmDate"></label>
+                        <label class="field"><span>Player's full name</span><input type="text" id="motmPlayer" maxlength="80" placeholder="e.g., Alpha Jalloh" autocomplete="off"></label>
+                        <label class="field"><span>Team</span><input type="text" id="motmTeam" maxlength="80" placeholder="e.g., Freetown FC" autocomplete="off"></label>
+                        <label class="field"><span>Shirt number</span><input type="number" id="motmShirt" min="1" max="99" inputmode="numeric" placeholder="e.g., 9"></label>
+                        <div class="photo-field span-all">
+                            <span class="avatar avatar-lg photo-preview" id="motmPhotoPreview" aria-hidden="true">+</span>
+                            <div>
+                                <label class="btn btn-outline btn-sm photo-btn">Upload player photo<input type="file" id="motmPhotoInput" accept="image/*" class="sr-only" onchange="onPhotoChosen(this, 'motmPhotoPreview')"></label>
+                                <div class="hint">A clear photo of the player (JPG, PNG or WebP).</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="gap:10px;">
+                        <button type="button" id="motmCancelBtn" onclick="resetMotmForm()" class="btn btn-outline hidden">Cancel edit</button>
+                        <button type="button" id="motmSaveBtn" onclick="saveMotm()" class="btn btn-success">Post Man of the Match</button>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Man of the Match already posted</h3>
+                <div id="refereeMotmList" class="motm-grid" style="margin:10px 0 24px;"></div>
+
+                <h3 class="section-title">Official incident log</h3>
+                <div class="table-container" style="margin-top:10px;">
+                    <table>
+                        <thead>
+                            <tr><th>Minute</th><th>Incident</th><th>Team</th><th>Player</th><th>Logged by</th></tr>
+                        </thead>
+                        <tbody id="refereeEventsLogBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Master developer control center -->
+        <section id="masterUserDirectoryPanel" class="accordion-card hidden" style="--accent: var(--danger);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="masterAccordionContent" onclick="toggleAccordion('masterAccordionContent', this)" onkeydown="accordionKey(event, 'masterAccordionContent', this)">
+                <div>
+                    <h2>Developer control center</h2>
+                    <p>Account roles, league data and system notices</p>
+                </div>
+                <div class="card-meta">
+                    <span class="badge badge-danger">Developer</span>
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="masterAccordionContent" class="accordion-content">
+
+                <div class="form-panel">
+                    <h3>Assign a role to a registered user</h3>
+                    <p class="section-hint">The person must first use "Create account" on this site. Then enter their email here and choose their role.</p>
+                    <div class="grid-2">
+                        <label class="field"><span>Account email</span><input type="email" id="newAccountEmail" placeholder="name@example.com"></label>
+                        <label class="field"><span>Unique ID (optional)</span><input type="text" id="newAccountID" placeholder="e.g., CLB-102"></label>
+                        <label class="field"><span>Role</span>
+                            <select id="newAccountRole">
+                                <option value="SUPER_ADMIN">Super Admin</option>
+                                <option value="CLUB_ADMIN">Club Admin</option>
+                                <option value="REFEREE">Referee</option>
+                                <option value="STAFF">Staff (read-only)</option>
+                                <option value="VIEWER">Viewer (no portal access)</option>
+                            </select>
+                        </label>
+                        <div class="photo-field">
+                            <span class="avatar avatar-lg photo-preview" id="assignPhotoPreview" aria-hidden="true">+</span>
+                            <div>
+                                <label class="btn btn-outline btn-sm photo-btn">Attach photo<input type="file" id="assignPhotoInput" accept="image/*" class="sr-only" onchange="onPhotoChosen(this, 'assignPhotoPreview')"></label>
+                                <div class="hint">Optional here. People can also add their own from the Administration menu.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="assignRoleByEmail()" class="btn btn-primary">Assign role</button>
+                    </div>
+                </div>
+
+                <div class="form-panel">
+                    <h3>Update club standings</h3>
+                    <p class="section-hint">Points are calculated from wins and draws.</p>
+                    <div class="grid-2">
+                        <label class="field span-all"><span>Club name</span><input type="text" id="standingClubName" placeholder="e.g., Bo Rangers FC"></label>
+                        <label class="field"><span>Matches played</span><input type="number" id="standingMP" min="0"></label>
+                        <label class="field"><span>Wins</span><input type="number" id="standingW" min="0"></label>
+                        <label class="field"><span>Draws</span><input type="number" id="standingD" min="0"></label>
+                        <label class="field"><span>Losses</span><input type="number" id="standingL" min="0"></label>
+                        <label class="field"><span>Goals for</span><input type="number" id="standingGF" min="0"></label>
+                        <label class="field"><span>Goals against</span><input type="number" id="standingGA" min="0"></label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="upsertLeagueStanding()" class="btn btn-primary">Save standing</button>
+                    </div>
+                </div>
+
+                <div class="form-panel">
+                    <h3>Update Golden Boot goalscorers</h3>
+                    <div class="grid-2" style="margin-top:12px;">
+                        <label class="field"><span>Player full name</span><input type="text" id="scorerPlayerName"></label>
+                        <label class="field"><span>Club</span><input type="text" id="scorerClubName"></label>
+                        <label class="field span-all"><span>Total goals</span><input type="number" id="scorerGoalsCount" min="0"></label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="upsertTopScorer()" class="btn btn-primary">Save scorer</button>
+                    </div>
+                </div>
+
+                <div class="form-panel">
+                    <h3>Update playmaker assists</h3>
+                    <div class="grid-2" style="margin-top:12px;">
+                        <label class="field"><span>Player full name</span><input type="text" id="assistPlayerName"></label>
+                        <label class="field"><span>Club</span><input type="text" id="assistClubName"></label>
+                        <label class="field span-all"><span>Total assists</span><input type="number" id="assistCount" min="0"></label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="upsertTopAssist()" class="btn btn-primary">Save assists</button>
+                    </div>
+                </div>
+
+                <div class="form-panel">
+                    <h3>Update Golden Glove clean sheets</h3>
+                    <div class="grid-2" style="margin-top:12px;">
+                        <label class="field"><span>Goalkeeper full name</span><input type="text" id="gkPlayerName"></label>
+                        <label class="field"><span>Club</span><input type="text" id="gkClubName"></label>
+                        <label class="field span-all"><span>Total clean sheets</span><input type="number" id="gkCleanSheetsCount" min="0"></label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="upsertCleanSheet()" class="btn btn-primary">Save clean sheets</button>
+                    </div>
+                </div>
+
+                <div class="flex-row">
+                    <h3 class="section-title" style="margin:0;">User accounts</h3>
+                    <button type="button" onclick="fetchMasterUserDirectory()" class="btn btn-outline btn-sm">Refresh</button>
+                </div>
+                <div class="table-container" style="margin-bottom:24px;">
+                    <table>
+                        <thead>
+                            <tr><th>Unique ID</th><th>Full name</th><th>Email</th><th>Role</th><th>Status</th><th class="r">Actions</th></tr>
+                        </thead>
+                        <tbody id="masterUserTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="form-panel" style="margin-bottom:0;">
+                    <h3>Site-wide notice</h3>
+                    <p class="section-hint">Shows a banner at the top of every page.</p>
+                    <div class="inline-row">
+                        <input type="text" id="bannerInputText" placeholder="Type your announcement" aria-label="Announcement text">
+                        <button type="button" onclick="updateSystemBanner()" class="btn btn-primary">Publish notice</button>
+                    </div>
+                    <button type="button" onclick="toggleBannerVisibility(false)" class="auth-link text-danger" style="margin-top:12px; font-size:13px;">Remove notice for everyone</button>
+                </div>
+            </div>
+        </section>
+        </div>
+
+        <!-- 2. Executive staff directory -->
+        <section id="staff-directory" class="accordion-card" style="--accent: var(--blue);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="staffAccordionContent" onclick="toggleAccordion('staffAccordionContent', this)" onkeydown="accordionKey(event, 'staffAccordionContent', this)">
+                <div>
+                    <h2>Executive and staff directory</h2>
+                    <p>League board members, officials and operations staff</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="staffAccordionContent" class="accordion-content">
+                <div id="staffActionControls" class="toolbar hidden">
+                    <button type="button" id="staffFormToggle" onclick="toggleStaffForm()" class="btn btn-primary btn-sm" aria-expanded="false" aria-controls="staffFormPanel">Add personnel</button>
+                </div>
+                <div id="staffFormPanel" class="form-panel hidden" style="margin-top:12px;">
+                    <h3>Add a staff member</h3>
+                    <p class="section-hint">Choose the department so the person appears in the right group of the directory.</p>
+                    <div class="grid-2">
+                        <label class="field"><span>Full name</span><input type="text" id="staffName" placeholder="e.g., Dr. Brima Kamara" autocomplete="off"></label>
+                        <label class="field"><span>Job title</span><input type="text" id="staffTitle" placeholder="e.g., Head of Media" autocomplete="off"></label>
+                        <label class="field"><span>Department</span><select id="staffDepartment"></select></label>
+                        <div class="photo-field">
+                            <span class="avatar avatar-lg photo-preview" id="staffPhotoPreview" aria-hidden="true">+</span>
+                            <div>
+                                <label class="btn btn-outline btn-sm photo-btn">Attach photo<input type="file" id="staffPhotoInput" accept="image/*" class="sr-only" onchange="onPhotoChosen(this, 'staffPhotoPreview')"></label>
+                                <div class="hint">A clear photo of the person's face (JPG, PNG or WebP).</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="gap:10px;">
+                        <button type="button" onclick="toggleStaffForm(false)" class="btn btn-outline">Cancel</button>
+                        <button type="button" id="staffSaveBtn" onclick="saveStaffMember()" class="btn btn-primary">Save staff member</button>
+                    </div>
+                </div>
+                <div id="staffGridContainer" style="margin-top:16px;"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <span>&copy; 2026 Sierra Leone Premier League</span>
+            <span class="footer-credit">Designed by Alhaji Abu Koroma</span>
+        </div>
+    </footer>
+
+    <!-- Application JavaScript Engine -->
+    <script>
+        // ------------------------------------------------------------------
+        // SUPABASE CONNECTION
+        // The URL and publishable key are public by design: the database rules
+        // (row-level security) decide what each visitor may read or change.
+        // Never put the service_role key in this file.
+        // ------------------------------------------------------------------
+        const SUPABASE_URL = 'https://ticcaervmjdzbprdpxxv.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_WSlNd0DeyV4Z0vM3fM28iA_c5BIYRiL';
+
+        // A harmless stand-in used when Supabase is not configured or not loaded.
+        // It lets the page keep working (default data, menus, accordions) instead of crashing.
+        function createOfflineDb() {
+            const result = { data: null, error: { message: 'Database not connected. Add your Supabase URL and key.' } };
+            const chain = new Proxy(function () {}, {
+                get(_target, prop) {
+                    if (prop === 'then') return (resolve, reject) => Promise.resolve(result).then(resolve, reject);
+                    return chain;
+                },
+                apply() { return chain; }
+            });
+            return {
+                from: () => chain,
+                rpc: async () => result,
+                storage: {
+                    from: () => ({
+                        upload: async () => result,
+                        remove: async () => result,
+                        getPublicUrl: () => ({ data: { publicUrl: '' } })
+                    })
+                },
+                auth: {
+                    getSession: async () => ({ data: { session: null }, error: null }),
+                    onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+                    signInWithPassword: async () => result,
+                    signUp: async () => result,
+                    signOut: async () => ({ error: null })
+                }
+            };
+        }
+
+        let db;
+        let dbOnline = false;
+        try {
+            if (typeof supabase === 'undefined') throw new Error('Supabase library did not load.');
+            if (SUPABASE_URL.indexOf('YOUR_') === 0 || SUPABASE_KEY.indexOf('YOUR_') === 0) throw new Error('Supabase keys not set.');
+            db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            dbOnline = true;
+        } catch (err) {
+            console.warn('Running without database: ' + err.message);
+            db = createOfflineDb();
+        }
+
+        // ------------------------------------------------------------------
+        // READ-ONLY MODE: visitors who are signed out, and accounts with the Viewer role
+        // (the default for every new sign-up) or the Staff role, can look but never change anything.
+        // The database enforces this too; this is a second lock inside the page.
+        // ------------------------------------------------------------------
+        const READ_ONLY_MESSAGE = 'Read-only access: this account cannot change league data.';
+
+        function isReadOnly() {
+            const role = getRole();
+            return !role || role === 'VIEWER' || role === 'STAFF';
+        }
+
+        function guardWrites(client) {
+            // Chainable on purpose: code like .update(x).eq(...).select() must end in the error, not a crash.
+            const refused = { data: null, error: { message: READ_ONLY_MESSAGE } };
+            const chain = new Proxy(function () {}, {
+                get(_target, prop) {
+                    if (prop === 'then') return (resolve, reject) => Promise.resolve(refused).then(resolve, reject);
+                    return chain;
+                },
+                apply() { return chain; }
+            });
+            const blocked = () => chain;
+            const rawFrom = client.from.bind(client);
+            client.from = (table) => {
+                const builder = rawFrom(table);
+                if (!isReadOnly()) return builder;
+                return new Proxy(builder, {
+                    get(target, prop) {
+                        if (prop === 'insert' || prop === 'update' || prop === 'upsert' || prop === 'delete') return blocked;
+                        const value = target[prop];
+                        return typeof value === 'function' ? value.bind(target) : value;
+                    }
+                });
+            };
+            const rawRpc = client.rpc ? client.rpc.bind(client) : null;
+            if (rawRpc) client.rpc = (...args) => (isReadOnly() ? blocked() : rawRpc(...args));
+            if (client.storage && client.storage.from) {
+                const rawBucket = client.storage.from.bind(client.storage);
+                client.storage.from = (bucket) => {
+                    const api = rawBucket(bucket);
+                    if (!isReadOnly()) return api;
+                    return new Proxy(api, {
+                        get(target, prop) {
+                            if (prop === 'upload' || prop === 'remove' || prop === 'update' || prop === 'move' || prop === 'copy') return blocked;
+                            const value = target[prop];
+                            return typeof value === 'function' ? value.bind(target) : value;
+                        }
+                    });
+                };
+            }
+            return client;
+        }
+        guardWrites(db);
+
+        // Escape any text before putting it into HTML
+        function esc(value) {
+            return String(value === null || value === undefined ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // ------------------------------------------------------------------
+        // PHOTOS: pick, shrink on the phone, upload, show
+        // ------------------------------------------------------------------
+        const PHOTO_BUCKET = 'member-photos';
+        const PHOTO_BASE = SUPABASE_URL + '/storage/v1/object/public/' + PHOTO_BUCKET + '/';
+        const photoDrafts = {};   // chosen-but-not-yet-saved photos, keyed by the file input's id
+
+        function isSafePhotoUrl(url) {
+            return typeof url === 'string' && url.indexOf(PHOTO_BASE) === 0 && /^[A-Za-z0-9:\/._~%-]+$/.test(url);
+        }
+
+        function initialsOf(name) {
+            return String(name || '').split(/\s+/).filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
+        }
+
+        function avatarHtml(url, name, sizeClass) {
+            const cls = 'avatar' + (sizeClass ? ' ' + sizeClass : '');
+            if (isSafePhotoUrl(url)) return `<img class="${cls}" src="${esc(url)}" alt="Photo of ${esc(name)}" data-initials="${esc(initialsOf(name))}" loading="lazy" onerror="avatarFallback(this)">`;
+            return `<span class="${cls}" aria-hidden="true">${esc(initialsOf(name))}</span>`;
+        }
+
+        function avatarFallback(img) {
+            const span = document.createElement('span');
+            span.className = img.className;
+            span.textContent = img.dataset.initials || '?';
+            span.setAttribute('aria-hidden', 'true');
+            img.replaceWith(span);
+        }
+
+        function friendlyError(err) {
+            const msg = (err && err.message) ? err.message : String(err || 'Something went wrong.');
+            if (/row-level security|not allowed|permission denied/i.test(msg)) return 'Your account does not have permission to do that.';
+            if (/man_of_the_match/i.test(msg)) {
+                return 'The database still needs the Man of the Match upgrade. Run supabase-upgrade-man-of-the-match.sql in Supabase, then try again.';
+            }
+            if (/photo_url|department|member-photos|bucket not found|schema cache|could not find the function/i.test(msg)) {
+                return 'The database still needs the photo upgrade. Run supabase-upgrade-photos-staff.sql in Supabase, then try again.';
+            }
+            return msg;
+        }
+
+        function loadImageElement(file) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('This photo could not be read. Use a JPG, PNG or WebP image.')); };
+                img.src = url;
+            });
+        }
+
+        // Turns the chosen file into a small JPEG (max 640 px) so uploads are quick on mobile data.
+        async function prepareImage(file) {
+            if (!file) return null;
+            if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) throw new Error('Choose a photo in JPG, PNG or WebP format.');
+            if (file.size > 15 * 1024 * 1024) throw new Error('That photo is too large. Choose one under 15 MB.');
+            let source;
+            try { source = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+            catch (e) { source = await loadImageElement(file); }
+            const scale = Math.min(1, 640 / Math.max(source.width, source.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(source.width * scale));
+            canvas.height = Math.max(1, Math.round(source.height * scale));
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+            if (source.close) source.close();
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+            if (!blob) throw new Error('This photo could not be prepared. Try another one.');
+            return blob;
+        }
+
+        function setPreview(previewEl, url) {
+            if (!previewEl) return;
+            if (previewEl.dataset.objectUrl) { URL.revokeObjectURL(previewEl.dataset.objectUrl); previewEl.dataset.objectUrl = ''; }
+            if (url) {
+                previewEl.style.backgroundImage = 'url("' + url + '")';
+                previewEl.classList.add('has-photo');
+                previewEl.textContent = '';
+            } else {
+                previewEl.style.backgroundImage = '';
+                previewEl.classList.remove('has-photo');
+                previewEl.textContent = '+';
+            }
+        }
+
+        async function onPhotoChosen(input, previewId) {
+            try {
+                const blob = await prepareImage(input.files && input.files[0]);
+                if (!blob) return;
+                photoDrafts[input.id] = blob;
+                const preview = document.getElementById(previewId);
+                const objectUrl = URL.createObjectURL(blob);
+                setPreview(preview, objectUrl);
+                if (preview) preview.dataset.objectUrl = objectUrl;
+            } catch (err) {
+                input.value = '';
+                delete photoDrafts[input.id];
+                alert(err.message);
+            }
+        }
+
+        function resetPhotoField(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            if (input) input.value = '';
+            delete photoDrafts[inputId];
+            setPreview(document.getElementById(previewId), null);
+        }
+
+        async function uploadPhotoBlob(folder, blob) {
+            const unique = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).slice(2));
+            const path = folder + '/' + unique + '.jpg';
+            const { error } = await db.storage.from(PHOTO_BUCKET).upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+            if (error) throw error;
+            const { data } = db.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+            return data.publicUrl;
+        }
+
+        // Best effort: delete a replaced or orphaned photo file.
+        function removePhotoByUrl(url) {
+            if (!isSafePhotoUrl(url)) return;
+            try { Promise.resolve(db.storage.from(PHOTO_BUCKET).remove([url.slice(PHOTO_BASE.length)])).catch(() => {}); } catch (e) {}
+        }
+
+        // ------------------------------------------------------------------
+        // SESSION STATE  (the role comes from the database, never from the browser)
+        // ------------------------------------------------------------------
+        let currentUser = null;
+        let currentProfile = null;
+        let dbState = null;
+
+        const ROLE_LABELS = {
+            DEVELOPER: 'Master Developer',
+            SUPER_ADMIN: 'Super Admin',
+            CLUB_ADMIN: 'Club Manager',
+            REFEREE: 'Match Official',
+            STAFF: 'Staff (read-only)',
+            VIEWER: 'Viewer'
+        };
+        const ASSIGNABLE_ROLES = ['SUPER_ADMIN', 'CLUB_ADMIN', 'REFEREE', 'STAFF', 'VIEWER'];
+
+        // "Preview as visitor": a signed-in editor can look at exactly what the public sees.
+        // It is never saved; reloading the page ends it.
+        let previewAsVisitor = false;
+
+        function realRole() {
+            if (!currentProfile || currentProfile.status === 'Suspended') return null;
+            return currentProfile.system_role || null;
+        }
+
+        function getRole() {
+            return previewAsVisitor ? null : realRole();
+        }
+
+        function canEditForReal() {
+            const role = realRole();
+            return !!role && role !== 'VIEWER' && role !== 'STAFF';
+        }
+
+        function setVisitorPreview(on) {
+            previewAsVisitor = !!on && canEditForReal();
+            if (previewAsVisitor) viewMode = 'public';
+            closeAdminDropdown();
+            applyRoleUI();
+            loadStaffData();
+        }
+
+        // "My panel" (the role's own tools) or the public pages. Signing in as an editor opens My panel.
+        let viewMode = 'public';
+        let lastViewUserId = null;
+
+        const WORKSPACE_NAMES = {
+            DEVELOPER: 'Developer panel',
+            SUPER_ADMIN: 'Super Admin panel',
+            CLUB_ADMIN: 'Club manager panel',
+            REFEREE: 'Referee panel'
+        };
+        const WORKSPACE_HINTS = {
+            DEVELOPER: 'Assign roles, update the league tables, publish notices, and manage squads and match records.',
+            SUPER_ADMIN: 'Manage the executive and staff directory below.',
+            CLUB_ADMIN: 'Register and manage the players of your club.',
+            REFEREE: 'Record match incidents and post the Man of the Match for the public pages.'
+        };
+
+        function inWorkspace() {
+            return canEditForReal() && !previewAsVisitor && viewMode === 'workspace';
+        }
+
+        function scrollToViewTabs() {
+            setTimeout(() => {
+                const el = document.getElementById('viewTabs');
+                if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 60);
+        }
+
+        function setView(mode, scroll) {
+            if (mode === 'workspace') {
+                if (!canEditForReal()) return;
+                previewAsVisitor = false;
+                viewMode = 'workspace';
+            } else {
+                viewMode = 'public';
+            }
+            closeAdminDropdown();
+            applyRoleUI();
+            loadStaffData();
+            if (scroll) scrollToViewTabs();
+        }
+
+        // ------------------------------------------------------------------
+        // PAGE START
+        // ------------------------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            // Close admin dropdown when clicking anywhere outside (registered first so it always works)
+            window.addEventListener('click', function (e) {
+                if (!e.target.closest('.dropdown-menu-container')) {
+                    const dropdown = document.getElementById('adminDropdownContent');
+                    if (dropdown) dropdown.classList.remove('show-dropdown');
+                }
+            });
+            window.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    closeAdminDropdown();
+                    const modal = document.getElementById('authModal');
+                    if (modal && !modal.classList.contains('hidden')) closeAuthModal();
+                    const photoModal = document.getElementById('photoModal');
+                    if (photoModal && !photoModal.classList.contains('hidden')) closePhotoModal();
+                }
+            });
+
+            populateDepartments();
+            resetMotmForm();
+            checkConnection();
+            checkSystemFreeze();
+            loadStaffData();
+            loadSystemBanner();
+            loadLeagueStandings();
+            loadTopScorers();
+            loadTopAssists();
+            loadCleanSheets();
+            loadMatchEvents();
+            loadMotm();
+            initAuth();
+        });
+
+        function toggleAdminDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('adminDropdownContent');
+            if (dropdown) {
+                dropdown.classList.toggle('show-dropdown');
+            }
+        }
+
+        function closeAdminDropdown() {
+            const dropdown = document.getElementById('adminDropdownContent');
+            if (dropdown) dropdown.classList.remove('show-dropdown');
+        }
+
+        function toggleAccordion(contentId, headerEl) {
+            const content = document.getElementById(contentId);
+            if (!content) return;
+            const nowCollapsed = content.classList.toggle('collapsed');
+            if (headerEl) {
+                headerEl.classList.toggle('collapsed', nowCollapsed);
+                headerEl.setAttribute('aria-expanded', String(!nowCollapsed));
+            }
+        }
+
+        // Open or close every public section at once (standings, Golden Boot, Playmakers,
+        // Golden Glove, incidents and the staff directory).
+        const PUBLIC_SECTIONS = ['standingsContent', 'goldenBootContent', 'playmakersContent', 'goldenGloveContent', 'motmContent', 'incidentsContent', 'staffAccordionContent'];
+
+        function setPublicSections(open) {
+            PUBLIC_SECTIONS.forEach(id => {
+                const content = document.getElementById(id);
+                if (!content) return;
+                content.classList.toggle('collapsed', !open);
+                const header = document.querySelector('[aria-controls="' + id + '"]');
+                if (header) {
+                    header.classList.toggle('collapsed', !open);
+                    header.setAttribute('aria-expanded', String(open));
+                }
+            });
+        }
+
+        function accordionKey(event, contentId, headerEl) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleAccordion(contentId, headerEl);
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // DATABASE CONNECTION CHECK
+        // ------------------------------------------------------------------
+        async function checkConnection() {
+            if (!dbOnline) {
+                dbState = { cls: 'db-off', text: 'Not connected to Supabase. Showing demo data.' };
+                renderDbStatus();
+                return;
+            }
+            try {
+                const { error } = await db.from('app_settings').select('key').limit(1);
+                if (!error) {
+                    dbState = { cls: 'db-ok', text: 'Connected to Supabase' };
+                } else if (error.code === '42P01' || error.code === 'PGRST205') {
+                    console.warn('Supabase tables missing:', error.message);
+                    dbState = { cls: 'db-warn', text: 'Connected, but the league tables are missing. Run supabase-setup.sql.' };
+                } else {
+                    console.warn('Supabase error:', error.message);
+                    dbState = { cls: 'db-warn', text: 'Supabase returned an error. Check the project URL and key.' };
+                }
+            } catch (err) {
+                console.warn('Cannot reach Supabase:', err.message);
+                dbState = { cls: 'db-off', text: 'Cannot reach Supabase. Check the project URL and key.' };
+            }
+            renderDbStatus();
+        }
+
+        // Problems are shown to everyone while you set up; "connected" is shown only to the Developer.
+        function renderDbStatus() {
+            const el = document.getElementById('dbStatus');
+            if (!el || !dbState) return;
+            const visible = dbState.cls !== 'db-ok' || getRole() === 'DEVELOPER';
+            el.className = 'db-status ' + dbState.cls + (visible ? '' : ' hidden');
+            el.textContent = dbState.text;
+        }
+
+        // ------------------------------------------------------------------
+        // AUTHENTICATION (Supabase Auth: email + password)
+        // ------------------------------------------------------------------
+        async function initAuth() {
+            try {
+                const { data } = await db.auth.getSession();
+                await applySession(data && data.session);
+                db.auth.onAuthStateChange((event, session) => {
+                    if (event === 'INITIAL_SESSION') return;
+                    // Run outside the callback so Supabase calls inside it cannot deadlock
+                    setTimeout(() => applySession(session), 0);
+                });
+            } catch (err) {
+                await applySession(null);
+            }
+        }
+
+        let sessionSeq = 0;
+
+        async function fetchMyProfile(userId) {
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const { data, error } = await db.from('user_profiles').select('*').eq('id', userId).maybeSingle();
+                    if (!error && data) return data;
+                } catch (err) {}
+                await new Promise(resolve => setTimeout(resolve, 350 * (attempt + 1)));
+            }
+            return null;
+        }
+
+        async function applySession(session) {
+            const seq = ++sessionSeq;
+            const user = session ? session.user : null;
+            let profile = null;
+            if (user) {
+                profile = await fetchMyProfile(user.id);
+                if (seq !== sessionSeq) return;   // a newer sign-in/out already took over
+                // A background token refresh must never downgrade a signed-in editor
+                if (!profile && currentUser && currentUser.id === user.id) profile = currentProfile;
+            }
+            currentUser = user;
+            currentProfile = profile;
+
+            // A new sign-in lands on the person's own panel (not the public pages)
+            let justOpened = false;
+            if (!user) {
+                lastViewUserId = null;
+                viewMode = 'public';
+                previewAsVisitor = false;
+            } else if (user.id !== lastViewUserId) {
+                lastViewUserId = user.id;
+                viewMode = canEditForReal() ? 'workspace' : 'public';
+                justOpened = viewMode === 'workspace';
+            }
+
+            applyRoleUI();
+            loadStaffData();
+            if (justOpened) scrollToViewTabs();
+        }
+
+        function applyRoleUI() {
+            const role = getRole();
+            const isDev = role === 'DEVELOPER';
+            const isAdmin = role === 'SUPER_ADMIN';
+            const show = (id, on) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden', !on);
+            };
+
+            const working = inWorkspace();
+            const real = realRole();
+            show('viewTabs', canEditForReal() && !previewAsVisitor);
+            show('publicArea', !working);
+            show('workspaceArea', working);
+            show('staff-directory', !working || isDev || isAdmin);
+            const tabW = document.getElementById('tabWorkspace');
+            const tabP = document.getElementById('tabPublic');
+            if (tabW) {
+                tabW.textContent = WORKSPACE_NAMES[real] || 'My panel';
+                tabW.classList.toggle('is-active', working);
+                tabW.setAttribute('aria-pressed', String(working));
+            }
+            if (tabP) {
+                tabP.classList.toggle('is-active', !working);
+                tabP.setAttribute('aria-pressed', String(!working));
+            }
+            const wTitle = document.getElementById('workspaceTitle');
+            const wSub = document.getElementById('workspaceSub');
+            if (wTitle) wTitle.textContent = WORKSPACE_NAMES[real] || 'My panel';
+            if (wSub) wSub.textContent = WORKSPACE_HINTS[real] || '';
+
+            show('masterUserDirectoryPanel', isDev);
+            show('clubAdminPanelContainer', isDev || role === 'CLUB_ADMIN');
+            show('refereePanelContainer', isDev || role === 'REFEREE');
+            show('staffActionControls', isDev || isAdmin);
+            if (!(isDev || isAdmin)) show('staffFormPanel', false);
+            show('menuPhoto', !!currentUser && !isReadOnly());
+            show('menuPreview', !!currentUser && canEditForReal());
+            const previewItem = document.getElementById('menuPreview');
+            if (previewItem) previewItem.textContent = previewAsVisitor ? 'Exit visitor preview' : 'View as visitor (read-only)';
+            renderReadOnlyNotice();
+            show('logoutBtn', !!currentUser);
+            show('menuSignIn', !currentUser);
+            show('menuSignUp', !currentUser);
+            show('menuSignOut', !!currentUser);
+
+            renderSessionInfo();
+
+            if (isDev) fetchMasterUserDirectory();
+            if (isDev || role === 'CLUB_ADMIN') loadClubRoster();
+            if (isDev || role === 'REFEREE') loadMatchEvents();
+            renderMotm();
+            renderDbStatus();
+        }
+
+        function renderReadOnlyNotice() {
+            const box = document.getElementById('readOnlyNotice');
+            const text = document.getElementById('readOnlyText');
+            const action = document.getElementById('noticeAction');
+            if (!box || !text || !action) return;
+
+            let message;
+            let editing = false;
+            let actionLabel = '';
+            if (previewAsVisitor) {
+                message = 'Visitor preview: this is exactly what the public sees. Nothing can be changed.';
+                actionLabel = 'Exit preview';
+            } else if (!isReadOnly()) {
+                editing = true;
+                message = 'Editing enabled for your ' + (ROLE_LABELS[realRole()] || 'staff') + ' account.';
+                actionLabel = 'View as visitor';
+            } else if (!currentUser) {
+                message = 'You are viewing in read-only mode. Staff and officials sign in to manage the league.';
+            } else if (currentUser && !currentProfile) {
+                message = 'You are signed in, but your role could not be loaded. Refresh the page to try again.';
+            } else if (currentProfile && currentProfile.status === 'Suspended') {
+                message = 'This account is suspended. You have read-only access.';
+            } else if (currentProfile && currentProfile.system_role === 'STAFF') {
+                message = 'Staff accounts have read-only access. You can view all league information but not change it.';
+            } else {
+                message = 'Read-only access. A Developer must assign your role before you can make changes.';
+            }
+
+            text.textContent = message;
+            box.classList.toggle('is-editing', editing);
+            action.textContent = actionLabel;
+            action.classList.toggle('hidden', !actionLabel);
+            box.classList.remove('hidden');
+        }
+
+        function renderSessionInfo() {
+            const info = document.getElementById('sessionInfo');
+            if (!info) return;
+            if (!currentUser) { info.classList.add('hidden'); return; }
+            let line;
+            if (!currentProfile) line = 'No role found for this account yet.';
+            else if (currentProfile.status === 'Suspended') line = 'This account is <strong>suspended</strong>. Contact the league office.';
+            else if (currentProfile.system_role === 'VIEWER') line = 'Role: <strong>Viewer</strong>. Waiting for a Developer to assign your role.';
+            else line = 'Role: <strong>' + esc(ROLE_LABELS[currentProfile.system_role] || currentProfile.system_role) + '</strong>';
+            const who = (currentProfile && currentProfile.full_name) || currentUser.email;
+            const photo = currentProfile ? currentProfile.photo_url : null;
+            info.innerHTML = '<div class="session-person">' + avatarHtml(photo, who, 'avatar-sm') +
+                '<div>Signed in as <strong>' + esc(currentUser.email) + '</strong><br>' + line + '</div></div>';
+            info.classList.remove('hidden');
+        }
+
+        // ------------------------------------------------------------------
+        // MY PROFILE PHOTO (any signed-in account can set its own)
+        // ------------------------------------------------------------------
+        function setPhotoMessage(text, isError) {
+            const el = document.getElementById('photoMessage');
+            if (!el) return;
+            el.textContent = text || '';
+            el.className = 'auth-message ' + (text ? (isError ? 'auth-error' : 'auth-ok') : '');
+        }
+
+        function openPhotoModal() {
+            closeAdminDropdown();
+            resetPhotoField('myPhotoInput', 'myPhotoPreview');
+            if (currentProfile && isSafePhotoUrl(currentProfile.photo_url)) {
+                setPreview(document.getElementById('myPhotoPreview'), currentProfile.photo_url);
+            }
+            setPhotoMessage('', false);
+            document.getElementById('photoModal').classList.remove('hidden');
+        }
+
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.add('hidden');
+            resetPhotoField('myPhotoInput', 'myPhotoPreview');
+            setPhotoMessage('', false);
+        }
+
+        async function saveMyPhoto() {
+            if (!currentUser) return;
+            const blob = photoDrafts.myPhotoInput;
+            if (!blob) { setPhotoMessage('Choose a photo first.', true); return; }
+            const btn = document.getElementById('photoSaveBtn');
+            btn.disabled = true;
+            setPhotoMessage('Uploading...', false);
+            let url = null;
+            try {
+                url = await uploadPhotoBlob('profiles/' + currentUser.id, blob);
+                const { error } = await db.rpc('set_my_photo', { p_url: url });
+                if (error) throw error;
+                const oldUrl = currentProfile ? currentProfile.photo_url : null;
+                if (currentProfile) currentProfile.photo_url = url;
+                removePhotoByUrl(oldUrl);
+                renderSessionInfo();
+                if (getRole() === 'DEVELOPER') fetchMasterUserDirectory();
+                closePhotoModal();
+            } catch (err) {
+                if (url) removePhotoByUrl(url);
+                setPhotoMessage('Could not save the photo: ' + friendlyError(err), true);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        let authMode = 'signin';
+
+        function setAuthMessage(text, isError) {
+            const el = document.getElementById('authMessage');
+            if (!el) return;
+            el.textContent = text || '';
+            el.className = 'auth-message ' + (text ? (isError ? 'auth-error' : 'auth-ok') : '');
+        }
+
+        function setAuthMode(mode) {
+            authMode = mode;
+            const signup = mode === 'signup';
+            document.getElementById('authTitle').textContent = signup ? 'Create account' : 'Sign in';
+            document.getElementById('authSubtitle').textContent = signup
+                ? 'Register with your email. A Developer will assign your role afterwards.'
+                : 'Use your league account to open your portal.';
+            document.getElementById('authSubmitBtn').textContent = signup ? 'Create account' : 'Sign in';
+            document.getElementById('authSwitchLink').textContent = signup ? 'Already have an account? Sign in' : 'No account yet? Create one';
+            document.getElementById('authFullName').classList.toggle('hidden', !signup);
+            const nameField = document.getElementById('authFullNameField');
+            if (nameField) nameField.classList.toggle('hidden', !signup);
+            document.getElementById('authPassword').setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
+            setAuthMessage('', false);
+        }
+
+        function toggleAuthMode() {
+            setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+        }
+
+        function openAuthModal(mode) {
+            closeAdminDropdown();
+            setAuthMode(mode || 'signin');
+            document.getElementById('authPassword').value = '';
+            document.getElementById('authModal').classList.remove('hidden');
+            const first = document.getElementById(authMode === 'signup' ? 'authFullName' : 'authEmail');
+            if (first) first.focus();
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+            document.getElementById('authPassword').value = '';
+            setAuthMessage('', false);
+        }
+
+        async function handleAuthSubmit(event) {
+            event.preventDefault();
+            if (!dbOnline) {
+                setAuthMessage('The database is not connected yet. Add your Supabase URL and key first.', true);
+                return;
+            }
+            const email = document.getElementById('authEmail').value.trim().toLowerCase();
+            const password = document.getElementById('authPassword').value;
+            const fullName = document.getElementById('authFullName').value.trim();
+            const btn = document.getElementById('authSubmitBtn');
+            btn.disabled = true;
+            setAuthMessage('Please wait...', false);
+            try {
+                if (authMode === 'signin') {
+                    const { error } = await db.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    closeAuthModal();
+                } else {
+                    if (!fullName) throw new Error('Enter your full name.');
+                    const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+                    if (error) throw error;
+                    if (data && data.session) {
+                        closeAuthModal();
+                        alert('Account created. A Developer must assign your role before any portal opens for you.');
+                    } else {
+                        setAuthMessage('Account created. Check your email to confirm it, then sign in and add your photo from the Administration menu. A Developer must assign your role before any portal opens for you.', false);
+                    }
+                }
+            } catch (err) {
+                setAuthMessage(err.message || 'Something went wrong. Try again.', true);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function logoutSystem() {
+            try { await db.auth.signOut(); } catch (err) {}
+            alert("You have been signed out.");
+            window.location.reload();
+        }
+
+        // ------------------------------------------------------------------
+        // SYSTEM FREEZE
+        // ------------------------------------------------------------------
+        async function checkSystemFreeze() {
+            try {
+                const { data } = await db.from('app_settings').select('value').eq('key', 'system_freeze').single();
+                if (data && data.value === true) {
+                    document.body.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#F3F6F2; text-align:center; padding:20px; font-family:system-ui,sans-serif;"><h1 style="color:#0A2E1F; font-size:28px;">Sierra Leone Premier League is under maintenance</h1><p style="color:#586861;">The league platform is temporarily unavailable. Please check back shortly.</p></div>`;
+                }
+            } catch (err) {}
+        }
+
+        // ------------------------------------------------------------------
+        // SHARED DISPLAY HELPERS
+        // ------------------------------------------------------------------
+        const rankBadge = (index) => index === 0
+            ? `<span class="rank rank-1">1</span>`
+            : `<span class="rank">${index + 1}</span>`;
+
+        function crestTone(name) {
+            let h = 0;
+            for (const ch of String(name || '')) h = (h * 31 + ch.charCodeAt(0)) % 5;
+            return h;
+        }
+
+        function clubCell(name) {
+            const initials = String(name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            return `<span class="club"><span class="crest t${crestTone(name)}">${esc(initials)}</span><strong>${esc(name)}</strong></span>`;
+        }
+
+        const EVENT_LABELS = {
+            GOAL: ['Goal', 'badge-success'],
+            YELLOW_CARD: ['Yellow card', 'badge-warning'],
+            RED_CARD: ['Red card', 'badge-danger'],
+            SUB: ['Substitution', 'badge-info']
+        };
+
+        function eventBadge(type) {
+            const entry = EVENT_LABELS[type] || [type, 'badge-role'];
+            return `<span class="badge ${entry[1]}">${esc(entry[0])}</span>`;
+        }
+
+        function leaderboardRows(rows, nameKey, valueKey) {
+            let html = '';
+            rows.forEach((row, index) => {
+                html += `<tr><td class="c">${rankBadge(index)}</td><td><div class="pl-name">${esc(row[nameKey])}</div><div class="pl-club">${esc(row.club)}</div></td><td class="stat">${esc(row[valueKey])}</td></tr>`;
+            });
+            return html;
+        }
+
+        // ------------------------------------------------------------------
+        // STAFF DIRECTORY
+        // ------------------------------------------------------------------
+        const STAFF_DEPARTMENTS = [
+            'Executive Board', 'Administration', 'Competitions and Fixtures', 'Referees Committee',
+            'Technical and Coaching', 'Medical', 'Media and Communications', 'Marketing and Sponsorship',
+            'Finance', 'Legal and Discipline', 'Security and Stewarding', 'Operations and IT', 'Other'
+        ];
+        let staffCache = [];
+
+        function populateDepartments() {
+            const sel = document.getElementById('staffDepartment');
+            if (sel && !sel.options.length) {
+                sel.innerHTML = STAFF_DEPARTMENTS.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+            }
+        }
+
+        async function loadStaffData() {
+            const defaultStaff = [
+                { id: 1, name: "Alhaji Abu Koroma", role: "Master Developer & Tech Lead", department: "Operations and IT", status: "Active" },
+                { id: 2, name: "Yayah Koroma", role: "Executive Operations Partner", department: "Administration", status: "Active" },
+                { id: 3, name: "Dr. Brima", role: "Executive Board", department: "Executive Board", status: "Active" },
+                { id: 4, name: "Mr. Foday Turay", role: "Club Admin & Operations", department: "Administration", status: "Active" }
+            ];
+
+            try {
+                const { data, error } = await db.from('staff_registry').select('*').order('id', { ascending: true });
+                if (error) throw error;
+                if (data && data.length > 0) renderStaffGrid(data, false);
+                else renderStaffGrid(defaultStaff, true);
+            } catch (err) {
+                renderStaffGrid(defaultStaff, true);
+            }
+        }
+
+        function staffCardHtml(m, canEdit) {
+            const id = Number(m.id);
+            const badge = `<span class="badge badge-success">${esc(m.status || 'Active')}</span>`;
+            const foot = canEdit
+                ? `<div class="staff-foot has-actions">${badge}<div class="staff-actions">
+                        <label class="btn btn-outline btn-sm photo-btn">${m.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${m.photo_url ? 'Change' : 'Add'} photo for ${esc(m.name)}" onchange="changeStaffPhoto(${id}, this)"></label>
+                        <button type="button" onclick="deleteStaffMember(${id}, this.dataset.name)" data-name="${esc(m.name)}" class="btn btn-outline btn-sm text-danger">Remove</button>
+                   </div></div>`
+                : '';
+            return `
+                <div class="staff-card">
+                    ${avatarHtml(m.photo_url, m.name)}
+                    <div style="min-width:0;">
+                        <div class="staff-name">${esc(m.name)}</div>
+                        <div class="staff-role">${esc(m.role)}</div>
+                        ${canEdit ? '' : `<div class="staff-foot">${badge}</div>`}
+                    </div>
+                    ${foot}
+                </div>`;
+        }
+
+        function renderStaffGrid(staffList, isDemo) {
+            const grid = document.getElementById('staffGridContainer');
+            if (!grid) return;
+            staffCache = isDemo ? [] : staffList;
+
+            const role = getRole();
+            const canEdit = !isDemo && (role === 'SUPER_ADMIN' || role === 'DEVELOPER');
+
+            const groups = {};
+            staffList.forEach(m => {
+                const dept = m.department || 'Administration';
+                (groups[dept] = groups[dept] || []).push(m);
+            });
+            const order = STAFF_DEPARTMENTS.filter(d => groups[d])
+                .concat(Object.keys(groups).filter(d => STAFF_DEPARTMENTS.indexOf(d) === -1));
+
+            grid.innerHTML = order.map(dept =>
+                `<div class="dept-block"><h3 class="dept-title">${esc(dept)} <span class="dept-count">${groups[dept].length}</span></h3>` +
+                `<div class="staff-grid">${groups[dept].map(m => staffCardHtml(m, canEdit)).join('')}</div></div>`
+            ).join('');
+        }
+
+        function toggleStaffForm(force) {
+            const panel = document.getElementById('staffFormPanel');
+            const btn = document.getElementById('staffFormToggle');
+            if (!panel) return;
+            const open = (typeof force === 'boolean') ? force : panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !open);
+            if (btn) btn.setAttribute('aria-expanded', String(open));
+            if (open) {
+                populateDepartments();
+                const first = document.getElementById('staffName');
+                if (first) first.focus();
+            } else {
+                document.getElementById('staffName').value = '';
+                document.getElementById('staffTitle').value = '';
+                resetPhotoField('staffPhotoInput', 'staffPhotoPreview');
+            }
+        }
+
+        async function saveStaffMember() {
+            const name = document.getElementById('staffName').value.trim();
+            const title = document.getElementById('staffTitle').value.trim();
+            const department = document.getElementById('staffDepartment').value;
+            if (!name || !title) { alert("Enter the person's full name and job title."); return; }
+
+            const btn = document.getElementById('staffSaveBtn');
+            btn.disabled = true;
+            let photoUrl = null;
+            try {
+                const blob = photoDrafts.staffPhotoInput;
+                if (blob) photoUrl = await uploadPhotoBlob('staff', blob);
+                const { error } = await db.from('staff_registry').insert([{ name, role: title, department, status: 'Active', photo_url: photoUrl }]);
+                if (error) throw error;
+                alert(`${name} was added to the directory.`);
+                toggleStaffForm(false);
+                loadStaffData();
+            } catch (err) {
+                if (photoUrl) removePhotoByUrl(photoUrl);
+                alert("Could not add this person: " + friendlyError(err));
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function changeStaffPhoto(id, input) {
+            let url = null;
+            try {
+                const blob = await prepareImage(input.files && input.files[0]);
+                if (!blob) return;
+                url = await uploadPhotoBlob('staff', blob);
+                const { error } = await db.from('staff_registry').update({ photo_url: url }).eq('id', id);
+                if (error) throw error;
+                const old = staffCache.find(m => Number(m.id) === Number(id));
+                if (old) removePhotoByUrl(old.photo_url);
+                loadStaffData();
+            } catch (err) {
+                if (url) removePhotoByUrl(url);
+                alert("Could not save the photo: " + friendlyError(err));
+            } finally {
+                input.value = '';
+            }
+        }
+
+        async function deleteStaffMember(id, name) {
+            if (!confirm(`Remove ${name} from the staff directory?`)) return;
+            try {
+                const old = staffCache.find(m => Number(m.id) === Number(id));
+                const { error } = await db.from('staff_registry').delete().eq('id', id);
+                if (error) throw error;
+                if (old) removePhotoByUrl(old.photo_url);
+                alert(`${name} was removed.`);
+                loadStaffData();
+            } catch (err) {
+                alert("Could not remove this person: " + friendlyError(err));
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // PUBLIC LEADERBOARDS
+        // ------------------------------------------------------------------
+        const defaultLeagueStandings = [
+            { pos: 1, club: "Bo Rangers FC", mp: 10, w: 7, d: 2, l: 1, gf: 18, ga: 6, pts: 23 },
+            { pos: 2, club: "Freetown FC", mp: 10, w: 6, d: 3, l: 1, gf: 15, ga: 8, pts: 21 },
+            { pos: 3, club: "Eastern Lions", mp: 10, w: 5, d: 4, l: 1, gf: 14, ga: 7, pts: 19 },
+            { pos: 4, club: "Mighty Blackpool", mp: 10, w: 4, d: 3, l: 3, gf: 11, ga: 10, pts: 15 },
+            { pos: 5, club: "Diamond Stars", mp: 10, w: 3, d: 4, l: 3, gf: 9, ga: 9, pts: 13 }
+        ];
+
+        async function loadLeagueStandings() {
+            const tbody = document.getElementById('leagueStandingsTableBody');
+            if (!tbody) return;
+            let standingsToRender = defaultLeagueStandings;
+            try {
+                const { data } = await db.from('league_standings').select('*').order('pts', { ascending: false });
+                if (data && data.length > 0) standingsToRender = data;
+            } catch (err) {}
+
+            let html = '';
+            standingsToRender.forEach((team, index) => {
+                const goalDiff = (team.gf - team.ga);
+                const gdDisplay = goalDiff > 0 ? `+${goalDiff}` : goalDiff;
+                const gdClass = goalDiff > 0 ? 'gd-pos' : (goalDiff < 0 ? 'gd-neg' : '');
+                html += `<tr${index === 0 ? ' class="leader"' : ''}><td class="c">${rankBadge(index)}</td><td>${clubCell(team.club)}</td><td class="c">${esc(team.mp)}</td><td class="c">${esc(team.w)}</td><td class="c">${esc(team.d)}</td><td class="c">${esc(team.l)}</td><td class="c ${gdClass}">${esc(gdDisplay)}</td><td class="c pts">${esc(team.pts)}</td></tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        const defaultTopScorers = [
+            { player: "Mohamed Bangura", club: "Bo Rangers FC", goals: 12 },
+            { player: "Alpha Jalloh", club: "Freetown FC", goals: 9 },
+            { player: "Ibrahim Conteh", club: "Eastern Lions", goals: 8 },
+            { player: "Musa Kamara", club: "Mighty Blackpool", goals: 7 }
+        ];
+
+        async function loadTopScorers() {
+            const tbody = document.getElementById('topScorersTableBody');
+            if (!tbody) return;
+            let scorersToRender = defaultTopScorers;
+            try {
+                const { data } = await db.from('top_scorers').select('*').order('goals', { ascending: false });
+                if (data && data.length > 0) scorersToRender = data;
+            } catch (err) {}
+            tbody.innerHTML = leaderboardRows(scorersToRender, 'player', 'goals');
+        }
+
+        const defaultTopAssists = [
+            { player: "Musa Kamara", club: "Bo Rangers FC", assists: 8 },
+            { player: "Alpha Jalloh", club: "Freetown FC", assists: 7 },
+            { player: "Mohamed Bangura", club: "Bo Rangers FC", assists: 6 },
+            { player: "Ibrahim Conteh", club: "Eastern Lions", assists: 5 }
+        ];
+
+        async function loadTopAssists() {
+            const tbody = document.getElementById('topAssistsTableBody');
+            if (!tbody) return;
+            let assistsToRender = defaultTopAssists;
+            try {
+                const { data } = await db.from('top_assists').select('*').order('assists', { ascending: false });
+                if (data && data.length > 0) assistsToRender = data;
+            } catch (err) {}
+            tbody.innerHTML = leaderboardRows(assistsToRender, 'player', 'assists');
+        }
+
+        const defaultCleanSheets = [
+            { goalkeeper: "Mohamed Kamara", club: "Bo Rangers FC", clean_sheets: 6 },
+            { goalkeeper: "Donald Wellington", club: "Freetown FC", clean_sheets: 5 },
+            { goalkeeper: "Unisa Conteh", club: "Eastern Lions", clean_sheets: 4 },
+            { goalkeeper: "Prince Koroma", club: "Mighty Blackpool", clean_sheets: 3 }
+        ];
+
+        async function loadCleanSheets() {
+            const tbody = document.getElementById('cleanSheetsTableBody');
+            if (!tbody) return;
+            let sheetsToRender = defaultCleanSheets;
+            try {
+                const { data } = await db.from('clean_sheets').select('*').order('clean_sheets', { ascending: false });
+                if (data && data.length > 0) sheetsToRender = data;
+            } catch (err) {}
+            tbody.innerHTML = leaderboardRows(sheetsToRender, 'goalkeeper', 'clean_sheets');
+        }
+
+        // ------------------------------------------------------------------
+        // CLUB SQUAD ROSTER (with NIN) - the database only returns the rows you may see
+        // ------------------------------------------------------------------
+        let squadCache = [];
+
+        async function submitClubPlayer() {
+            const name = document.getElementById('clubPlayerName').value.trim();
+            const nin = document.getElementById('clubPlayerNIN').value.trim();
+            const position = document.getElementById('clubPlayerPosition').value.trim();
+            if (!name || !nin || !position) { alert("Complete all player fields, including the NIN."); return; }
+            if (!currentUser) { alert("Sign in first."); return; }
+
+            const btn = document.getElementById('clubSubmitBtn');
+            btn.disabled = true;
+            let photoUrl = null;
+            try {
+                const blob = photoDrafts.clubPlayerPhotoInput;
+                if (blob) photoUrl = await uploadPhotoBlob('squad/' + currentUser.id, blob);
+                const { error } = await db.from('club_squad').insert([{ player_name: name, player_nin: nin, position: position, status: 'Active', photo_url: photoUrl }]);
+                if (error) {
+                    if (error.code === '23505') throw new Error('A player with this NIN is already registered.');
+                    throw error;
+                }
+                alert("Player registered.");
+                document.getElementById('clubPlayerName').value = '';
+                document.getElementById('clubPlayerNIN').value = '';
+                document.getElementById('clubPlayerPosition').value = '';
+                resetPhotoField('clubPlayerPhotoInput', 'clubPlayerPhotoPreview');
+                loadClubRoster();
+            } catch (err) {
+                if (photoUrl) removePhotoByUrl(photoUrl);
+                alert("Could not register this player: " + friendlyError(err));
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function loadClubRoster() {
+            const tbody = document.getElementById('clubRosterTableBody');
+            if (!tbody) return;
+            try {
+                const { data, error } = await db.from('club_squad').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                squadCache = data || [];
+                if (data && data.length > 0) {
+                    let html = '';
+                    data.forEach(p => {
+                        const id = Number(p.id);
+                        html += `<tr><td><span class="person">${avatarHtml(p.photo_url, p.player_name, 'avatar-sm')}<strong>${esc(p.player_name)}</strong></span></td><td><code style="font-size:13px; background:#F3F6F2; padding:2px 8px; border-radius:6px; border:1px solid var(--line);">${esc(p.player_nin || 'N/A')}</code></td><td><span class="badge badge-role">${esc(p.position)}</span></td><td><span class="badge badge-success">${esc(p.status || 'Active')}</span></td><td class="r"><label class="btn btn-outline btn-sm photo-btn">${p.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${p.photo_url ? 'Change' : 'Add'} photo for ${esc(p.player_name)}" onchange="changeClubPlayerPhoto(${id}, this)"></label> <button type="button" onclick="deleteClubPlayer(${id})" class="btn btn-outline btn-sm text-danger">Remove</button></td></tr>`;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="5" class="muted-cell">No players registered yet. Use the form above to add the first one.</td></tr>`;
+                }
+            } catch (err) { tbody.innerHTML = `<tr><td colspan="5" class="muted-cell">The squad roster could not be loaded.</td></tr>`; }
+        }
+
+        async function changeClubPlayerPhoto(id, input) {
+            if (!currentUser) return;
+            let url = null;
+            try {
+                const blob = await prepareImage(input.files && input.files[0]);
+                if (!blob) return;
+                url = await uploadPhotoBlob('squad/' + currentUser.id, blob);
+                const { error } = await db.from('club_squad').update({ photo_url: url }).eq('id', id);
+                if (error) throw error;
+                const old = squadCache.find(p => Number(p.id) === Number(id));
+                if (old) removePhotoByUrl(old.photo_url);
+                loadClubRoster();
+            } catch (err) {
+                if (url) removePhotoByUrl(url);
+                alert("Could not save the photo: " + friendlyError(err));
+            } finally {
+                input.value = '';
+            }
+        }
+
+        async function deleteClubPlayer(id) {
+            if (confirm("Remove this player from the roster?")) {
+                const old = squadCache.find(p => Number(p.id) === Number(id));
+                const { error } = await db.from('club_squad').delete().eq('id', id);
+                if (error) alert("Could not remove this player: " + friendlyError(error));
+                else if (old) removePhotoByUrl(old.photo_url);
+                loadClubRoster();
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // DEVELOPER CONTROLS
+        // ------------------------------------------------------------------
+        async function upsertLeagueStanding() {
+            const club = document.getElementById('standingClubName').value.trim();
+            const mp = parseInt(document.getElementById('standingMP').value) || 0;
+            const w = parseInt(document.getElementById('standingW').value) || 0;
+            const d = parseInt(document.getElementById('standingD').value) || 0;
+            const l = parseInt(document.getElementById('standingL').value) || 0;
+            const gf = parseInt(document.getElementById('standingGF').value) || 0;
+            const ga = parseInt(document.getElementById('standingGA').value) || 0;
+            if (!club) { alert("Enter the club name."); return; }
+            const pts = (w * 3) + (d * 1);
+            const { error } = await db.from('league_standings').upsert([{ club, mp, w, d, l, gf, ga, pts, updated_at: new Date() }], { onConflict: 'club' });
+            if (error) alert("Could not save: " + error.message);
+            else { alert(`Standing saved for ${club}.`); loadLeagueStandings(); }
+        }
+
+        async function upsertTopScorer() {
+            const player = document.getElementById('scorerPlayerName').value.trim();
+            const club = document.getElementById('scorerClubName').value.trim();
+            const goals = parseInt(document.getElementById('scorerGoalsCount').value) || 0;
+            if (!player || !club) { alert("Enter the player and the club."); return; }
+            const { error } = await db.from('top_scorers').upsert([{ player, club, goals, updated_at: new Date() }], { onConflict: 'player' });
+            if (error) alert("Could not save: " + error.message);
+            else { alert(`Goals saved for ${player}.`); loadTopScorers(); }
+        }
+
+        async function upsertTopAssist() {
+            const player = document.getElementById('assistPlayerName').value.trim();
+            const club = document.getElementById('assistClubName').value.trim();
+            const assists = parseInt(document.getElementById('assistCount').value) || 0;
+            if (!player || !club) { alert("Enter the player and the club."); return; }
+            const { error } = await db.from('top_assists').upsert([{ player, club, assists, updated_at: new Date() }], { onConflict: 'player' });
+            if (error) alert("Could not save: " + error.message);
+            else { alert(`Assists saved for ${player}.`); loadTopAssists(); }
+        }
+
+        async function upsertCleanSheet() {
+            const goalkeeper = document.getElementById('gkPlayerName').value.trim();
+            const club = document.getElementById('gkClubName').value.trim();
+            const clean_sheets = parseInt(document.getElementById('gkCleanSheetsCount').value) || 0;
+            if (!goalkeeper || !club) { alert("Enter the goalkeeper and the club."); return; }
+            const { error } = await db.from('clean_sheets').upsert([{ goalkeeper, club, clean_sheets, updated_at: new Date() }], { onConflict: 'goalkeeper' });
+            if (error) alert("Could not save: " + error.message);
+            else { alert(`Clean sheets saved for ${goalkeeper}.`); loadCleanSheets(); }
+        }
+
+        // ------------------------------------------------------------------
+        // USER ACCOUNTS (roles live in the database; only a Developer can change them)
+        // ------------------------------------------------------------------
+        let userCache = [];
+
+        async function fetchMasterUserDirectory() {
+            const tbody = document.getElementById('masterUserTableBody');
+            if (!tbody) return;
+            try {
+                const { data, error } = await db.from('user_profiles').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                userCache = data || [];
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="muted-cell">No accounts yet.</td></tr>`;
+                    return;
+                }
+                let html = '';
+                data.forEach(u => {
+                    const isSuspended = u.status === 'Suspended';
+                    const nextStatus = isSuspended ? 'Active' : 'Suspended';
+                    const isSelf = currentUser && u.id === currentUser.id;
+                    const displayName = u.full_name || u.email || '';
+
+                    let roleCell;
+                    let actionCell;
+                    if (isSelf || u.system_role === 'DEVELOPER') {
+                        roleCell = `<span class="badge badge-role">${esc(ROLE_LABELS[u.system_role] || u.system_role)}</span>`;
+                        actionCell = `<span style="color:var(--muted); font-size:13px;">${isSelf ? 'You' : 'Protected'}</span>`;
+                    } else {
+                        const options = ASSIGNABLE_ROLES.map(r => `<option value="${r}"${r === u.system_role ? ' selected' : ''}>${esc(ROLE_LABELS[r])}</option>`).join('');
+                        roleCell = `<select data-id="${esc(u.id)}" onchange="updateUserRole(this.dataset.id, this.value)" aria-label="Role for ${esc(u.email)}" style="height:34px; font-size:13px; min-width:150px;">${options}</select>`;
+                        actionCell = `<button type="button" data-id="${esc(u.id)}" data-status="${nextStatus}" onclick="toggleAccountStatus(this.dataset.id, this.dataset.status)" class="btn btn-outline btn-sm ${isSuspended ? 'text-success' : 'text-danger'}">${isSuspended ? 'Activate' : 'Suspend'}</button>`;
+                    }
+                    const photoBtn = `<label class="btn btn-outline btn-sm photo-btn">${u.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" data-id="${esc(u.id)}" aria-label="${u.photo_url ? 'Change' : 'Add'} photo for ${esc(displayName)}" onchange="changeUserPhoto(this.dataset.id, this)"></label>`;
+
+                    html += `<tr><td style="font-weight:600;">${esc(u.unique_user_id || '—')}</td><td><span class="person">${avatarHtml(u.photo_url, displayName, 'avatar-sm')}<strong>${esc(u.full_name || '—')}</strong></span></td><td style="font-size:13px;">${esc(u.email || '')}</td><td>${roleCell}</td><td><span class="badge ${isSuspended ? 'badge-danger' : 'badge-success'}">${esc(u.status || 'Active')}</span></td><td class="r">${actionCell} ${photoBtn}</td></tr>`;
+                });
+                tbody.innerHTML = html;
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" class="muted-cell">The account list could not be loaded.</td></tr>`;
+            }
+        }
+
+        async function assignRoleByEmail() {
+            const email = document.getElementById('newAccountEmail').value.trim().toLowerCase();
+            const uniqueId = document.getElementById('newAccountID').value.trim();
+            const role = document.getElementById('newAccountRole').value;
+            if (!email) { alert("Enter the email the person used to create their account."); return; }
+            const patch = { system_role: role };
+            if (uniqueId) patch.unique_user_id = uniqueId;
+            const { data, error } = await db.from('user_profiles').update(patch).eq('email', email).select();
+            if (error) { alert("Could not assign the role: " + friendlyError(error)); return; }
+            if (!data || data.length === 0) { alert("No account found for that email. The person must use \"Create account\" first."); return; }
+
+            let photoNote = '';
+            const blob = photoDrafts.assignPhotoInput;
+            if (blob) {
+                let url = null;
+                try {
+                    url = await uploadPhotoBlob('profiles/' + data[0].id, blob);
+                    const { error: photoError } = await db.from('user_profiles').update({ photo_url: url }).eq('id', data[0].id);
+                    if (photoError) throw photoError;
+                    removePhotoByUrl(data[0].photo_url);
+                } catch (err) {
+                    if (url) removePhotoByUrl(url);
+                    photoNote = " The photo could not be saved: " + friendlyError(err);
+                }
+            }
+            alert("Role assigned." + photoNote);
+            document.getElementById('newAccountEmail').value = '';
+            document.getElementById('newAccountID').value = '';
+            resetPhotoField('assignPhotoInput', 'assignPhotoPreview');
+            fetchMasterUserDirectory();
+        }
+
+        async function changeUserPhoto(userId, input) {
+            let url = null;
+            try {
+                const blob = await prepareImage(input.files && input.files[0]);
+                if (!blob) return;
+                url = await uploadPhotoBlob('profiles/' + userId, blob);
+                const { error } = await db.from('user_profiles').update({ photo_url: url }).eq('id', userId);
+                if (error) throw error;
+                const old = userCache.find(u => u.id === userId);
+                if (old) removePhotoByUrl(old.photo_url);
+                if (currentUser && userId === currentUser.id && currentProfile) { currentProfile.photo_url = url; renderSessionInfo(); }
+                fetchMasterUserDirectory();
+            } catch (err) {
+                if (url) removePhotoByUrl(url);
+                alert("Could not save the photo: " + friendlyError(err));
+            } finally {
+                input.value = '';
+            }
+        }
+
+        async function updateUserRole(userId, newRole) {
+            const { error } = await db.from('user_profiles').update({ system_role: newRole }).eq('id', userId);
+            if (error) alert("Could not change the role: " + error.message);
+            fetchMasterUserDirectory();
+        }
+
+        async function toggleAccountStatus(userId, newStatus) {
+            const { error } = await db.from('user_profiles').update({ status: newStatus }).eq('id', userId);
+            if (error) alert("Could not change the status: " + error.message);
+            fetchMasterUserDirectory();
+        }
+
+        // ------------------------------------------------------------------
+        // GLOBAL BROADCAST BANNER
+        // ------------------------------------------------------------------
+        async function loadSystemBanner() {
+            try {
+                const { data } = await db.from('app_settings').select('value').eq('key', 'banner_config').single();
+                if (data && data.value && data.value.active) {
+                    document.getElementById('bannerTextContent').innerText = data.value.message;
+                    document.getElementById('systemNotificationBanner').classList.remove('hidden');
+                }
+            } catch (err) {}
+        }
+
+        async function updateSystemBanner() {
+            const message = document.getElementById('bannerInputText').value.trim();
+            if (!message) return;
+            const { error } = await db.from('app_settings').upsert({ key: 'banner_config', value: { active: true, message } }, { onConflict: 'key' });
+            if (error) { alert("Could not publish the notice: " + error.message); return; }
+            loadSystemBanner();
+            alert("Notice published.");
+        }
+
+        async function toggleBannerVisibility(active) {
+            const { error } = await db.from('app_settings').upsert({ key: 'banner_config', value: { active, message: "" } }, { onConflict: 'key' });
+            if (error) { alert("Could not remove the notice: " + error.message); return; }
+            document.getElementById('systemNotificationBanner').classList.add('hidden');
+        }
+
+        function dismissBanner() { document.getElementById('systemNotificationBanner').classList.add('hidden'); }
+
+        // ------------------------------------------------------------------
+        // MATCH INCIDENTS
+        // ------------------------------------------------------------------
+        async function submitMatchIncident() {
+            const event_type = document.getElementById('refEventType').value;
+            const team_name = document.getElementById('refTeamName').value.trim();
+            const player_name = document.getElementById('refPlayerName').value.trim();
+            const minute = document.getElementById('refMinute').value;
+            if (!team_name || !player_name || !minute) { alert("Complete all incident fields."); return; }
+            const recorded_by = (currentProfile && (currentProfile.full_name || currentProfile.email)) || 'Match Official';
+            const { error } = await db.from('match_events').insert([{ match_id: 'match_01', event_type, team_name, player_name, minute: parseInt(minute), recorded_by }]);
+            if (error) { alert("Could not record the incident: " + error.message); return; }
+            alert("Incident recorded.");
+            loadMatchEvents();
+        }
+
+        async function loadMatchEvents() {
+            const tbody = document.getElementById('publicMatchEventsBody');
+            const refTbody = document.getElementById('refereeEventsLogBody');
+            try {
+                const { data } = await db.from('match_events').select('*').order('created_at', { ascending: false });
+                let html = '';
+                if (data && data.length > 0) {
+                    data.forEach(e => {
+                        html += `<tr><td><strong>${esc(e.minute)}'</strong></td><td>${eventBadge(e.event_type)}</td><td>${esc(e.team_name)}</td><td>${esc(e.player_name)}</td><td style="color:var(--muted); font-size:13px;">${esc(e.recorded_by)}</td></tr>`;
+                    });
+                } else {
+                    html = `<tr><td colspan="5" class="muted-cell">No incidents recorded yet.</td></tr>`;
+                }
+                if (tbody) tbody.innerHTML = html;
+                if (refTbody) refTbody.innerHTML = html;
+            } catch (err) {}
+        }
+
+        // ------------------------------------------------------------------
+        // MAN OF THE MATCH  (match officials post it; everyone can read it)
+        // ------------------------------------------------------------------
+        let motmCache = [];
+        let motmLoaded = false;
+        let motmTableMissing = false;
+        let motmEditId = null;
+
+        function todayIso() {
+            const d = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        }
+
+        function formatMatchDate(iso) {
+            const d = new Date(String(iso || '') + 'T00:00:00');
+            if (isNaN(d.getTime())) return '';
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function canManageMotm(m) {
+            const role = getRole();
+            if (role === 'DEVELOPER' || role === 'SUPER_ADMIN') return true;
+            return role === 'REFEREE' && !!currentUser && m.created_by === currentUser.id;
+        }
+
+        function motmCardHtml(m, withActions) {
+            const id = Number(m.id);
+            const date = formatMatchDate(m.match_date);
+            const actions = withActions && canManageMotm(m)
+                ? `<div class="motm-actions">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="editMotm(${id})">Edit</button>
+                        <button type="button" class="btn btn-outline btn-sm text-danger" onclick="deleteMotm(${id})">Remove</button>
+                   </div>`
+                : '';
+            return `
+                <article class="motm-card">
+                    ${avatarHtml(m.photo_url, m.player_name, 'avatar-xl')}
+                    <div style="min-width:0;">
+                        <div class="motm-label">Man of the Match</div>
+                        <div class="motm-name">${esc(m.player_name)}</div>
+                        <div class="motm-team"><span>${esc(m.team_name)}</span><span class="motm-shirt" title="Shirt number">#${esc(m.shirt_number)}</span></div>
+                        <div class="motm-match">${esc(m.match_label)}${date ? ' &middot; ' + esc(date) : ''}</div>
+                    </div>
+                    ${actions}
+                </article>`;
+        }
+
+        function renderMotm() {
+            const pub = document.getElementById('publicMotmGrid');
+            const ref = document.getElementById('refereeMotmList');
+            if (!pub && !ref) return;
+            if (!motmLoaded) return;
+            if (pub) {
+                pub.innerHTML = motmCache.length
+                    ? motmCache.map(m => motmCardHtml(m, false)).join('')
+                    : '<p class="motm-empty">No Man of the Match has been announced yet.</p>';
+            }
+            if (ref) {
+                if (motmTableMissing) {
+                    ref.innerHTML = '<p class="motm-empty">The database still needs the Man of the Match upgrade. Run supabase-upgrade-man-of-the-match.sql in Supabase.</p>';
+                } else {
+                    ref.innerHTML = motmCache.length
+                        ? motmCache.map(m => motmCardHtml(m, true)).join('')
+                        : '<p class="motm-empty">Nothing posted yet. Use the form above after the match.</p>';
+                }
+            }
+        }
+
+        async function loadMotm() {
+            try {
+                const { data, error } = await db.from('man_of_the_match').select('*')
+                    .order('match_date', { ascending: false }).order('created_at', { ascending: false }).limit(60);
+                if (error) {
+                    motmTableMissing = error.code === '42P01' || error.code === 'PGRST205' || /man_of_the_match/i.test(error.message || '');
+                    motmCache = [];
+                } else {
+                    motmTableMissing = false;
+                    motmCache = data || [];
+                }
+            } catch (err) {
+                motmCache = [];
+            }
+            motmLoaded = true;
+            renderMotm();
+        }
+
+        function resetMotmForm() {
+            motmEditId = null;
+            ['motmMatch', 'motmPlayer', 'motmTeam', 'motmShirt'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            const date = document.getElementById('motmDate');
+            if (date) date.value = todayIso();
+            resetPhotoField('motmPhotoInput', 'motmPhotoPreview');
+            const title = document.getElementById('motmFormTitle');
+            const save = document.getElementById('motmSaveBtn');
+            const cancel = document.getElementById('motmCancelBtn');
+            if (title) title.textContent = 'Post Man of the Match';
+            if (save) save.textContent = 'Post Man of the Match';
+            if (cancel) cancel.classList.add('hidden');
+        }
+
+        function editMotm(id) {
+            const m = motmCache.find(x => Number(x.id) === Number(id));
+            if (!m || !canManageMotm(m)) return;
+            motmEditId = m.id;
+            document.getElementById('motmMatch').value = m.match_label || '';
+            document.getElementById('motmDate').value = m.match_date || todayIso();
+            document.getElementById('motmPlayer').value = m.player_name || '';
+            document.getElementById('motmTeam').value = m.team_name || '';
+            document.getElementById('motmShirt').value = m.shirt_number || '';
+            resetPhotoField('motmPhotoInput', 'motmPhotoPreview');
+            if (isSafePhotoUrl(m.photo_url)) setPreview(document.getElementById('motmPhotoPreview'), m.photo_url);
+            document.getElementById('motmFormTitle').textContent = 'Edit Man of the Match';
+            document.getElementById('motmSaveBtn').textContent = 'Save changes';
+            document.getElementById('motmCancelBtn').classList.remove('hidden');
+            const panel = document.getElementById('motmFormPanel');
+            if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function saveMotm() {
+            const match_label = document.getElementById('motmMatch').value.trim();
+            const match_date = document.getElementById('motmDate').value;
+            const player_name = document.getElementById('motmPlayer').value.trim();
+            const team_name = document.getElementById('motmTeam').value.trim();
+            const shirtText = document.getElementById('motmShirt').value.trim();
+            const shirt_number = /^\d{1,2}$/.test(shirtText) ? parseInt(shirtText, 10) : NaN;
+
+            if (!match_label || !match_date || !player_name || !team_name || !shirtText) {
+                alert("Fill in the match, date, player name, team and shirt number.");
+                return;
+            }
+            if (!(shirt_number >= 1 && shirt_number <= 99)) {
+                alert("The shirt number must be a whole number from 1 to 99.");
+                return;
+            }
+            if (!currentUser) { alert("Please sign in first."); return; }
+
+            const btn = document.getElementById('motmSaveBtn');
+            btn.disabled = true;
+            let newUrl = null;
+            let stage = 'photo';
+            try {
+                const blob = photoDrafts.motmPhotoInput;
+                if (blob) newUrl = await uploadPhotoBlob('motm/' + currentUser.id, blob);
+                stage = 'save';
+                const recorded_by = (currentProfile && (currentProfile.full_name || currentProfile.email)) || 'Match Official';
+                const row = { match_label, match_date, player_name, team_name, shirt_number, recorded_by };
+                const editing = motmEditId ? motmCache.find(x => Number(x.id) === Number(motmEditId)) : null;
+                let result;
+                if (editing) {
+                    if (newUrl) row.photo_url = newUrl;
+                    result = await db.from('man_of_the_match').update(row).eq('id', editing.id);
+                } else {
+                    row.photo_url = newUrl;
+                    result = await db.from('man_of_the_match').insert([row]);
+                }
+                if (result.error) throw result.error;
+                if (editing && newUrl) removePhotoByUrl(editing.photo_url);
+                alert(editing ? "Man of the Match updated." : "Man of the Match posted. It is now on the public page.");
+                resetMotmForm();
+                loadMotm();
+            } catch (err) {
+                if (newUrl) removePhotoByUrl(newUrl);
+                const msg = (err && err.message) || '';
+                if (err && (err.code === '23505' || /duplicate key/i.test(msg))) {
+                    alert("A Man of the Match is already posted for this match and date. Use Edit on it below instead.");
+                } else if (stage === 'photo') {
+                    alert("The photo could not be uploaded: " + (/row-level security|not allowed|permission/i.test(msg)
+                        ? 'the database still needs the Man of the Match upgrade. Run supabase-upgrade-man-of-the-match.sql in Supabase.'
+                        : friendlyError(err)));
+                } else {
+                    alert("Could not post Man of the Match: " + friendlyError(err));
+                }
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteMotm(id) {
+            const m = motmCache.find(x => Number(x.id) === Number(id));
+            if (!m || !canManageMotm(m)) return;
+            if (!confirm('Remove ' + m.player_name + ' as Man of the Match for "' + m.match_label + '"?')) return;
+            try {
+                const { error } = await db.from('man_of_the_match').delete().eq('id', m.id);
+                if (error) throw error;
+                removePhotoByUrl(m.photo_url);
+                if (motmEditId && Number(motmEditId) === Number(m.id)) resetMotmForm();
+                loadMotm();
+            } catch (err) {
+                alert("Could not remove it: " + friendlyError(err));
+            }
+        }
+    </script>
+</body>
+</html>
