@@ -1927,14 +1927,10 @@
         // ------------------------------------------------------------------
         // PUBLIC LEADERBOARDS
         // ------------------------------------------------------------------
-        const defaultLeagueStandings = [
-            { pos: 1, club: "Bo Rangers FC", mp: 10, w: 7, d: 2, l: 1, gf: 18, ga: 6, pts: 23 },
-            { pos: 2, club: "Freetown FC", mp: 10, w: 6, d: 3, l: 1, gf: 15, ga: 8, pts: 21 },
-            { pos: 3, club: "Eastern Lions", mp: 10, w: 5, d: 4, l: 1, gf: 14, ga: 7, pts: 19 },
-            { pos: 4, club: "Mighty Blackpool", mp: 10, w: 4, d: 3, l: 3, gf: 11, ga: 10, pts: 15 },
-            { pos: 5, club: "Diamond Stars", mp: 10, w: 3, d: 4, l: 3, gf: 9, ga: 9, pts: 13 }
-        ];
-
+        const defaultLeagueStandings = [];
+const defaultTopScorers = [];
+const defaultTopAssists = [];
+const defaultCleanSheets = [];
         async function loadLeagueStandings() {
             const tbody = document.getElementById('leagueStandingsTableBody');
             if (!tbody) return;
