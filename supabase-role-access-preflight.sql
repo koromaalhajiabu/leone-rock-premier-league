@@ -15,12 +15,12 @@ ORDER BY ordinal_position;
 -- R = replica only; A = always enabled.
 SELECT
   t.tgname AS trigger_name,
-  CASE t.tgenabled
+  CASE t.tgenabled::text
     WHEN 'O' THEN 'enabled (origin)'
     WHEN 'D' THEN 'DISABLED'
     WHEN 'R' THEN 'replica only'
     WHEN 'A' THEN 'always enabled'
-    ELSE 'unknown: ' || t.tgenabled::text
+    ELSE 'unknown: ' || t.tgenabled::text::text
   END AS trigger_status,
   p.proname AS function_name,
   pg_get_functiondef(p.oid) AS function_definition
