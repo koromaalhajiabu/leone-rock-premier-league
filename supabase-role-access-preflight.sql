@@ -20,7 +20,7 @@ SELECT
     WHEN 'D' THEN 'DISABLED'
     WHEN 'R' THEN 'replica only'
     WHEN 'A' THEN 'always enabled'
-    ELSE 'unknown: ' || t.tgenabled::text::text
+    ELSE concat('unknown: ', t.tgenabled::text)
   END AS trigger_status,
   p.proname AS function_name,
   pg_get_functiondef(p.oid) AS function_definition
