@@ -1260,6 +1260,10 @@ th{font-weight:800}
                     <div class="form-actions">
                         <button type="button" onclick="submitMatchIncident()" class="btn btn-success">Record incident</button>
                     </div>
+                    <div id="refereeOfflineSyncStatus" class="db-status db-warn" role="status" aria-live="polite" style="display:block;margin-top:14px;">
+                        Offline-ready incident log: checking sync status…
+                    </div>
+                    <div id="refereePendingIncidentList" class="section-hint" style="margin-top:8px;" aria-live="polite"></div>
                 </div>
 
                 <div class="form-panel" id="motmFormPanel">
@@ -3614,32 +3618,72 @@ th{font-weight:800}
             catch (_) { return []; }
         }
         function setPendingRefIncidents(items) {
-            localStorage.setItem(REF_INCIDENT_QUEUE_KEY, JSON.stringify(items));
+            try { localStorage.setItem(REF_INCIDENT_QUEUE_KEY, JSON.stringify(items)); }
+            catch (err) { console.error('Could not save pending incidents locally', err); }
+            renderRefereeOfflineSyncStatus();
+        }
+        const REF_MATCH_CACHE_KEY = 'lrpl_referee_matches_cache_v1';
+        let refereeSyncBusy = false;
+        function renderRefereeOfflineSyncStatus(message) {
+            const status = document.getElementById('refereeOfflineSyncStatus');
+            const list = document.getElementById('refereePendingIncidentList');
+            if (!status && !list) return;
+            const queue = getPendingRefIncidents();
+            const mine = currentUser ? queue.filter(x => x.userId === currentUser.id) : queue;
+            const online = navigator.onLine;
+            if (status) {
+                status.className = 'db-status ' + (mine.length ? 'db-warn' : online ? 'db-ok' : 'db-off');
+                status.textContent = message || (mine.length
+                    ? (online ? 'Internet available — ' + mine.length + ' incident(s) waiting to sync.' : 'Offline — ' + mine.length + ' incident(s) safely queued on this device.')
+                    : (online ? 'Connected. No pending incidents on this device.' : 'Offline. New incidents will be saved on this device until connection returns.'));
+            }
+            if (list) {
+                list.textContent = mine.length
+                    ? 'Pending on this device: ' + mine.map(x => {
+                        const p=x.payload||{};
+                        return (p.event_type||'Incident') + ' — ' + (p.team_name||'Team') + ', ' + (p.minute||'?') + "' (saved " + new Date(x.queuedAt||Date.now()).toLocaleString() + ')';
+                      }).join(' | ')
+                    : 'Local queue is clear. Records already synced remain in the official incident log.';
+            }
         }
         async function syncPendingRefIncidents() {
-            if (!navigator.onLine || !currentUser) return;
+            renderRefereeOfflineSyncStatus();
+            if (refereeSyncBusy || !navigator.onLine || !currentUser || !db) return;
             const pending = getPendingRefIncidents();
-            if (!pending.length) return;
+            if (!pending.some(item => item.userId === currentUser.id)) return;
+            refereeSyncBusy = true;
             const keep = [];
-            for (const item of pending) {
-                if (item.userId !== currentUser.id) { keep.push(item); continue; }
-                try {
-                    if (item.role === 'REFEREE') {
-                        const { data: assignment, error: aerr } = await db.from('match_referee_assignments')
-                            .select('id').eq('match_id', item.payload.match_id)
-                            .eq('referee_user_id', currentUser.id).eq('assignment_status', 'ACTIVE').maybeSingle();
-                        if (aerr || !assignment) { keep.push(item); continue; }
-                    }
-                    const { error } = await db.from('match_events').upsert([item.payload], {
-                        onConflict: 'client_event_id', ignoreDuplicates: true
-                    });
-                    if (error) { keep.push(item); continue; }
-                } catch (_) { keep.push(item); }
+            let synced = 0;
+            try {
+                for (const item of pending) {
+                    if (item.userId !== currentUser.id) { keep.push(item); continue; }
+                    try {
+                        if (item.role === 'REFEREE') {
+                            const { data: assignment, error: aerr } = await db.from('match_referee_assignments')
+                                .select('id').eq('match_id', item.payload.match_id)
+                                .eq('referee_user_id', currentUser.id).eq('assignment_status', 'ACTIVE').maybeSingle();
+                            if (aerr || !assignment) { keep.push(item); continue; }
+                        }
+                        const { error } = await db.from('match_events').upsert([item.payload], {
+                            onConflict: 'client_event_id', ignoreDuplicates: true
+                        });
+                        if (error) { keep.push(item); continue; }
+                        synced++;
+                    } catch (_) { keep.push(item); }
+                }
+                setPendingRefIncidents(keep);
+                if (synced) loadMatchEvents();
+                renderRefereeOfflineSyncStatus(keep.some(x=>x.userId===currentUser.id)
+                    ? 'Sync attempted — ' + synced + ' synced; ' + keep.filter(x=>x.userId===currentUser.id).length + ' still pending. Assignment or database access may need checking.'
+                    : 'Sync complete — ' + synced + ' incident(s) uploaded successfully.');
+            } finally {
+                refereeSyncBusy = false;
             }
-            setPendingRefIncidents(keep);
-            if (keep.length < pending.length) loadMatchEvents();
         }
         window.addEventListener('online', syncPendingRefIncidents);
+        window.addEventListener('offline', () => renderRefereeOfflineSyncStatus());
+        window.addEventListener('focus', syncPendingRefIncidents);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) syncPendingRefIncidents(); });
 
         async function submitMatchIncident() {
             const event_type = document.getElementById('refEventType').value;
@@ -3691,7 +3735,9 @@ th{font-weight:800}
             }
             document.getElementById('refPlayerName').value = '';
             document.getElementById('refMinute').value = '';
+            renderRefereeOfflineSyncStatus();
             loadMatchEvents();
+            syncPendingRefIncidents();
         }
 
         async function loadRefereeMatchOptions() {
@@ -3727,10 +3773,29 @@ th{font-weight:800}
                 }).join('');
                 if (select) select.innerHTML = allowed.length ? optionsHtml : '<option value="">No assigned matches available</option>';
                 if (resultSelect) resultSelect.innerHTML = allowed.length ? optionsHtml : '<option value="">No assigned matches available</option>';
+                try {
+                    localStorage.setItem(REF_MATCH_CACHE_KEY, JSON.stringify(allowed.map(m => ({
+                        id: String(m.id),
+                        home: m.home_team || m.home_club || m.home || m.home_club_name || '',
+                        away: m.away_team || m.away_club || m.away || m.away_club_name || '',
+                        date: m.match_date || m.date || m.kickoff_date || ''
+                    }))));
+                } catch (cacheErr) { console.warn('Could not cache assigned matches on this device.', cacheErr); }
             } catch (err) {
-                if (select) select.innerHTML = '<option value="">Could not load matches — check table schema and RLS</option>';
-                if (resultSelect) resultSelect.innerHTML = '<option value="">Could not load matches — check table schema and RLS</option>';
-                console.warn('Could not load referee match options:', err);
+                let cached = [];
+                try { cached = JSON.parse(localStorage.getItem(REF_MATCH_CACHE_KEY) || '[]'); } catch (_) {}
+                if (realRole() === 'REFEREE') {
+                    // Only use this device's previously downloaded assigned-match list while offline.
+                    // The server still re-checks the active assignment when syncing.
+                }
+                const optionsHtml = '<option value="">Select previously loaded match…</option>' + cached.map(m =>
+                    '<option value="' + esc(m.id).replace(/"/g,'&quot;') + '" data-home="' + esc(m.home).replace(/"/g,'&quot;') + '" data-away="' + esc(m.away).replace(/"/g,'&quot;') + '">' +
+                    esc(m.date ? m.date + ' — ' : '') + esc((m.home || 'Home team') + ' vs ' + (m.away || 'Away team')) + ' (ID ' + esc(m.id) + ')</option>'
+                ).join('');
+                if (select) select.innerHTML = cached.length ? optionsHtml : '<option value="">No saved fixtures — connect once to load assigned matches</option>';
+                if (resultSelect) resultSelect.innerHTML = cached.length ? optionsHtml : '<option value="">No saved fixtures — connect once to load assigned matches</option>';
+                renderRefereeOfflineSyncStatus('Offline or connection failed. Previously cached fixtures are available; pending reports will sync when access returns.');
+                console.warn('Could not load referee match options; using device cache:', err);
             }
         }
 
