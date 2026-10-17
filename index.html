@@ -2703,9 +2703,13 @@ th{font-weight:800}
                     const rows = [];
                     let start = 0;
                     const pageSize = 500;
+                    // NIN is intentionally excluded from browser-generated backups.
+                    const backupSelect = table === 'club_squad'
+                        ? 'id, player_name, position, status, photo_url, created_by, created_at, club_id'
+                        : '*';
                     let failed = false;
                     while (true) {
-                        const { data, error } = await db.from(table).select('*').range(start, start + pageSize - 1);
+                        const { data, error } = await db.from(table).select(backupSelect).range(start, start + pageSize - 1);
                         if (error) {
                             backup.table_errors[table] = error.message || String(error);
                             failed = true;
