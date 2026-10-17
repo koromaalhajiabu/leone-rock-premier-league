@@ -1208,7 +1208,7 @@ th{font-weight:800}
                 <div class="table-container" style="margin-top:10px;">
                     <table>
                         <thead>
-                            <tr><th>Player</th><th>National ID (NIN)</th><th>Position</th><th>Status</th><th class="r">Actions</th></tr>
+                            <tr><th>Player</th><th>Position</th><th>Status</th><th class="r">Actions</th></tr>
                         </thead>
                         <tbody id="clubRosterTableBody"></tbody>
                     </table>
@@ -3233,7 +3233,7 @@ th{font-weight:800}
         }
 
         // ------------------------------------------------------------------
-        // CLUB SQUAD ROSTER (with NIN) - the database only returns the rows you may see
+        // CLUB SQUAD ROSTER - do not fetch or display NIN values in the roster UI. Database grants/RLS must separately protect the stored NIN.
         // ------------------------------------------------------------------
         let squadCache = [];
 
@@ -3273,18 +3273,18 @@ th{font-weight:800}
             const tbody = document.getElementById('clubRosterTableBody');
             if (!tbody) return;
             try {
-                const { data, error } = await db.from('club_squad').select('*').order('created_at', { ascending: false });
+                const { data, error } = await db.from('club_squad').select('id, player_name, position, status, photo_url, created_by, created_at').order('created_at', { ascending: false });
                 if (error) throw error;
                 squadCache = data || [];
                 if (data && data.length > 0) {
                     let html = '';
                     data.forEach(p => {
                         const id = Number(p.id);
-                        html += `<tr><td><span class="person">${avatarHtml(p.photo_url, p.player_name, 'avatar-sm')}<strong>${esc(p.player_name)}</strong></span></td><td><code style="font-size:13px; background:#F3F6F2; padding:2px 8px; border-radius:6px; border:1px solid var(--line);">${esc(p.player_nin || 'N/A')}</code></td><td><span class="badge badge-role">${esc(p.position)}</span></td><td><span class="badge badge-success">${esc(p.status || 'Active')}</span></td><td class="r"><label class="btn btn-outline btn-sm photo-btn">${p.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${p.photo_url ? 'Change' : 'Add'} photo for ${esc(p.player_name)}" onchange="changeClubPlayerPhoto(${id}, this)"></label> <button type="button" onclick="deleteClubPlayer(${id})" class="btn btn-outline btn-sm text-danger">Remove</button></td></tr>`;
+                        html += `<tr><td><span class="person">${avatarHtml(p.photo_url, p.player_name, 'avatar-sm')}<strong>${esc(p.player_name)}</strong></span></td><td><span class="badge badge-role">${esc(p.position)}</span></td><td><span class="badge badge-success">${esc(p.status || 'Active')}</span></td><td class="r"><label class="btn btn-outline btn-sm photo-btn">${p.photo_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/*" class="sr-only" aria-label="${p.photo_url ? 'Change' : 'Add'} photo for ${esc(p.player_name)}" onchange="changeClubPlayerPhoto(${id}, this)"></label> <button type="button" onclick="deleteClubPlayer(${id})" class="btn btn-outline btn-sm text-danger">Remove</button></td></tr>`;
                     });
                     tbody.innerHTML = html;
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="5" class="muted-cell">No players registered yet. Use the form above to add the first one.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" class="muted-cell">No players registered yet. Use the form above to add the first one.</td></tr>`;
                 }
             } catch (err) { tbody.innerHTML = `<tr><td colspan="5" class="muted-cell">The squad roster could not be loaded.</td></tr>`; }
         }
