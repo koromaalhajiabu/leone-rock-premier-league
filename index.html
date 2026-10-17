@@ -2324,11 +2324,17 @@ th{font-weight:800}
                         } }
                     });
                     if (error) throw error;
+                    const roleLabel = {
+                        CLUB_ADMIN: 'Club Admin',
+                        REFEREE: 'Referee / Match Official',
+                        STAFF: 'League Staff',
+                        VIEWER: 'Viewer'
+                    }[requestedRole] || 'requested';
                     if (data && data.session) {
                         closeAuthModal();
-                        alert('Application submitted and pending Super Admin approval. You cannot manage a club until your application is approved.');
+                        alert('Account created. Your ' + roleLabel + ' request must be verified by the Developer before any privileged access is granted.');
                     } else {
-                        setAuthMessage('Application submitted. Check your email to confirm your account. Your Club Admin access will remain pending until the Super Admin approves the club application.', false);
+                        setAuthMessage('Account request submitted. Check your email to confirm your account. Your account will not receive privileged access until the Developer verifies your request and assigns an approved role.', false);
                     }
                 }
             } catch (err) {
