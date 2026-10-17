@@ -621,10 +621,18 @@ th{font-weight:800}
                 <p id="authSubtitle">Use your league account to open your portal.</p>
                 <label class="field hidden" id="authFullNameField"><span>Full name</span><input type="text" id="authFullName" autocomplete="name"></label>
                 <div id="clubRegistrationFields" class="hidden">
-                    <label class="field"><span>Club name</span><input type="text" id="authClubName" maxlength="120" autocomplete="organization"></label>
+                    <label class="field"><span>Access requested</span>
+                        <select id="authRequestedRole" onchange="syncRegistrationFields()">
+                            <option value="CLUB_ADMIN">Club Admin (club representative)</option>
+                            <option value="REFEREE">Referee / Match Official</option>
+                            <option value="STAFF">League Staff</option>
+                            <option value="VIEWER">Public / Viewer account</option>
+                        </select>
+                    </label>
+                    <label class="field" id="authClubNameField"><span>Club name</span><input type="text" id="authClubName" maxlength="120" autocomplete="organization"></label>
                     <label class="field"><span>Contact phone (optional)</span><input type="tel" id="authClubPhone" maxlength="40" autocomplete="tel"></label>
-                    <label class="field"><span>Application note (optional)</span><textarea id="authClubNotes" rows="2" maxlength="1000" placeholder="League affiliation or contact details"></textarea></label>
-                    <p class="section-hint">Your application will remain pending until the Super Admin verifies and approves your club. Registration does not grant management access.</p>
+                    <label class="field"><span>Application note (optional)</span><textarea id="authClubNotes" rows="2" maxlength="1000" placeholder="Club, referee appointment, or league role details"></textarea></label>
+                    <p class="section-hint">Your account starts without privileged access. A Developer must verify your request and assign the approved role. Super Admin and Developer roles cannot be requested here.</p>
                 </div>
                 <label class="field"><span>Email address</span><input type="email" id="authEmail" autocomplete="email" required></label>
                 <label class="field"><span>Password</span><input type="password" id="authPassword" autocomplete="current-password" minlength="8" required></label>
@@ -2237,13 +2245,28 @@ th{font-weight:800}
             const clubFields = document.getElementById('clubRegistrationFields');
             if (clubFields) clubFields.classList.toggle('hidden', !signup);
             const clubNameField = document.getElementById('authClubName');
-            if (clubNameField) clubNameField.required = signup;
+            if (clubNameField) clubNameField.required = false;
+            const requestedRole = document.getElementById('authRequestedRole');
+            if (requestedRole && signup && !requestedRole.value) requestedRole.value = 'CLUB_ADMIN';
+            syncRegistrationFields();
             if (signup) {
-                document.getElementById('authSubtitle').textContent = 'Apply for Club Admin access. Your application must be approved by the Super Admin before you can manage a club.';
+                document.getElementById('authSubtitle').textContent = 'Create an account and request the access appropriate to your league duty. Privileged access requires Developer approval.';
                 document.getElementById('authSwitchLink').textContent = 'Already registered? Sign in';
             }
             document.getElementById('authPassword').setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
             setAuthMessage('', false);
+        }
+
+        function syncRegistrationFields() {
+            const signup = authMode === 'signup';
+            const fields = document.getElementById('clubRegistrationFields');
+            if (fields) fields.classList.toggle('hidden', !signup);
+            const roleSelect = document.getElementById('authRequestedRole');
+            const clubWrap = document.getElementById('authClubNameField');
+            const clubInput = document.getElementById('authClubName');
+            const isClubAdmin = !roleSelect || roleSelect.value === 'CLUB_ADMIN';
+            if (clubWrap) clubWrap.classList.toggle('hidden', !signup || !isClubAdmin);
+            if (clubInput) clubInput.required = signup && isClubAdmin;
         }
 
         function toggleAuthMode() {
@@ -2277,6 +2300,7 @@ th{font-weight:800}
             const clubName = (document.getElementById('authClubName') || {}).value?.trim() || '';
             const clubPhone = (document.getElementById('authClubPhone') || {}).value?.trim() || '';
             const clubNotes = (document.getElementById('authClubNotes') || {}).value?.trim() || '';
+            const requestedRole = (document.getElementById('authRequestedRole') || {}).value || 'CLUB_ADMIN';
             const btn = document.getElementById('authSubmitBtn');
             btn.disabled = true;
             setAuthMessage('Please wait...', false);
@@ -2287,12 +2311,13 @@ th{font-weight:800}
                     closeAuthModal();
                 } else {
                     if (!fullName) throw new Error('Enter your full name.');
-                    if (!clubName) throw new Error('Enter the club name you are applying to represent.');
+                    if (requestedRole === 'CLUB_ADMIN' && !clubName) throw new Error('Enter the club name you are applying to represent.');
                     const { data, error } = await db.auth.signUp({
                         email, password,
                         options: { data: {
                             full_name: fullName,
-                            registration_type: 'club_admin',
+                            registration_type: requestedRole === 'CLUB_ADMIN' ? 'club_admin' : 'role_request',
+                            requested_role: requestedRole,
                             club_name: clubName,
                             contact_phone: clubPhone,
                             application_notes: clubNotes
