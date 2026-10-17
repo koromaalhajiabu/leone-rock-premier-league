@@ -1190,7 +1190,6 @@ th{font-weight:800}
                                 <option value="CLUB_ADMIN">Club Admin</option>
                                 <option value="REFEREE">Referee</option>
                                 <option value="STAFF">Staff (read-only)</option>
-                                <option value="VIEWER">Viewer (no portal access)</option>
                             </select>
                         </label>
                         <div class="photo-field">
@@ -2249,7 +2248,7 @@ th{font-weight:800}
             if (requestedRole && signup && !requestedRole.value) requestedRole.value = 'CLUB_ADMIN';
             syncRegistrationFields();
             if (signup) {
-                document.getElementById('authSubtitle').textContent = 'Create an account and request the access appropriate to your league duty. Privileged access requires Developer approval.';
+                document.getElementById('authSubtitle').textContent = 'Public viewers do not register. Request an account only for Club Admin, Referee, or League Staff duties.';
                 document.getElementById('authSwitchLink').textContent = 'Already registered? Sign in';
             }
             document.getElementById('authPassword').setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
