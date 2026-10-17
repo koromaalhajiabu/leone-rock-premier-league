@@ -3250,7 +3250,13 @@ th{font-weight:800}
             const nin = document.getElementById('clubPlayerNIN').value.trim();
             const position = document.getElementById('clubPlayerPosition').value.trim();
             if (!name || !nin || !position) { alert("Complete all player fields, including the NIN."); return; }
-            if (!currentUser) { alert("Sign in first."); return; }
+            if (!currentUser || !currentProfile) { alert("Sign in first."); return; }
+            if (realRole() !== 'CLUB_ADMIN') { alert("Only an assigned Club Manager can register players from this panel."); return; }
+            const assignedClubId = currentProfile.club_id;
+            if (!assignedClubId) {
+                alert("Your account has no assigned club. Ask a league administrator to assign your club before registering players.");
+                return;
+            }
 
             const btn = document.getElementById('clubSubmitBtn');
             btn.disabled = true;
@@ -3258,7 +3264,15 @@ th{font-weight:800}
             try {
                 const blob = photoDrafts.clubPlayerPhotoInput;
                 if (blob) photoUrl = await uploadPhotoBlob('squad/' + currentUser.id, blob);
-                const { error } = await db.from('club_squad').insert([{ player_name: name, player_nin: nin, position: position, status: 'Active', photo_url: photoUrl, created_by: currentUser.id }]);
+                const { error } = await db.from('club_squad').insert([{
+                    player_name: name,
+                    player_nin: nin,
+                    position: position,
+                    status: 'Active',
+                    photo_url: photoUrl,
+                    created_by: currentUser.id,
+                    club_id: assignedClubId
+                }]);
                 if (error) {
                     if (error.code === '23505') throw new Error('A player with this NIN is already registered.');
                     throw error;
