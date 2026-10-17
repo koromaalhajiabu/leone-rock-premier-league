@@ -43,7 +43,7 @@ SELECT
 -- 4) Show the profile-creation triggers specifically (if present).
 SELECT
   t.tgname AS trigger_name,
-  CASE t.tgenabled
+  CASE t.tgenabled::text
     WHEN 'O' THEN 'enabled (origin)'
     WHEN 'D' THEN 'DISABLED'
     WHEN 'R' THEN 'replica only'
