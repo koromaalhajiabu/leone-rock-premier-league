@@ -892,6 +892,19 @@ th{font-weight:800}
           </div>
         </section>
 
+        <!-- Referee and league-staff access requests -->
+        <section id="roleAccessReviewPanel" class="accordion-card hidden" style="--accent:var(--gold);">
+          <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="roleAccessReviewContent" onclick="toggleAccordion('roleAccessReviewContent',this)" onkeydown="accordionKey(event,'roleAccessReviewContent',this)">
+            <div><h2>Referee & Staff Access Requests</h2><p>Review requests before assigning operational permissions.</p></div>
+            <div class="card-meta"><span class="badge badge-warning">Developer / Super Admin</span></div>
+          </div>
+          <div id="roleAccessReviewContent" class="accordion-content">
+            <p class="section-hint">Only the General Overseer or Super Admin should approve or reject referee and league-staff requests. Club Admin applications remain in the separate club approval queue.</p>
+            <button type="button" class="btn btn-outline btn-sm" onclick="loadRoleAccessRequests()">Refresh access requests</button>
+            <div id="roleAccessRequestsList" style="margin-top:12px"><p class="section-hint">Sign in with an authorized account and refresh to load requests.</p></div>
+          </div>
+        </section>
+
         <!-- Shared club/player verification queue -->
         <section id="leagueVerificationPanel" class="accordion-card hidden" style="--accent:var(--blue);">
           <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="leagueVerificationContent" onclick="toggleAccordion('leagueVerificationContent',this)" onkeydown="accordionKey(event,'leagueVerificationContent',this)">
@@ -2052,6 +2065,7 @@ th{font-weight:800}
             // Keep governance directories out of the default public/Viewer panel.
             // Authorized management tools remain available in the private workspace.
             show('publicLeagueBoards', working && (isDev || isAdmin));
+            show('roleAccessReviewPanel', working && (isDev || isAdmin));
             show('staff-directory', working && (isDev || isAdmin));
             // Do not expose the executive/staff directory in the public Viewer panel.
             const tabW = document.getElementById('tabWorkspace');
@@ -2338,6 +2352,66 @@ th{font-weight:800}
                 setAuthMessage(err.message || 'Something went wrong. Try again.', true);
             } finally {
                 btn.disabled = false;
+            }
+        }
+
+        async function loadRoleAccessRequests() {
+            const host = document.getElementById('roleAccessRequestsList');
+            if (!host) return;
+            if (!currentUser || !['DEVELOPER','SUPER_ADMIN'].includes(realRole())) {
+                host.innerHTML = '<p class="section-hint">Only the General Overseer or Super Admin can review access requests.</p>';
+                return;
+            }
+            host.innerHTML = '<p class="section-hint">Loading access requests…</p>';
+            try {
+                const { data, error } = await db.from('role_access_requests')
+                    .select('id,requested_role,contact_name,contact_email,contact_phone,application_notes,status,created_at')
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: true });
+                if (error) throw error;
+                if (!data || !data.length) {
+                    host.innerHTML = '<p class="section-hint">There are no pending referee or staff requests.</p>';
+                    return;
+                }
+                host.innerHTML = data.map(req => {
+                    const safe = value => esc(value == null ? '' : String(value));
+                    const roleLabel = req.requested_role === 'REFEREE' ? 'Referee / Match Official' : 'League Staff';
+                    return '<article class="verification-request">' +
+                      '<h3>' + safe(roleLabel) + '</h3>' +
+                      '<div class="verification-meta"><span>Applicant: ' + safe(req.contact_name) + '</span><span>Email: ' + safe(req.contact_email) + '</span>' +
+                      (req.contact_phone ? '<span>Phone: ' + safe(req.contact_phone) + '</span>' : '') +
+                      '<span>Submitted: ' + safe(req.created_at ? new Date(req.created_at).toLocaleString() : '') + '</span></div>' +
+                      (req.application_notes ? '<p>' + safe(req.application_notes) + '</p>' : '') +
+                      '<div class="verification-actions">' +
+                      '<button type="button" class="btn btn-primary btn-sm" onclick="reviewRoleAccessRequest(\'' + safe(req.id) + '\',\'approved\')">Approve request</button>' +
+                      '<button type="button" class="btn btn-outline btn-sm" onclick="reviewRoleAccessRequest(\'' + safe(req.id) + '\',\'rejected\')">Reject request</button>' +
+                      '</div></article>';
+                }).join('');
+            } catch (err) {
+                host.innerHTML = '<p class="auth-error">Could not load access requests: ' + esc(friendlyError(err)) + '. Ensure supabase-role-access-requests.sql has been run in Supabase.</p>';
+            }
+        }
+
+        async function reviewRoleAccessRequest(requestId, decision) {
+            if (!currentUser || !['DEVELOPER','SUPER_ADMIN'].includes(realRole())) {
+                alert('Only the General Overseer or Super Admin can review access requests.');
+                return;
+            }
+            const verb = decision === 'approved' ? 'approve' : 'reject';
+            if (!confirm('Are you sure you want to ' + verb + ' this access request?')) return;
+            const notes = prompt('Optional review note:', '') || '';
+            try {
+                const { error } = await db.rpc('review_role_access_request', {
+                    p_request_id: requestId,
+                    p_decision: decision,
+                    p_review_notes: notes
+                });
+                if (error) throw error;
+                alert('Access request ' + decision + '.');
+                await loadRoleAccessRequests();
+                if (typeof applyRoleUI === 'function') applyRoleUI();
+            } catch (err) {
+                alert('Could not review request: ' + friendlyError(err));
             }
         }
 
