@@ -626,13 +626,12 @@ th{font-weight:800}
                             <option value="CLUB_ADMIN">Club Admin (club representative)</option>
                             <option value="REFEREE">Referee / Match Official</option>
                             <option value="STAFF">League Staff</option>
-                            <option value="VIEWER">Public / Viewer account</option>
                         </select>
                     </label>
                     <label class="field" id="authClubNameField"><span>Club name</span><input type="text" id="authClubName" maxlength="120" autocomplete="organization"></label>
                     <label class="field"><span>Contact phone (optional)</span><input type="tel" id="authClubPhone" maxlength="40" autocomplete="tel"></label>
-                    <label class="field"><span>Application note (optional)</span><textarea id="authClubNotes" rows="2" maxlength="1000" placeholder="Club, referee appointment, or league role details"></textarea></label>
-                    <p class="section-hint">Your account starts without privileged access. A Developer must verify your request and assign the approved role. Super Admin and Developer roles cannot be requested here.</p>
+                    <label class="field"><span>Application note (optional)</span><textarea id="authClubNotes" rows="2" maxlength="1000" placeholder="Club application or referee / staff role details"></textarea></label>
+                    <p class="section-hint">Public viewers use the default read-only panel and do not register. Account requests are only for Club Admin, Referee, or League Staff. Super Admin and Developer roles cannot be requested here.</p>
                 </div>
                 <label class="field"><span>Email address</span><input type="email" id="authEmail" autocomplete="email" required></label>
                 <label class="field"><span>Password</span><input type="password" id="authPassword" autocomplete="current-password" minlength="8" required></label>
@@ -2235,7 +2234,7 @@ th{font-weight:800}
             const signup = mode === 'signup';
             document.getElementById('authTitle').textContent = signup ? 'Create account' : 'Sign in';
             document.getElementById('authSubtitle').textContent = signup
-                ? 'Register with your email. A Developer will assign your role afterwards.'
+                ? 'Public viewers do not register. Register only if you are applying for an authorized league role.'
                 : 'Use your league account to open your portal.';
             document.getElementById('authSubmitBtn').textContent = signup ? 'Create account' : 'Sign in';
             document.getElementById('authSwitchLink').textContent = signup ? 'Already have an account? Sign in' : 'No account yet? Create one';
@@ -2328,7 +2327,6 @@ th{font-weight:800}
                         CLUB_ADMIN: 'Club Admin',
                         REFEREE: 'Referee / Match Official',
                         STAFF: 'League Staff',
-                        VIEWER: 'Viewer'
                     }[requestedRole] || 'requested';
                     if (data && data.session) {
                         closeAuthModal();
