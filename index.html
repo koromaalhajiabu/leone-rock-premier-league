@@ -566,6 +566,129 @@ th{font-weight:800}
           #publicLeagueBoards .board-manager-grid { grid-template-columns:minmax(0,1fr); }
         }
 
+    
+        /* ------------------------------------------------------------
+           PREMIUM UI REFRESH — presentation-only overrides
+           Preserves application logic, IDs, forms, and database calls.
+           ------------------------------------------------------------ */
+        :root {
+            --pitch: #071D18;
+            --pitch-2: #0B3027;
+            --green: #087A45;
+            --green-bright: #20C77A;
+            --blue: #1456A0;
+            --blue-dark: #0D3F79;
+            --gold: #D8B45A;
+            --gold-soft: #F7E8B8;
+            --chalk: #F4F7F6;
+            --paper: #FFFFFF;
+            --ink: #14231F;
+            --muted: #61716B;
+            --line: #DCE6E1;
+            --line-soft: #EDF2EF;
+            --radius-card: 18px;
+            --radius-panel: 14px;
+            --radius-field: 11px;
+            --shadow-card: 0 2px 5px rgba(7,29,24,.035), 0 14px 38px -24px rgba(7,29,24,.32);
+        }
+        html { scroll-behavior: smooth; scroll-padding-top: 92px; }
+        body { background: #F4F7F6; color: var(--ink); }
+        ::selection { background: rgba(216,180,90,.32); color: #071D18; }
+        .topbar { background: rgba(7,29,24,.96); border-bottom-color: rgba(216,180,90,.28); }
+        .topbar-inner { max-width: 1320px; padding-top: 13px; padding-bottom: 13px; }
+        .brand { gap: 14px; }
+        .brand-name { font-size: clamp(14px, 1.3vw, 17px); letter-spacing: .015em; }
+        .hero { background:
+            radial-gradient(ellipse at 82% 16%, rgba(216,180,90,.14), transparent 34%),
+            repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 90px, transparent 90px 180px),
+            linear-gradient(145deg, #103D30 0%, #071D18 72%); }
+        .hero-inner { max-width: 1320px; padding-top: clamp(42px, 6vw, 76px); padding-bottom: clamp(44px, 6vw, 80px); gap: clamp(24px, 4vw, 52px); }
+        .hero h1 { max-width: 12ch; text-wrap: balance; }
+        .hero-lead { max-width: 52ch; color: #D4E5DC; }
+        .scoreboard { border-color: rgba(216,180,90,.26); background: linear-gradient(160deg, #0D2C23, #061710); box-shadow: 0 32px 70px -34px rgba(0,0,0,.72); }
+        .scoreboard::before { background: linear-gradient(90deg, #20C77A 0 33.33%, #F8FAF9 33.33% 66.66%, #2F8DE4 66.66% 100%); }
+        .sb-score { color: #F7E8B8; }
+        .app-shell { max-width: 1320px; padding-top: clamp(22px, 3vw, 38px); }
+        .accordion-card { border-color: #DEE7E2; box-shadow: var(--shadow-card); transition: box-shadow .2s ease, transform .2s ease; }
+        .accordion-card:hover { box-shadow: 0 5px 18px rgba(7,29,24,.055), 0 22px 42px -28px rgba(7,29,24,.28); }
+        .accordion-header { padding: 22px 25px; }
+        .accordion-header h2 { letter-spacing: -.025em; }
+        .accordion-header:hover { background: #F8FBF9; }
+        .accordion-content { padding: clamp(16px, 2.4vw, 28px); }
+        .board { border-color: #DCE6E1; box-shadow: 0 3px 12px rgba(7,29,24,.025); }
+        .board-head { background: linear-gradient(180deg, #FBFDFC, #F5F8F6); border-bottom: 1px solid var(--line-soft); }
+        .btn { min-height: 40px; box-shadow: 0 1px 1px rgba(0,0,0,.025); transition: transform .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+        .btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(7,29,24,.12); }
+        .btn:active:not(:disabled) { transform: translateY(0); }
+        .btn-primary { background: linear-gradient(135deg, #1B66B7, #124B8C); }
+        .btn-success { background: linear-gradient(135deg, #0C9855, #087A45); }
+        .btn-outline { border-color: #D5E0DA; }
+        input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]),
+        select, textarea {
+            max-width: 100%;
+            border-color: #CFDBD4;
+            border-radius: 10px;
+            background-color: #FFFFFF;
+            color: #14231F;
+            transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+        }
+        input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):focus,
+        select:focus, textarea:focus {
+            border-color: #327DBB;
+            box-shadow: 0 0 0 3px rgba(50,125,187,.13);
+            outline: none;
+        }
+        table { border-collapse: separate; border-spacing: 0; }
+        th { background: #F3F7F4; color: #344840; font-size: 12px; letter-spacing: .045em; text-transform: uppercase; }
+        th, td { border-color: #E2EAE5; }
+        tbody tr:hover { background-color: #F7FAF8; }
+        .dropdown-content { border-color: #DCE6E1; box-shadow: 0 24px 60px -24px rgba(7,29,24,.42); }
+        .menu-item:hover { background: #F0F7F3; }
+        a { text-underline-offset: 3px; }
+        :focus-visible { outline: 3px solid #E0B957; outline-offset: 3px; }
+        @media (min-width: 1440px) {
+            .hero-inner, .topbar-inner, .app-shell { max-width: 1380px; }
+        }
+        @media (max-width: 760px) {
+            .topbar-inner { padding: 10px 14px; gap: 10px; }
+            .brand { gap: 9px; }
+            .brand-name { white-space: normal; line-height: 1.2; max-width: 190px; }
+            .topbar-actions { gap: 6px; }
+            .hero-inner { grid-template-columns: 1fr; padding: 38px 16px 42px; gap: 28px; }
+            .hero h1 { font-size: clamp(34px, 10vw, 52px); }
+            .hero-lead { font-size: 16px; }
+            .scoreboard { padding: 23px 18px 18px; }
+            .sb-score { font-size: clamp(32px, 9vw, 44px); padding: 8px 12px; }
+            .app-shell { padding: 22px 12px 48px; }
+            .accordion-card { margin-bottom: 14px; border-radius: 14px; }
+            .accordion-header { padding: 17px 15px; gap: 10px; }
+            .accordion-header h2 { font-size: 17px; }
+            .accordion-header p { font-size: 13px; }
+            .accordion-content { padding: 16px 12px; }
+            .board-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+            .section-toolbar { align-items: flex-start; }
+            .section-toolbar-actions { flex-wrap: wrap; }
+            .btn { min-height: 42px; }
+            table { font-size: 13px; }
+            th, td { padding: 9px 10px; }
+        }
+        @media (max-width: 420px) {
+            .brand-name { max-width: 145px; font-size: 13px; }
+            .topbar-actions .btn { padding: 8px 10px; font-size: 12px; }
+            .sb-match { gap: 8px; }
+            .sb-team { font-size: 14px; overflow-wrap: anywhere; }
+            .hero-actions { gap: 8px; }
+            .hero-actions .btn { width: 100%; justify-content: center; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
+
     </style>
 </head>
 <body>
