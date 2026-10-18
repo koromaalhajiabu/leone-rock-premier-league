@@ -63,12 +63,34 @@ alter table public.player_registration_history enable row level security;
 
 -- No direct browser writes: controlled changes must go through audited RPC functions.
 drop policy if exists "transfer requests readable by authenticated users" on public.player_transfer_requests;
-create policy "transfer requests readable by authenticated users"
-  on public.player_transfer_requests for select to authenticated using (true);
+create policy "transfer requests visible to involved authorized users"
+  on public.player_transfer_requests for select to authenticated using (
+    exists (
+      select 1 from public.user_profiles p
+      where p.id = auth.uid() and p.status <> 'Suspended'
+        and (
+          p.system_role in ('DEVELOPER','SUPER_ADMIN','REGISTRATION_ADMIN')
+          or (p.system_role = 'CLUB_ADMIN' and p.club_id::text in (from_club_ref, to_club_ref))
+        )
+    )
+  );
 
 drop policy if exists "registration history readable by authenticated users" on public.player_registration_history;
-create policy "registration history readable by authenticated users"
-  on public.player_registration_history for select to authenticated using (true);
+create policy "registration history visible to authorized users"
+  on public.player_registration_history for select to authenticated using (
+    exists (
+      select 1 from public.user_profiles p
+      where p.id = auth.uid() and p.status <> 'Suspended'
+        and (
+          p.system_role in ('DEVELOPER','SUPER_ADMIN','REGISTRATION_ADMIN')
+          or (p.system_role = 'CLUB_ADMIN' and exists (
+            select 1 from public.player_transfer_requests r
+            where r.id = transfer_request_id
+              and p.club_id::text in (r.from_club_ref, r.to_club_ref)
+          ))
+        )
+    )
+  );
 
 revoke insert, update, delete on public.player_transfer_requests from anon, authenticated;
 revoke insert, update, delete on public.player_registration_history from anon, authenticated;
@@ -140,8 +162,8 @@ begin
   if auth.uid() is null then raise exception 'Sign-in required'; end if;
   select * into v_profile from public.user_profiles where id = auth.uid();
   if not found or v_profile.status = 'Suspended' then raise exception 'Active profile required'; end if;
-  if v_profile.system_role not in ('DEVELOPER','SUPER_ADMIN','CLUB_ADMIN','REGISTRATION_ADMIN') then
-    raise exception 'Not authorized to confirm transfers';
+  if v_profile.system_role not in ('DEVELOPER','CLUB_ADMIN','REGISTRATION_ADMIN') then
+    raise exception 'Only Developer, Registration Admin, or the involved Club Admin may confirm transfers';
   end if;
   select * into v_request from public.player_transfer_requests where id = p_request_id for update;
   if not found then raise exception 'Transfer request not found'; end if;
