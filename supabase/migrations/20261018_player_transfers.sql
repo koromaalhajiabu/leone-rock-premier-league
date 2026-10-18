@@ -17,7 +17,7 @@ create table if not exists public.player_transfer_requests (
   reason text,
   supporting_documents jsonb not null default '[]'::jsonb,
   status text not null default 'PENDING_CURRENT_CLUB'
-    check (status in ('PENDING_CURRENT_CLUB','PENDING_RECEIVING_CLUB','UNDER_REVIEW','APPROVED','REJECTED','CANCELLED','COMPLETED')),
+    check (status in ('PENDING_CURRENT_CLUB','PENDING_RECEIVING_CLUB','UNDER_REVIEW','PENDING_SUPER_ADMIN','APPROVED','REJECTED','CANCELLED','COMPLETED')),
   submitted_by uuid not null references auth.users(id),
   current_club_confirmed_by uuid references auth.users(id),
   current_club_confirmed_at timestamptz,
@@ -162,8 +162,8 @@ begin
   if auth.uid() is null then raise exception 'Sign-in required'; end if;
   select * into v_profile from public.user_profiles where id = auth.uid();
   if not found or v_profile.status = 'Suspended' then raise exception 'Active profile required'; end if;
-  if v_profile.system_role not in ('DEVELOPER','CLUB_ADMIN','REGISTRATION_ADMIN') then
-    raise exception 'Only Developer, Registration Admin, or the involved Club Admin may confirm transfers';
+  if v_profile.system_role not in ('DEVELOPER','SUPER_ADMIN','CLUB_ADMIN','REGISTRATION_ADMIN') then
+    raise exception 'Not authorized to process transfer requests';
   end if;
   select * into v_request from public.player_transfer_requests where id = p_request_id for update;
   if not found then raise exception 'Transfer request not found'; end if;
@@ -190,16 +190,54 @@ begin
       raise exception 'Club Admin may confirm only for their own club and current workflow stage';
     end if;
   end if;
-  if not p_confirm then
-    update public.player_transfer_requests set status='REJECTED', reviewed_by=auth.uid(), reviewed_at=now(),
-      review_notes=concat_ws(E'\n',review_notes,p_note), updated_at=now()
-      where id=p_request_id;
-  else
-    if v_request.status <> 'UNDER_REVIEW' then raise exception 'Both clubs must confirm before review'; end if;
-    update public.player_transfer_requests set status='APPROVED', reviewed_by=auth.uid(), reviewed_at=now(),
-      review_notes=concat_ws(E'\n',review_notes,p_note), updated_at=now()
-      where id=p_request_id;
+  if v_profile.system_role = 'REGISTRATION_ADMIN' then
+    if v_request.status <> 'UNDER_REVIEW' then
+      raise exception 'Both clubs must confirm before Registration Admin review';
+    end if;
+    if not p_confirm then
+      update public.player_transfer_requests set status='REJECTED',
+        reviewed_by=auth.uid(), reviewed_at=now(),
+        review_notes=concat_ws(E'\\n',review_notes,'Registration Admin: ' || coalesce(p_note,'Rejected')),
+        updated_at=now() where id=p_request_id;
+    else
+      update public.player_transfer_requests set status='PENDING_SUPER_ADMIN',
+        reviewed_by=auth.uid(), reviewed_at=now(),
+        review_notes=concat_ws(E'\\n',review_notes,'Registration Admin checked: ' || coalesce(p_note,'Forwarded for Super Admin decision')),
+        updated_at=now() where id=p_request_id;
+    end if;
+    return;
   end if;
+
+  if v_profile.system_role = 'SUPER_ADMIN' then
+    if v_request.status <> 'PENDING_SUPER_ADMIN' then
+      raise exception 'Super Admin can decide only requests forwarded by Registration Admin';
+    end if;
+    if not p_confirm then
+      update public.player_transfer_requests set status='REJECTED',
+        reviewed_by=auth.uid(), reviewed_at=now(),
+        review_notes=concat_ws(E'\\n',review_notes,'Super Admin: ' || coalesce(p_note,'Rejected')),
+        updated_at=now() where id=p_request_id;
+    else
+      update public.player_transfer_requests set status='APPROVED',
+        reviewed_by=auth.uid(), reviewed_at=now(),
+        review_notes=concat_ws(E'\\n',review_notes,'Super Admin approved: ' || coalesce(p_note,'Approved')),
+        updated_at=now() where id=p_request_id;
+    end if;
+    return;
+  end if;
+
+  if v_profile.system_role = 'DEVELOPER' then
+    if v_request.status not in ('UNDER_REVIEW','PENDING_SUPER_ADMIN') then
+      raise exception 'Developer override requires both clubs to have confirmed';
+    end if;
+    update public.player_transfer_requests set
+      status=case when p_confirm then 'APPROVED' else 'REJECTED' end,
+      reviewed_by=auth.uid(), reviewed_at=now(),
+      review_notes=concat_ws(E'\\n',review_notes,'Developer override: ' || coalesce(p_note,'')),
+      updated_at=now() where id=p_request_id;
+    return;
+  end if;
+  raise exception 'Role cannot make the final decision';
 end;
 $$;
 
