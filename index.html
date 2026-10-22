@@ -1594,6 +1594,25 @@ th{font-weight:800}
                 <div id="mediaTeamList"></div>
             </div>
         </section>
+        <section id="matchAuditSection" class="accordion-card hidden" style="--accent: var(--amber); margin-top:22px;">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="matchAuditContent" onclick="toggleAccordion('matchAuditContent', this)" onkeydown="accordionKey(event, 'matchAuditContent', this)">
+                <div>
+                    <h2>Match audit trail</h2>
+                    <p>Every change to matches, results, match events, Man of the Match and referee assignments: who made it, when, and why</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="matchAuditContent" class="accordion-content">
+                <p class="hint" style="margin:0 0 10px;">Entries cannot be edited or deleted.</p>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+                    <label class="field" style="min-width:240px;"><span>Match</span><select id="auditMatchSelect" onchange="loadMatchAudit()"><option value="">All matches</option></select></label>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="loadMatchAudit()">Refresh</button>
+                </div>
+                <div id="matchAuditList" style="overflow-x:auto; margin-top:10px;"></div>
+            </div>
+        </section>
         <section id="refereePanelContainer" class="accordion-card hidden" style="--accent: var(--green-bright);">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="refereeAccordionContent" onclick="toggleAccordion('refereeAccordionContent', this)" onkeydown="accordionKey(event, 'refereeAccordionContent', this)">
                 <div>
@@ -1642,6 +1661,7 @@ th{font-weight:800}
                         Offline-ready incident log: checking sync status…
                     </div>
                     <div id="refereePendingIncidentList" class="section-hint" style="margin-top:8px;" aria-live="polite"></div>
+                    <button type="button" class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="discardRefusedRefIncidents()">Discard refused entries on this device</button>
                 </div>
 
                 <div class="form-panel" id="motmFormPanel">
@@ -1857,15 +1877,6 @@ th{font-weight:800}
                 <p id="matchAdminStatus" role="status" class="hint" style="margin-top:12px;"></p>
                 <div id="matchAdminList" style="overflow-x:auto;margin-top:10px;"></div>
                 <div id="resultApprovalBox" style="margin-top:18px;"></div>
-                <div id="matchAuditPanel" style="margin-top:22px;">
-                    <h3 style="margin:0 0 6px;">Match audit trail</h3>
-                    <p class="hint" style="margin:0 0 10px;">Every change to matches, results, match events, Man of the Match and referee assignments: who made it, when, and why. Entries cannot be edited or deleted.</p>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
-                        <label class="field" style="min-width:240px;"><span>Match</span><select id="auditMatchSelect" onchange="loadMatchAudit()"><option value="">All matches</option></select></label>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="loadMatchAudit()">Refresh</button>
-                    </div>
-                    <div id="matchAuditList" style="overflow-x:auto; margin-top:10px;"></div>
-                </div>
         <div style="margin-top:22px;">
             <h3 class="section-title">Player transfers and loans</h3>
             <p class="hint">Requests appear here once both clubs have confirmed. Approving completes the move automatically.</p>
@@ -2524,7 +2535,8 @@ th{font-weight:800}
         let sessionSeq = 0;
 
         const VIEWER_WINDOW_MS = 24 * 60 * 60 * 1000;
-        const VIEWER_EXPIRED_MSG = 'This account was not given a role within 24 hours of signing up, so it has been closed. Contact the league office, or create a new account and request a role.';
+        const ACCOUNT_CLOSED_MSG = 'This account is closed. Contact the league office for help.';
+        const VIEWER_EXPIRED_MSG ='This account was not given a role within 24 hours of signing up, so it has been closed. Contact the league office, or create a new account and request a role.';
 
         // A signed-up account that still has no role (Viewer) after 24 hours can no longer sign in.
         // Once the Developer assigns a role, the account works again.
@@ -2879,6 +2891,8 @@ th{font-weight:800}
             show('mediaAdminPanel', working && role === 'SUPER_ADMIN');
             if (working && role === 'MEDIA_OFFICER') loadMediaPortal();
             if (working && role === 'SUPER_ADMIN') { loadMediaReview(); loadMediaTeam(); }
+            show('matchAuditSection', working && (role === 'SUPER_ADMIN' || role === 'DEVELOPER'));
+            if (working && (role === 'SUPER_ADMIN' || role === 'DEVELOPER')) loadMatchAudit();
             if (role === 'PLAYER') { loadReportClubOptions(); loadMyPlayerReports(); }
             if (role === 'SUPER_ADMIN') loadAdminMedicalRecords();
             if (role === 'CLUB_ADMIN') loadClubPlayerReports();
@@ -3137,6 +3151,7 @@ th{font-weight:800}
             try {
                 if (authMode === 'signin') {
                     const { data: signInData, error } = await db.auth.signInWithPassword({ email, password });
+                    if (error && (/banned/i.test(error.message || '') || error.code === 'user_banned')) throw new Error(ACCOUNT_CLOSED_MSG);
                     if (error) throw error;
                     const signedInProfile = signInData && signInData.user ? await tryClaimPlayerRole(await fetchMyProfile(signInData.user.id), signInData.user.id) : null;
                     if (viewerWindowExpired(signedInProfile)) {
@@ -3310,6 +3325,41 @@ th{font-weight:800}
             }
         }
 
+        // Forced sign-out: if the league closes this account while someone is signed in
+        // (for example, a viewer with no role after 24 hours), end the session at once.
+        let accountWatchStarted = false;
+        let ownAccountChannelFor = null;
+        async function checkAccountStillOpen() {
+            if (!currentUser || !dbOnline) return;
+            try {
+                const { data, error } = await db.rpc('my_account_closed');
+                if (error || data !== true) return;
+                await db.auth.signOut();
+                alert(ACCOUNT_CLOSED_MSG);
+                window.location.reload();
+            } catch (err) {}
+        }
+        // Live: the moment the Developer suspends this account, the person's own profile changes and the page signs them out.
+        function ensureOwnAccountChannel() {
+            if (!currentUser || !dbOnline || ownAccountChannelFor === currentUser.id) return;
+            ownAccountChannelFor = currentUser.id;
+            try {
+                db.channel('own-account-' + currentUser.id)
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_profiles', filter: 'id=eq.' + currentUser.id },
+                        payload => { if (payload.new && payload.new.status === 'Suspended') checkAccountStillOpen(); })
+                    .subscribe();
+            } catch (err) {}
+        }
+        function startAccountWatch() {
+            if (accountWatchStarted) return;
+            accountWatchStarted = true;
+            setInterval(() => { ensureOwnAccountChannel(); checkAccountStillOpen(); }, 60 * 1000);
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) { ensureOwnAccountChannel(); checkAccountStillOpen(); }
+            });
+            ensureOwnAccountChannel();
+        }
+
         async function logoutSystem() {
             try { await db.auth.signOut(); } catch (err) {}
             alert("You have been signed out.");
@@ -3363,7 +3413,7 @@ th{font-weight:800}
         async function attachLeaderboardPhotos(rows, nameKey) {
             let squadPhotos = new Map();
             try {
-                const { data, error } = await db.from('club_squad').select('player_name, photo_url');
+                const { data, error } = await db.from('public_squad_photos').select('player_name, photo_url');
                 if (!error && Array.isArray(data)) {
                     data.forEach(player => {
                         if (player.player_name && isSafePhotoUrl(player.photo_url)) {
@@ -3735,8 +3785,13 @@ th{font-weight:800}
         async function loadMatchAudit() {
             const box = document.getElementById('matchAuditList');
             const sel = document.getElementById('auditMatchSelect');
-            if (!box || !dbOnline || !canManageMatches()) return;
+            const role = realRole();
+            if (!box || !dbOnline || (role !== 'SUPER_ADMIN' && role !== 'DEVELOPER')) return;
             if (sel) {
+                if (!MATCH_ADMIN.matches || !MATCH_ADMIN.matches.length) {
+                    const { data: list } = await db.from('matches').select('id, home_team, away_team, match_date').order('match_date', { ascending: false });
+                    MATCH_ADMIN.matches = list || [];
+                }
                 const keep = sel.value;
                 sel.innerHTML = '<option value="">All matches</option>' + (MATCH_ADMIN.matches || []).map(m =>
                     `<option value="${esc(String(m.id))}">${esc(m.home_team)} v ${esc(m.away_team)}</option>`).join('');
@@ -5340,12 +5395,14 @@ th{font-weight:800}
                             const { data: assignment, error: aerr } = await db.from('match_referee_assignments')
                                 .select('id').eq('match_id', item.payload.match_id)
                                 .eq('referee_user_id', currentUser.id).eq('assignment_status', 'ACTIVE').maybeSingle();
-                            if (aerr || !assignment) { keep.push(item); continue; }
+                            if (aerr) { keep.push(item); continue; }
+                            if (!assignment) { keep.push({ ...item, refused: 'You are not assigned to this match' }); continue; }
                         }
                         const { error } = await db.from('match_events').upsert([item.payload], {
                             onConflict: 'client_event_id', ignoreDuplicates: true
                         });
-                        if (error) { keep.push(item); continue; }
+                        // A database error code means the server refused the entry; no code means a connection problem.
+                        if (error) { keep.push(error.code ? { ...item, refused: friendlyError(error) } : item); continue; }
                         synced++;
                     } catch (_) { keep.push(item); }
                 }
@@ -5357,6 +5414,16 @@ th{font-weight:800}
             } finally {
                 refereeSyncBusy = false;
             }
+        }
+        // Removes only entries the server refused, after the referee confirms. Works on this device only.
+        function discardRefusedRefIncidents() {
+            if (!currentUser) return;
+            const all = getPendingRefIncidents();
+            const refused = all.filter(x => x.userId === currentUser.id && x.refused);
+            if (!refused.length) { renderRefereeOfflineSyncStatus('No refused entries on this device.'); return; }
+            if (!confirm('Discard ' + refused.length + ' refused incident(s) saved on this device? They were refused and will not be uploaded. This cannot be undone.')) return;
+            setPendingRefIncidents(all.filter(x => !(x.userId === currentUser.id && x.refused)));
+            renderRefereeOfflineSyncStatus('Discarded ' + refused.length + ' refused incident(s) from this device.');
         }
         window.addEventListener('online', syncPendingRefIncidents);
         window.addEventListener('offline', () => renderRefereeOfflineSyncStatus());
@@ -5532,6 +5599,7 @@ th{font-weight:800}
         }
 
         function startLiveScores() {
+            startAccountWatch();
             loadLiveScores();
             loadPublishedNews();
             try {
