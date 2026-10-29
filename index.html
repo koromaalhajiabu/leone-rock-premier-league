@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="SLFA League">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Sierra Leone Premier League | Enterprise Management Suite</title>
+    <title>Leone Rock Premier League | Enterprise Management Suite</title>
     <script>
         // Lets the site be installed as an app and open faster. Failure here never affects the page.
         if ('serviceWorker' in navigator) {
@@ -934,7 +934,7 @@ th{font-weight:800}
     <header class="topbar">
         <div class="topbar-inner">
             <div class="brand">
-                <svg width="34" height="38" viewBox="0 0 24 27" role="img" aria-label="Sierra Leone Premier League crest">
+                <svg width="34" height="38" viewBox="0 0 24 27" role="img" aria-label="Leone Rock Premier League crest">
                     <defs><clipPath id="crestShape"><path d="M12 1.2 22 4.6v8.2c0 6.2-4.5 10.4-10 12.2C6.5 23.2 2 19 2 12.8V4.6z"/></clipPath></defs>
                     <g clip-path="url(#crestShape)">
                         <rect x="0" y="0" width="24" height="9" fill="#1EB53A"/>
@@ -945,7 +945,7 @@ th{font-weight:800}
                     <circle cx="12" cy="13" r="3.6" fill="#0A2E1F"/>
                     <path d="M12 10.4l1.7 1.2-.65 2h-2.1l-.65-2z" fill="#fff"/>
                 </svg>
-                <span class="brand-name">Sierra Leone Premier League</span>
+                <span class="brand-name">Leone Rock Premier League</span>
             </div>
             <div class="topbar-actions">
                 <button type="button" id="logoutBtn" onclick="logoutSystem()" class="btn btn-ghost btn-sm hidden">Sign out</button>
@@ -1040,7 +1040,7 @@ th{font-weight:800}
         </svg>
         <div class="hero-inner">
             <div>
-                <h1>Sierra Leone<br>Premier League</h1>
+                <h1>Leone Rock<br>Premier League</h1>
                 <p class="hero-lead">Official competition information, fixtures, results and standings.</p>
                 <div class="hero-actions">
                     <a href="#standings" class="btn btn-light" style="text-decoration:none;">View standings</a>
@@ -2069,7 +2069,7 @@ th{font-weight:800}
 
     <footer>
         <div class="footer-inner">
-            <span>&copy; 2026 Sierra Leone Premier League</span>
+            <span>&copy; 2026 Leone Rock Premier League</span>
             <span class="footer-credit">Designed by Alhaji Abu Koroma</span>
         </div>
     </footer>
@@ -3496,7 +3496,7 @@ th{font-weight:800}
             try {
                 const { data } = await db.from('app_settings').select('value').eq('key', 'system_freeze').single();
                 if (data && data.value === true) {
-                    document.body.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#F3F6F2; text-align:center; padding:20px; font-family:system-ui,sans-serif;"><h1 style="color:#0A2E1F; font-size:28px;">Sierra Leone Premier League is under maintenance</h1><p style="color:#586861;">The league platform is temporarily unavailable. Please check back shortly.</p></div>`;
+                    document.body.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#F3F6F2; text-align:center; padding:20px; font-family:system-ui,sans-serif;"><h1 style="color:#0A2E1F; font-size:28px;">Leone Rock Premier League is under maintenance</h1><p style="color:#586861;">The league platform is temporarily unavailable. Please check back shortly.</p></div>`;
                 }
             } catch (err) {}
         }
