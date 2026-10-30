@@ -1075,6 +1075,53 @@ th{font-weight:800}
         .card:hover, .accordion-card:hover, .stat-card:hover { transform: translateY(-3px); }
         h1, h2, h3, .section-title { color: #0B3D6E; }
         @media (prefers-reduced-motion: reduce) { .live-dot { animation: none !important; } }
+
+        /* ==========================================================
+           READABLE BRIGHT LAYER: dark text, softer backgrounds
+           ========================================================== */
+        :root { --chalk: #E9F2EC !important; --paper: #F8FBF9 !important; --ink: #0E1B16 !important; --muted: #34503F !important; }
+        body, .card, .accordion-card, .form-panel, .table-container, .panel, .stat-card, .hero-inner, section {
+            color: #0E1B16;
+        }
+        body {
+            background:
+                radial-gradient(900px 600px at 0% -10%, rgba(30,181,58,0.14), transparent 60%),
+                radial-gradient(900px 600px at 100% 0%, rgba(11,95,165,0.12), transparent 62%),
+                linear-gradient(180deg, #EEF6F1 0%, #E6EFF8 100%) !important;
+            background-attachment: fixed;
+        }
+        h1, h2, h3, h4, .section-title, .hero h1, .section-title h2 {
+            background: none !important;
+            -webkit-background-clip: border-box !important;
+            background-clip: border-box !important;
+            -webkit-text-fill-color: #0B3D6E !important;
+            color: #0B3D6E !important;
+            animation: none !important;
+            filter: none !important;
+            text-shadow: none !important;
+        }
+        .hero h1 { text-shadow: 0 0 18px rgba(30,181,58,0.18) !important; }
+        p, li, label, td, th, span, small, .muted, .muted-cell, .hero-lead {
+            color: #22362C;
+        }
+        .muted, .muted-cell, small { color: #3A5546 !important; }
+        .card, .accordion-card, .form-panel, .table-container, .panel, .stat-card {
+            background: #F8FBF9 !important;
+            border: 1px solid rgba(11,95,165,0.22) !important;
+            box-shadow: 0 2px 10px -4px rgba(11,61,110,0.18) !important;
+        }
+        .card:hover, .accordion-card:hover, .stat-card:hover { transform: none; }
+        .hero {
+            background: linear-gradient(160deg, #F8FBF9 0%, #E4F3EA 55%, #E2EEF9 100%) !important;
+        }
+        .hero .btn-outline, .hero .btn-ghost {
+            background: #FFFFFF !important;
+            color: #0B3D6E !important;
+            border: 1px solid rgba(11,95,165,0.35) !important;
+        }
+        .readonly-notice { background: #FFFFFF !important; color: #0E1B16 !important; }
+        .scoreboard { background: linear-gradient(135deg, #0B3D6E 0%, #17703A 100%) !important; }
+        .scoreboard, .scoreboard * { color: #FFFFFF !important; }
     </style>
 </head>
 <body>
