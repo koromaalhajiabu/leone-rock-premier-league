@@ -916,6 +916,62 @@ th{font-weight:800}
         @keyframes rowFlash { from { background-color: rgba(60,203,85,.28); } to { background-color: transparent; } }
         .scoreboard.goal-flash { animation: goalFlash 1.2s ease-out; }
         .goal-flash-row td { animation: rowFlash 1.6s ease-out; }
+        /* ==========================================================
+           PREMIUM GLOW THEME (layer on top of the existing design)
+           ========================================================== */
+        :root {
+            --glow-gold: rgba(230, 185, 79, 0.55);
+            --glow-gold-soft: rgba(230, 185, 79, 0.22);
+            --glow-green: rgba(30, 181, 58, 0.25);
+        }
+        body {
+            background:
+                radial-gradient(1100px 620px at 12% -8%, rgba(230,185,79,0.16), transparent 60%),
+                radial-gradient(900px 560px at 96% 4%, rgba(30,181,58,0.14), transparent 62%),
+                var(--chalk);
+            background-attachment: fixed;
+        }
+        h1, h2, h3, .section-title, .hero-title, .page-title {
+            background: linear-gradient(180deg, #fff6d6 0%, #f0cf72 48%, #c99a2e 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 18px var(--glow-gold-soft);
+            letter-spacing: 0.005em;
+        }
+        h1, h2, h3, .section-title {
+            filter: drop-shadow(0 0 10px rgba(230,185,79,0.18));
+        }
+        .card, .accordion-card, .form-panel, .table-container, .panel, .stat-card {
+            border: 1px solid rgba(230,185,79,0.35) !important;
+            box-shadow: 0 0 0 1px rgba(230,185,79,0.06), 0 0 28px -8px var(--glow-gold-soft), 0 14px 34px -18px rgba(10,46,31,0.35) !important;
+            transition: box-shadow .3s ease, transform .3s ease;
+        }
+        .card:hover, .accordion-card:hover, .stat-card:hover {
+            box-shadow: 0 0 0 1px rgba(230,185,79,0.18), 0 0 36px -6px var(--glow-gold), 0 18px 40px -18px rgba(10,46,31,0.4) !important;
+        }
+        button, .btn {
+            transition: box-shadow .25s ease, transform .15s ease, filter .25s ease;
+        }
+        .btn-primary, button.primary, .btn-danger {
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset, 0 0 18px -4px var(--glow-gold);
+        }
+        .btn-primary:hover, button.primary:hover {
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.2) inset, 0 0 26px -2px var(--glow-gold);
+            transform: translateY(-1px);
+        }
+        .btn-outline:hover, .btn:hover {
+            box-shadow: 0 0 16px -4px var(--glow-gold-soft);
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none !important;
+            border-color: rgba(230,185,79,0.9) !important;
+            box-shadow: 0 0 0 3px rgba(230,185,79,0.22), 0 0 18px -4px var(--glow-gold) !important;
+        }
+        .badge, .pill, .chip, .status-pill {
+            box-shadow: 0 0 12px -3px currentColor;
+        }
+        ::selection { background: rgba(230,185,79,0.35); color: var(--ink); }
     </style>
 </head>
 <body>
