@@ -1336,6 +1336,45 @@ th{font-weight:800}
         @media (prefers-reduced-motion: reduce) {
             .scoreboard::before { animation: none; }
         }
+
+        /* ==========================================================
+           SEASON LIVE UPDATE: bright green glass with a glow
+           ========================================================== */
+        .scoreboard {
+            background:
+                linear-gradient(135deg, rgba(22,163,74,0.86) 0%, rgba(15,128,70,0.90) 50%, rgba(8,96,72,0.92) 100%),
+                rgba(255,255,255,0.10) !important;
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            backdrop-filter: blur(14px) saturate(160%);
+            border: 1px solid rgba(255,255,255,0.55) !important;
+            border-radius: 22px;
+            box-shadow:
+                0 0 0 1px rgba(134,239,172,0.35) inset,
+                0 18px 40px -16px rgba(16,140,90,0.55),
+                0 0 34px -4px rgba(74,222,128,0.65) !important;
+            position: relative;
+            overflow: hidden;
+        }
+        .scoreboard::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.28) 50%, transparent 65%);
+            background-size: 250% 100%;
+            animation: glassSweep 5.5s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes glassSweep { 0% { background-position: 120% 0; } 100% { background-position: -120% 0; } }
+        .scoreboard, .scoreboard *:not(.live-dot) {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+            text-shadow: 0 1px 2px rgba(6,60,38,0.45), 0 0 12px rgba(187,247,208,0.7) !important;
+        }
+        .scoreboard > * { position: relative; z-index: 1; }
+        .scoreboard .live-dot {
+            background: #DCFCE7 !important;
+            box-shadow: 0 0 10px rgba(220,252,231,0.9), 0 0 22px rgba(74,222,128,0.9) !important;
+        }
+        @media (prefers-reduced-motion: reduce) { .scoreboard::after { animation: none !important; } }
     </style>
 </head>
 <body>
