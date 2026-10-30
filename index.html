@@ -1389,16 +1389,31 @@ th{font-weight:800}
         .hero {
             background: linear-gradient(160deg, #E6F6EE 0%, #D3EEE4 45%, #D7E9F8 100%) !important;
         }
-        /* Site-wide notice: solid blue-to-green bar with white, readable text */
+        /* Site-wide notice: light glass bar with a shiny, glowing, looping blue message */
         #systemNotificationBanner.banner {
-            background: linear-gradient(100deg, #0B5FA5 0%, #0E8A4E 60%, #1EB53A 100%) !important;
-            color: #FFFFFF !important;
-            border-bottom: 1px solid rgba(255,255,255,0.25) !important;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+            background: linear-gradient(100deg, rgba(255,255,255,0.97) 0%, #EAF6FF 60%, #F2FBF6 100%) !important;
+            border-bottom: 1px solid rgba(11,95,165,0.25) !important;
+            box-shadow: 0 4px 18px rgba(11,95,165,0.18);
             font-size: 15px;
         }
-        #systemNotificationBanner #bannerTextContent { color: #FFFFFF !important; }
-        #systemNotificationBanner button { color: #FFFFFF !important; }
+        #systemNotificationBanner #bannerTextContent {
+            font-weight: 700;
+            background: linear-gradient(90deg, #0B5FA5, #2EA8FF, #7FD4FF, #0B5FA5, #2EA8FF);
+            background-size: 220% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
+            animation: noticeShine 4s linear infinite;
+            filter: drop-shadow(0 0 4px rgba(46,168,255,0.7)) drop-shadow(0 0 10px rgba(11,95,165,0.45));
+        }
+        @keyframes noticeShine {
+            from { background-position: 0% 50%; }
+            to   { background-position: 220% 50%; }
+        }
+        #systemNotificationBanner button { color: #0B5FA5 !important; }
+        @media (prefers-reduced-motion: reduce) {
+            #systemNotificationBanner #bannerTextContent { animation: none; }
+        }
     </style>
 </head>
 <body>
