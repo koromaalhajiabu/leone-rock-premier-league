@@ -1375,6 +1375,20 @@ th{font-weight:800}
             box-shadow: 0 0 10px rgba(220,252,231,0.9), 0 0 22px rgba(74,222,128,0.9) !important;
         }
         @media (prefers-reduced-motion: reduce) { .scoreboard::after { animation: none !important; } }
+
+        /* Background: a soft mix of green and blue */
+        body {
+            background:
+                radial-gradient(1000px 620px at 0% -6%, rgba(30,181,58,0.30), transparent 62%),
+                radial-gradient(900px 600px at 100% 8%, rgba(11,95,165,0.24), transparent 62%),
+                radial-gradient(900px 560px at 30% 60%, rgba(30,181,58,0.14), transparent 62%),
+                radial-gradient(900px 560px at 85% 100%, rgba(11,95,165,0.20), transparent 62%),
+                linear-gradient(160deg, #DDF4E8 0%, #E3F1EE 40%, #DCEBF8 75%, #D6EAF6 100%) !important;
+            background-attachment: fixed;
+        }
+        .hero {
+            background: linear-gradient(160deg, #E6F6EE 0%, #D3EEE4 45%, #D7E9F8 100%) !important;
+        }
     </style>
 </head>
 <body>
