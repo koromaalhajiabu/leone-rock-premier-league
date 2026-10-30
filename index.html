@@ -1017,6 +1017,64 @@ th{font-weight:800}
             body, h1, h2, h3, .section-title, .hero-title, .page-title, .card::after, .accordion-card::after { animation: none !important; }
             .card:hover, .accordion-card:hover, .stat-card:hover { transform: none; }
         }
+
+        /* ==========================================================
+           BRIGHT, DYNAMIC LAYER (overrides the dark saved theme)
+           ========================================================== */
+        :root { --chalk: #F2FBF6 !important; --paper: #FFFFFF !important; }
+        body {
+            background:
+                radial-gradient(900px 600px at 0% -10%, rgba(30,181,58,0.22), transparent 60%),
+                radial-gradient(900px 600px at 100% 0%, rgba(11,95,165,0.20), transparent 62%),
+                linear-gradient(180deg, #F7FCF9 0%, #EEF6FF 100%) !important;
+            background-attachment: fixed;
+            color: #0E1B16;
+        }
+        .topbar {
+            background: linear-gradient(110deg, #0B5FA5 0%, #1EB53A 100%) !important;
+            border-bottom: none !important;
+            box-shadow: 0 10px 30px -10px rgba(11,95,165,0.45) !important;
+        }
+        .hero {
+            background:
+                radial-gradient(700px 400px at 90% 0%, rgba(59,158,230,0.25), transparent 60%),
+                linear-gradient(160deg, #FFFFFF 0%, #E6F7EC 50%, #E3F0FF 100%) !important;
+        }
+        .hero, .hero p, .hero-lead { color: #0E1B16 !important; }
+        .hero h1 {
+            color: #0B5FA5 !important;
+            background: none !important;
+            -webkit-text-fill-color: #0B5FA5 !important;
+            text-shadow: 0 0 22px rgba(30,181,58,0.25);
+            animation: none !important;
+        }
+        .hero .btn-outline, .hero .btn-ghost {
+            background: #FFFFFF !important;
+            color: #0B5FA5 !important;
+            border: 1px solid rgba(11,95,165,0.35) !important;
+        }
+        .readonly-notice {
+            background: #FFFFFF !important;
+            color: #0B3D6E !important;
+            border: 1px solid rgba(30,181,58,0.45) !important;
+            box-shadow: 0 0 22px -8px rgba(30,181,58,0.35);
+        }
+        .scoreboard {
+            background: linear-gradient(135deg, #0B5FA5 0%, #1EB53A 100%) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            box-shadow: 0 22px 44px -18px rgba(11,95,165,0.55), 0 0 36px -8px rgba(30,181,58,0.45) !important;
+        }
+        .scoreboard * { color: #FFFFFF !important; }
+        .scoreboard .live-dot { background: #FFFFFF !important; box-shadow: 0 0 0 0 rgba(255,255,255,.7); animation: pulseDot 1.6s ease-out infinite; }
+        @keyframes pulseDot { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,.7); } 100% { box-shadow: 0 0 0 10px rgba(255,255,255,0); } }
+        .card, .accordion-card, .form-panel, .table-container, .panel, .stat-card {
+            background: #FFFFFF !important;
+            border: 1px solid rgba(11,95,165,0.14) !important;
+        }
+        .card:hover, .accordion-card:hover, .stat-card:hover { transform: translateY(-3px); }
+        h1, h2, h3, .section-title { color: #0B3D6E; }
+        @media (prefers-reduced-motion: reduce) { .live-dot { animation: none !important; } }
     </style>
 </head>
 <body>
