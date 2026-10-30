@@ -1259,6 +1259,21 @@ th{font-weight:800}
         @media (prefers-reduced-motion: reduce) {
             h1, h2, h3, h4, .section-title, .hero h1, [class*="kicker"], [class*="eyebrow"] { animation: none !important; }
         }
+        /* More green in the page background */
+        body {
+            background:
+                radial-gradient(1000px 640px at 0% -8%, rgba(30,181,58,0.34), transparent 62%),
+                radial-gradient(900px 600px at 100% 6%, rgba(30,181,58,0.22), transparent 62%),
+                radial-gradient(900px 520px at 50% 105%, rgba(11,95,165,0.16), transparent 62%),
+                linear-gradient(180deg, #D9F2E3 0%, #E4F4EC 45%, #E6EFF8 100%) !important;
+            background-attachment: fixed;
+        }
+        .hero {
+            background: linear-gradient(160deg, #EAF8F0 0%, #CDEEDB 55%, #DDEBF8 100%) !important;
+        }
+        .card, .accordion-card, .form-panel, .table-container, .panel, .stat-card {
+            background: #F3FBF6 !important;
+        }
     </style>
 </head>
 <body>
