@@ -917,61 +917,106 @@ th{font-weight:800}
         .scoreboard.goal-flash { animation: goalFlash 1.2s ease-out; }
         .goal-flash-row td { animation: rowFlash 1.6s ease-out; }
         /* ==========================================================
-           PREMIUM GLOW THEME (layer on top of the existing design)
+           DYNAMIC GREEN / WHITE / BLUE THEME (layer on top of the design)
            ========================================================== */
         :root {
-            --glow-gold: rgba(230, 185, 79, 0.55);
-            --glow-gold-soft: rgba(230, 185, 79, 0.22);
+            --gold: #1E9E5A;
+            --gold-soft: #CFEFDF;
+            --glow-a: rgba(30, 181, 58, 0.45);
+            --glow-b: rgba(11, 95, 165, 0.38);
+            --glow-w: rgba(255, 255, 255, 0.55);
+            --glow-gold: var(--glow-a);
+            --glow-gold-soft: rgba(30, 181, 58, 0.2);
             --glow-green: rgba(30, 181, 58, 0.25);
         }
         body {
             background:
-                radial-gradient(1100px 620px at 12% -8%, rgba(230,185,79,0.16), transparent 60%),
-                radial-gradient(900px 560px at 96% 4%, rgba(30,181,58,0.14), transparent 62%),
+                radial-gradient(900px 560px at 10% -10%, rgba(30,181,58,0.20), transparent 60%),
+                radial-gradient(900px 600px at 100% 0%, rgba(11,95,165,0.18), transparent 62%),
+                radial-gradient(800px 500px at 50% 110%, rgba(255,255,255,0.7), transparent 60%),
                 var(--chalk);
+            background-size: 140% 140%, 140% 140%, 100% 100%, auto;
             background-attachment: fixed;
+            animation: bgDrift 18s ease-in-out infinite alternate;
+        }
+        @keyframes bgDrift {
+            0%   { background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+            100% { background-position: 30% 20%, 70% 30%, 40% 80%, 0 0; }
         }
         h1, h2, h3, .section-title, .hero-title, .page-title {
-            background: linear-gradient(180deg, #fff6d6 0%, #f0cf72 48%, #c99a2e 100%);
+            background: linear-gradient(100deg, #0B5FA5 0%, #1EB53A 28%, #ffffff 50%, #1EB53A 72%, #0B5FA5 100%);
+            background-size: 240% 100%;
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 18px var(--glow-gold-soft);
-            letter-spacing: 0.005em;
+            animation: shimmer 6s linear infinite;
+            text-shadow: 0 0 18px rgba(30,181,58,0.18);
+        }
+        @keyframes shimmer {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 240% 50%; }
         }
         h1, h2, h3, .section-title {
-            filter: drop-shadow(0 0 10px rgba(230,185,79,0.18));
+            filter: drop-shadow(0 0 10px rgba(11,95,165,0.16));
         }
         .card, .accordion-card, .form-panel, .table-container, .panel, .stat-card {
-            border: 1px solid rgba(230,185,79,0.35) !important;
-            box-shadow: 0 0 0 1px rgba(230,185,79,0.06), 0 0 28px -8px var(--glow-gold-soft), 0 14px 34px -18px rgba(10,46,31,0.35) !important;
-            transition: box-shadow .3s ease, transform .3s ease;
+            border: 1px solid rgba(30,181,58,0.30) !important;
+            box-shadow: 0 0 0 1px rgba(11,95,165,0.06), 0 0 30px -8px var(--glow-a), 0 14px 34px -18px rgba(10,46,31,0.35) !important;
+            transition: box-shadow .35s ease, transform .35s ease, border-color .35s ease;
+            position: relative;
         }
         .card:hover, .accordion-card:hover, .stat-card:hover {
-            box-shadow: 0 0 0 1px rgba(230,185,79,0.18), 0 0 36px -6px var(--glow-gold), 0 18px 40px -18px rgba(10,46,31,0.4) !important;
+            border-color: rgba(11,95,165,0.45) !important;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.4), 0 0 40px -6px var(--glow-b), 0 18px 40px -18px rgba(10,46,31,0.4) !important;
+            transform: translateY(-2px);
+        }
+        .card::after, .accordion-card::after {
+            content: "";
+            position: absolute; inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(120deg, #1EB53A, #ffffff, #0B5FA5, #1EB53A);
+            background-size: 300% 300%;
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity .4s ease;
+            pointer-events: none;
+            animation: borderFlow 8s linear infinite;
+        }
+        .card:hover::after, .accordion-card:hover::after { opacity: .75; }
+        @keyframes borderFlow {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
         }
         button, .btn {
             transition: box-shadow .25s ease, transform .15s ease, filter .25s ease;
         }
         .btn-primary, button.primary, .btn-danger {
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset, 0 0 18px -4px var(--glow-gold);
+            background-image: linear-gradient(120deg, #0B5FA5, #1EB53A) !important;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 18px -4px var(--glow-a);
         }
         .btn-primary:hover, button.primary:hover {
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.2) inset, 0 0 26px -2px var(--glow-gold);
-            transform: translateY(-1px);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.3) inset, 0 0 28px -2px var(--glow-b);
+            transform: translateY(-1px) scale(1.01);
         }
         .btn-outline:hover, .btn:hover {
-            box-shadow: 0 0 16px -4px var(--glow-gold-soft);
+            box-shadow: 0 0 16px -4px var(--glow-b);
         }
         input:focus, select:focus, textarea:focus {
             outline: none !important;
-            border-color: rgba(230,185,79,0.9) !important;
-            box-shadow: 0 0 0 3px rgba(230,185,79,0.22), 0 0 18px -4px var(--glow-gold) !important;
+            border-color: rgba(11,95,165,0.9) !important;
+            box-shadow: 0 0 0 3px rgba(30,181,58,0.22), 0 0 18px -4px var(--glow-b) !important;
         }
         .badge, .pill, .chip, .status-pill {
             box-shadow: 0 0 12px -3px currentColor;
         }
-        ::selection { background: rgba(230,185,79,0.35); color: var(--ink); }
+        ::selection { background: rgba(30,181,58,0.35); color: var(--ink); }
+        @media (prefers-reduced-motion: reduce) {
+            body, h1, h2, h3, .section-title, .hero-title, .page-title, .card::after, .accordion-card::after { animation: none !important; }
+            .card:hover, .accordion-card:hover, .stat-card:hover { transform: none; }
+        }
     </style>
 </head>
 <body>
