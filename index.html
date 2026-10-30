@@ -1895,6 +1895,18 @@ th{font-weight:800}
                     </div>
                 </div>
 
+                <div class="form-panel" id="cleanupPanel" style="margin-bottom:24px;">
+                    <h3>Clean up unassigned accounts</h3>
+                    <p class="muted-cell" style="margin:6px 0 12px;">Lists accounts still waiting for a role after 14 days, with no pending or approved role request. Review the list before removing anyone. Removals are recorded.</p>
+                    <div class="form-actions" style="margin-top:0;">
+                        <button type="button" onclick="loadUnassignedAccounts()" class="btn btn-outline">Review unassigned accounts</button>
+                    </div>
+                    <div id="cleanupList" style="margin-top:12px;"></div>
+                    <div class="form-actions" id="cleanupActions" style="display:none;">
+                        <button type="button" onclick="removeSelectedUnassigned()" class="btn btn-danger">Remove selected accounts</button>
+                    </div>
+                </div>
+
                 <div class="flex-row">
                     <h3 class="section-title" style="margin:0;">User accounts</h3>
                     <button type="button" onclick="fetchMasterUserDirectory()" class="btn btn-outline btn-sm">Refresh</button>
@@ -5647,6 +5659,45 @@ th{font-weight:800}
             const { error } = await db.from('user_profiles').update({ status: newStatus }).eq('id', userId);
             if (error) alert("Could not change the status: " + error.message);
             fetchMasterUserDirectory();
+        }
+
+        // ------------------------------------------------------------------
+        // CLEAN UP UNASSIGNED ACCOUNTS (Developer only; uses the database functions in supabase-cleanup-unassigned-accounts.sql)
+        // ------------------------------------------------------------------
+        async function loadUnassignedAccounts() {
+            const box = document.getElementById('cleanupList');
+            const actions = document.getElementById('cleanupActions');
+            box.innerHTML = '<p class="muted-cell">Loading...</p>';
+            actions.style.display = 'none';
+            try {
+                const { data, error } = await db.rpc('list_unassigned_accounts', { p_older_than_days: 14 });
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    box.innerHTML = '<p class="muted-cell">No unassigned accounts to review.</p>';
+                    return;
+                }
+                box.innerHTML = '<table><thead><tr><th></th><th>Name</th><th>Email</th><th>Signed up</th><th>Days waiting</th></tr></thead><tbody>' +
+                    data.map(u => `<tr><td><input type="checkbox" class="cleanup-check" value="${esc(u.user_id)}"></td><td>${esc(u.full_name || '')}</td><td>${esc(u.email || '')}</td><td>${esc(new Date(u.created_at).toLocaleDateString())}</td><td>${esc(u.days_waiting)}</td></tr>`).join('') +
+                    '</tbody></table>';
+                actions.style.display = 'flex';
+            } catch (err) {
+                box.innerHTML = '<p class="muted-cell">Could not load accounts: ' + esc(err.message || err) + '</p>';
+            }
+        }
+
+        async function removeSelectedUnassigned() {
+            const ids = Array.from(document.querySelectorAll('.cleanup-check:checked')).map(c => c.value);
+            if (ids.length === 0) { alert('Select at least one account to remove.'); return; }
+            if (!confirm('Permanently remove ' + ids.length + ' unassigned account(s)? This cannot be undone.')) return;
+            try {
+                const { data, error } = await db.rpc('remove_unassigned_accounts', { p_user_ids: ids, p_older_than_days: 14 });
+                if (error) throw error;
+                alert('Removed ' + data + ' account(s).');
+                await loadUnassignedAccounts();
+                fetchMasterUserDirectory();
+            } catch (err) {
+                alert('Could not remove accounts: ' + (err.message || err));
+            }
         }
 
         // ------------------------------------------------------------------
