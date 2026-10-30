@@ -1226,6 +1226,39 @@ th{font-weight:800}
         }
         .scoreboard, .scoreboard *:not(.live-dot) { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
         .scoreboard *:not(.live-dot) { text-shadow: 0 0 10px rgba(255,255,255,0.45) !important; }
+
+        /* ==========================================================
+           LOOPING SHINE: green and blue base with a white sheen
+           ========================================================== */
+        @property --shine-x { syntax: '<percentage>'; inherits: false; initial-value: -60%; }
+        @keyframes sheen { 0% { --shine-x: -60%; } 100% { --shine-x: 160%; } }
+        @keyframes hueLoop {
+            0%, 100% { background-position: 0% 50%; }
+            50%      { background-position: 100% 50%; }
+        }
+        h1, h2, h3, h4, .section-title, .hero h1, [class*="kicker"], [class*="eyebrow"] {
+            background-image:
+                linear-gradient(105deg, transparent 0%, transparent calc(var(--shine-x) - 12%), rgba(255,255,255,0.95) var(--shine-x), transparent calc(var(--shine-x) + 12%)),
+                linear-gradient(100deg, #0A7A44 0%, #1EB53A 25%, #0B5FA5 50%, #1EB53A 75%, #0A7A44 100%) !important;
+            background-size: 100% 100%, 240% 100%;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            color: transparent !important;
+            animation: sheen 3.6s ease-in-out infinite, hueLoop 7s ease-in-out infinite !important;
+            text-shadow: none !important;
+            filter: drop-shadow(0 0 8px rgba(30,181,58,0.35)) drop-shadow(0 0 16px rgba(11,95,165,0.25));
+        }
+        .sb-status, .scoreboard [class*="kicker"], .scoreboard h1, .scoreboard h2, .scoreboard h3 {
+            -webkit-text-fill-color: #FFFFFF !important;
+            color: #FFFFFF !important;
+            background: none !important;
+            animation: none !important;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5) !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            h1, h2, h3, h4, .section-title, .hero h1, [class*="kicker"], [class*="eyebrow"] { animation: none !important; }
+        }
     </style>
 </head>
 <body>
