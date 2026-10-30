@@ -1274,6 +1274,68 @@ th{font-weight:800}
         .card, .accordion-card, .form-panel, .table-container, .panel, .stat-card {
             background: #F3FBF6 !important;
         }
+
+        /* ==========================================================
+           HERO POLISH: calmer title, background, buttons, notice, scoreboard
+           ========================================================== */
+        .hero h1 {
+            background-image:
+                linear-gradient(105deg, transparent 0%, transparent calc(var(--shine-x) - 6%), rgba(255,255,255,0.7) var(--shine-x), transparent calc(var(--shine-x) + 6%)),
+                linear-gradient(100deg, #0A7A44 0%, #13A24E 35%, #0B5FA5 70%, #0A7A44 100%) !important;
+            background-size: 100% 100%, 200% 100%;
+            animation: sheen 5.5s ease-in-out infinite, hueLoop 12s ease-in-out infinite !important;
+            filter: drop-shadow(0 0 6px rgba(30,181,58,0.25));
+        }
+        body {
+            background:
+                radial-gradient(1100px 640px at 0% -10%, rgba(30,181,58,0.26), transparent 62%),
+                radial-gradient(900px 600px at 100% 4%, rgba(30,181,58,0.16), transparent 62%),
+                radial-gradient(900px 520px at 50% 108%, rgba(11,95,165,0.12), transparent 62%),
+                linear-gradient(180deg, #E2F5EA 0%, #E8F3EE 50%, #E8EFF7 100%) !important;
+        }
+        .hero .btn-primary, .hero button.primary, .hero [class*="btn-primary"] {
+            background-image: linear-gradient(120deg, #0A7A44 0%, #13A24E 55%, #0B5FA5 100%) !important;
+            color: #FFFFFF !important;
+            border: 1px solid rgba(255,255,255,0.35) !important;
+            box-shadow: 0 10px 22px -10px rgba(10,122,68,0.55), 0 0 0 1px rgba(255,255,255,0.4) inset !important;
+            font-weight: 800;
+            border-radius: 14px;
+        }
+        .hero .btn-outline, .hero .btn-ghost, .hero button:not(.btn-primary) {
+            background: rgba(255,255,255,0.92) !important;
+            color: #0B3D6E !important;
+            border: 1px solid rgba(11,95,165,0.28) !important;
+            box-shadow: 0 6px 16px -10px rgba(11,61,110,0.35) !important;
+            border-radius: 14px;
+            font-weight: 700;
+        }
+        .readonly-notice {
+            background: rgba(255,255,255,0.9) !important;
+            color: #0E2A1F !important;
+            border: 1px solid rgba(30,181,58,0.4) !important;
+            border-radius: 18px;
+            box-shadow: 0 8px 20px -14px rgba(10,122,68,0.5) !important;
+        }
+        .scoreboard {
+            background: linear-gradient(135deg, #0B3D6E 0%, #0E6B47 100%) !important;
+            border-radius: 22px;
+            border: 1px solid rgba(255,255,255,0.18) !important;
+            box-shadow: 0 24px 46px -20px rgba(11,61,110,0.55), 0 0 28px -10px rgba(30,181,58,0.45) !important;
+            position: relative;
+            overflow: hidden;
+        }
+        .scoreboard::before {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+            background-size: 250% 100%;
+            animation: sheen 6s linear infinite;
+            pointer-events: none;
+        }
+        .scoreboard > * { position: relative; }
+        @media (prefers-reduced-motion: reduce) {
+            .scoreboard::before { animation: none; }
+        }
     </style>
 </head>
 <body>
