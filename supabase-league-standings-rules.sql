@@ -20,7 +20,7 @@ declare
     v_gd_first boolean;
     v_h2h boolean := false;
 begin
-    select r.points_win, r.points_draw, r.points_loss, r.tiebreaker_order
+    select r.points_win, r.points_draw, r.points_loss, r.tiebreaker_order, r.use_head_to_head
       into rule
     from public.competition_rules r
     join public.seasons s on s.id = r.season_id
