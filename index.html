@@ -1625,6 +1625,19 @@ th{font-weight:800}
             50% { color: #FFFFFF; }
         }
         @media (prefers-reduced-motion: reduce) { .footer-copy { animation: none; color: #FFFFFF; } }
+        /* Android download link: a glass button whose text glows and cycles blue, white and blue. */
+        .apk-download {
+            display: inline-block; padding: 8px 16px; border-radius: 999px; font-weight: 700; text-decoration: none;
+            background: rgba(0,114,198,0.14); border: 1px solid rgba(93,184,255,0.45);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            text-shadow: 0 0 10px rgba(93,184,255,0.7), 0 0 18px rgba(255,255,255,0.3);
+            animation: apkDownloadGlow 4s ease-in-out infinite;
+        }
+        @keyframes apkDownloadGlow {
+            0%, 100% { color: #5DB8FF; }
+            50% { color: #FFFFFF; }
+        }
+        @media (prefers-reduced-motion: reduce) { .apk-download { animation: none; color: #FFFFFF; } }
     </style>
 </head>
 <body>
@@ -2789,7 +2802,7 @@ th{font-weight:800}
     <footer>
         <div class="footer-inner">
             <span class="footer-copy">&copy; 2026 Sierra Leone Football Association · Leone Rock Premier League</span>
-            <a href="slfa-league.apk" download style="color:inherit;font-weight:700;text-decoration:underline;">Download the Android app</a>
+            <a href="slfa-league.apk" download class="apk-download">Download the Android app</a>
             <span class="footer-credit">Designed by Alhaji Abu Koroma</span>
         </div>
     </footer>
