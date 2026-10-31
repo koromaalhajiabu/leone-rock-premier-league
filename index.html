@@ -1484,6 +1484,32 @@ th{font-weight:800}
         #adminDropdownContent .menu-item:hover { background: #EEF5F0 !important; }
         #adminDropdownContent .session-info { color: #53645B !important; }
         #adminDropdownContent .session-info strong { color: #0E1B16 !important; }
+
+        /* Section bars: dark text on a light surface, so every label stays readable */
+        .section-toolbar,
+        .section-title,
+        .block {
+            background: #FFFFFF !important;
+            color: #0E1B16 !important;
+            border-color: var(--line) !important;
+        }
+        /* Headings: solid colour only. Gradient text faded out in its pale middle and hid letters. */
+        h1, h2, h3, h4, .section-title, .page-title, .hero-title, .accordion-header h2, .accordion-header h3, .board-head h3 {
+            background: none !important;
+            -webkit-background-clip: border-box !important;
+            background-clip: border-box !important;
+            -webkit-text-fill-color: #0B3D6E !important;
+            color: #0B3D6E !important;
+            text-shadow: none !important;
+            filter: none !important;
+            animation: none !important;
+        }
+        .section-toolbar span,
+        .section-toolbar strong,
+        .section-title,
+        .section-toolbar button { color: #0E1B16 !important; }
+        .section-toolbar .section-hint,
+        .section-toolbar small { color: #53645B !important; }
     </style>
 </head>
 <body>
