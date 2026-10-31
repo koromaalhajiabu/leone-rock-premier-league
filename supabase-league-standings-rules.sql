@@ -1,6 +1,8 @@
--- Standings that follow the competition rules (points per result, tie-breaker order, positions).
--- Reads the current season's "League" row in competition_rules. If there is none, it uses 3 / 1 / 0
--- and goal difference then goals scored. Head-to-head is not applied yet.
+-- Standings that follow the competition rules (points per result, head-to-head, tie-breaker order, positions).
+-- Reads the current season's "League" row in competition_rules. If there is none, it uses 3 / 1 / 0,
+-- no head-to-head, and goal difference then goals scored.
+-- Head-to-head: clubs level on points are ranked by their results against each other first (points,
+-- then goal difference, then goals scored in those games), when use_head_to_head is true.
 -- Safe to run more than once. Changes only the standings calculation.
 
 create or replace function public.recalculate_leone_rock_standings()
@@ -16,6 +18,7 @@ declare
     v_loss integer := 0;
     v_tiebreak text[] := array['goal_difference', 'goals_for'];
     v_gd_first boolean;
+    v_h2h boolean := false;
 begin
     select r.points_win, r.points_draw, r.points_loss, r.tiebreaker_order
       into rule
@@ -31,6 +34,7 @@ begin
         if rule.tiebreaker_order is not null then
             v_tiebreak := rule.tiebreaker_order;
         end if;
+        v_h2h := coalesce(rule.use_head_to_head, false);
     end if;
 
     v_gd_first := coalesce(array_position(v_tiebreak, 'goal_difference'), 99)
@@ -73,18 +77,38 @@ begin
             or lower(trim(r.away_team)) = lower(trim(s.club)))
     );
 
-    -- Positions: points first, then the tie-breakers in the order the rules set.
+    -- Positions: points first, then head-to-head (if the rule uses it), then the tie-breakers in the order the rules set.
     update public.league_standings s
     set pos = ranked.rn
     from (
-        select club,
+        select st.club,
                row_number() over (
-                   order by pts desc,
-                            case when v_gd_first then gf - ga else gf end desc,
-                            case when v_gd_first then gf else gf - ga end desc,
-                            club
+                   order by st.pts desc,
+                            case when v_h2h then coalesce(h.h2h_pts, 0) else 0 end desc,
+                            case when v_h2h then coalesce(h.h2h_gd, 0) else 0 end desc,
+                            case when v_h2h then coalesce(h.h2h_gf, 0) else 0 end desc,
+                            case when v_gd_first then st.gf - st.ga else st.gf end desc,
+                            case when v_gd_first then st.gf else st.gf - st.ga end desc,
+                            st.club
                )::integer as rn
-        from public.league_standings
+        from public.league_standings st
+        left join (
+            -- Results between clubs level on points only.
+            select g.club,
+                   sum(case when g.gf > g.ga then v_win when g.gf = g.ga then v_draw else v_loss end)::integer as h2h_pts,
+                   sum(g.gf - g.ga)::integer as h2h_gd,
+                   sum(g.gf)::integer as h2h_gf
+            from (
+                select trim(home_team) as club, trim(away_team) as opp, home_goals as gf, away_goals as ga
+                from public.match_results where status = 'CONFIRMED'
+                union all
+                select trim(away_team) as club, trim(home_team) as opp, away_goals as gf, home_goals as ga
+                from public.match_results where status = 'CONFIRMED'
+            ) g
+            join public.league_standings a on a.club = g.club
+            join public.league_standings b on b.club = g.opp and b.pts = a.pts
+            group by g.club
+        ) h on h.club = st.club
     ) ranked
     where s.club = ranked.club;
 end;
