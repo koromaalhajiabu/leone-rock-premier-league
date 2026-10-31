@@ -1500,10 +1500,37 @@ th{font-weight:800}
             background-clip: border-box !important;
             -webkit-text-fill-color: #0B3D6E !important;
             color: #0B3D6E !important;
-            text-shadow: none !important;
+            text-shadow: 0 0 12px rgba(30,181,58,0.55), 0 0 26px rgba(30,181,58,0.28) !important;
             filter: none !important;
             animation: none !important;
         }
+
+        /* Admin menu: a fixed panel on the right edge of the screen, above everything */
+        .topbar, .banner {
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        #adminDropdownContent.dropdown-content {
+            position: fixed !important;
+            top: 74px !important;
+            right: 12px !important;
+            left: auto !important;
+            width: min(300px, calc(100vw - 24px)) !important;
+            max-width: calc(100vw - 24px) !important;
+            min-width: 0 !important;
+            transform: none !important;
+            z-index: 2000 !important;
+            background: #FFFFFF !important;
+            color: #0E1B16 !important;
+            border: 1px solid #C9D6CD !important;
+            border-radius: 14px !important;
+            box-shadow: 0 24px 48px -12px rgba(0,0,0,0.45) !important;
+            padding: 8px !important;
+            font-family: var(--font, system-ui, sans-serif) !important;
+            font-size: 15px !important;
+            line-height: 1.4 !important;
+        }
+        #adminDropdownContent.dropdown-content.show-dropdown { display: block !important; visibility: visible !important; opacity: 1 !important; }
         .section-toolbar span,
         .section-toolbar strong,
         .section-title,
