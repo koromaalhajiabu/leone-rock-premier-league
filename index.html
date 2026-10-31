@@ -5237,12 +5237,15 @@ th{font-weight:800}
                     club: String(row.club || row.club_name || 'Unnamed club'),
                     mp: number(row.mp), w: number(row.w), d: number(row.d), l: number(row.l),
                     gf: number(row.gf), ga: number(row.ga), pts: number(row.pts)
-                })).sort((a, b) =>
-                    b.pts - a.pts ||
-                    (b.gf - b.ga) - (a.gf - a.ga) ||
-                    b.gf - a.gf ||
-                    a.club.localeCompare(b.club)
-                );
+                })).sort((a, b) => {
+                    // Use the official position saved by the database when it is available.
+                    const hasPos = Number.isFinite(Number(a.pos)) && Number.isFinite(Number(b.pos)) && Number(a.pos) > 0 && Number(b.pos) > 0;
+                    if (hasPos && Number(a.pos) !== Number(b.pos)) return Number(a.pos) - Number(b.pos);
+                    return b.pts - a.pts ||
+                        (b.gf - b.ga) - (a.gf - a.ga) ||
+                        b.gf - a.gf ||
+                        a.club.localeCompare(b.club);
+                });
                 tbody.innerHTML = standingsToRender.map((team, index) => {
                     const goalDiff = team.gf - team.ga;
                     const gdDisplay = goalDiff > 0 ? `+${goalDiff}` : goalDiff;
