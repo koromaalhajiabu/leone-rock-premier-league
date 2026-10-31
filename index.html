@@ -3655,25 +3655,23 @@ th{font-weight:800}
             loadAdminPlayerReports();
         }
 
-        // Staff only: players whose cards mean a suspension is due this season.
+        // Staff and assigned referees only. The database refuses everyone else, so the panel stays hidden for them.
         async function loadSuspensionFlags() {
             const section = document.getElementById('suspensionFlagsSection');
             const host = document.getElementById('suspensionFlagsList');
             if (!section || !host) return;
-            const canSee = ['DEVELOPER', 'SUPER_ADMIN', 'STAFF'].includes(getRole());
-            section.classList.toggle('hidden', !canSee);
-            if (!canSee || !db) return;
-            host.innerHTML = '<p class="motm-empty">Loading…</p>';
+            section.classList.add('hidden');
+            if (!currentUser || !db) return;
             try {
                 const { data, error } = await db.rpc('staff_suspension_flags');
-                if (error) throw error;
+                if (error) return;
+                section.classList.remove('hidden');
                 const due = (Array.isArray(data) ? data : []).filter(r => r.suspension_due);
                 host.innerHTML = due.length
                     ? due.map(r => `<div class="motm-card"><div><strong>${esc(r.player_name)}</strong><div class="hint">${esc(r.team_name)} · yellow cards ${esc(r.yellow_cards)} · red cards ${esc(r.red_cards)}</div></div></div>`).join('')
                     : '<p class="motm-empty">No players are due a suspension.</p>';
             } catch (err) {
                 console.warn('Could not load suspension flags.', err);
-                host.innerHTML = '<p class="motm-empty">Suspension flags could not be loaded.</p>';
             }
         }
 
