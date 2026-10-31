@@ -1415,6 +1415,50 @@ th{font-weight:800}
         @media (prefers-reduced-motion: reduce) {
             #systemNotificationBanner #bannerTextContent { animation: none; }
         }
+
+        /* ------------------------------------------------------------
+           Premium finish
+           A refined layer over the design tokens: deeper header, softer
+           backdrop, precise type, and finer elevation on interactive parts.
+           ------------------------------------------------------------ */
+        body {
+            background:
+                radial-gradient(1200px 600px at 100% -10%, rgba(14,138,62,0.07), transparent 60%),
+                radial-gradient(900px 500px at -10% 0%, rgba(11,95,165,0.06), transparent 55%),
+                var(--chalk);
+            letter-spacing: 0.005em;
+        }
+        h1, h2, h3 { letter-spacing: -0.018em; line-height: 1.15; }
+        h1 { font-weight: 800; }
+        h2 { font-weight: 750; }
+
+        .topbar {
+            background: linear-gradient(180deg, rgba(8,38,25,0.97), rgba(10,46,31,0.94));
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 1px 0 rgba(30,181,58,0.25), 0 10px 30px -18px rgba(0,0,0,0.5);
+        }
+        .topbar-inner { padding-block: 12px; }
+        .brand-logo { box-shadow: 0 0 0 2px rgba(255,255,255,0.9), 0 6px 16px -8px rgba(0,0,0,0.6); }
+        .brand-name { font-weight: 750; letter-spacing: 0.01em; }
+
+        .btn {
+            font-weight: 650;
+            letter-spacing: 0.01em;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 6px 14px -10px rgba(10,46,31,0.5);
+        }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 10px 20px -12px rgba(10,46,31,0.55); }
+        .btn:active:not(:disabled) { transform: translateY(0); }
+        .btn-primary { background: linear-gradient(180deg, #1565B3, var(--blue)); }
+        .btn-primary:hover { background: linear-gradient(180deg, var(--blue), var(--blue-dark)); }
+        .btn-success { background: linear-gradient(180deg, #13A047, var(--green)); }
+        .btn-success:hover { background: linear-gradient(180deg, var(--green), #0B7433); }
+
+        :focus-visible { outline-color: var(--blue); }
+        ::selection { background: rgba(30,181,58,0.22); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .btn:hover:not(:disabled) { transform: none; }
+        }
     </style>
 </head>
 <body>
