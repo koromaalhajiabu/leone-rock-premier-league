@@ -126,6 +126,7 @@
         }
         .brand { display: flex; align-items: center; gap: 12px; color: #fff; min-width: 0; }
         .brand svg { flex-shrink: 0; }
+        .brand-logo { flex-shrink: 0; width: 40px; height: 40px; object-fit: contain; border-radius: 50%; background: #fff; }
         .brand-name { font-stretch: 112%; font-weight: 800; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .topbar-actions { display: flex; align-items: center; gap: 10px; }
 
@@ -1432,17 +1433,7 @@ th{font-weight:800}
     <header class="topbar">
         <div class="topbar-inner">
             <div class="brand">
-                <svg width="34" height="38" viewBox="0 0 24 27" role="img" aria-label="Leone Rock Premier League crest">
-                    <defs><clipPath id="crestShape"><path d="M12 1.2 22 4.6v8.2c0 6.2-4.5 10.4-10 12.2C6.5 23.2 2 19 2 12.8V4.6z"/></clipPath></defs>
-                    <g clip-path="url(#crestShape)">
-                        <rect x="0" y="0" width="24" height="9" fill="#1EB53A"/>
-                        <rect x="0" y="9" width="24" height="8" fill="#FFFFFF"/>
-                        <rect x="0" y="17" width="24" height="10" fill="#0072C6"/>
-                    </g>
-                    <path d="M12 1.2 22 4.6v8.2c0 6.2-4.5 10.4-10 12.2C6.5 23.2 2 19 2 12.8V4.6z" fill="none" stroke="#fff" stroke-width="1.2"/>
-                    <circle cx="12" cy="13" r="3.6" fill="#0A2E1F"/>
-                    <path d="M12 10.4l1.7 1.2-.65 2h-2.1l-.65-2z" fill="#fff"/>
-                </svg>
+                <img class="brand-logo" src="leone-rock-logo.jpg" width="40" height="40" alt="Leone Rock Premier League logo">
                 <span class="brand-name">Leone Rock Premier League</span>
             </div>
             <div class="topbar-actions">
