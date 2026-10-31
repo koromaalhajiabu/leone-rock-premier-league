@@ -1895,6 +1895,14 @@ th{font-weight:800}
                 <div id="slfaNewsList"></div>
             </div>
         </section>
+        <section id="suspensionFlagsSection" class="accordion-card hidden" style="--accent: var(--green-bright);">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="suspensionFlagsContent" onclick="toggleAccordion('suspensionFlagsContent', this)" onkeydown="accordionKey(event, 'suspensionFlagsContent', this)">
+                <div class="accordion-title"><h2>Players due a suspension</h2><p class="section-hint">Staff only. Based on the cards recorded this season.</p></div>
+            </div>
+            <div id="suspensionFlagsContent" class="accordion-content">
+                <div id="suspensionFlagsList"><p class="motm-empty">Loading…</p></div>
+            </div>
+        </section>
         <section id="liveScores" class="accordion-card" style="--accent: var(--green-bright);">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="liveScoresContent" onclick="toggleAccordion('liveScoresContent', this)" onkeydown="accordionKey(event, 'liveScoresContent', this)">
                 <div>
@@ -3647,10 +3655,33 @@ th{font-weight:800}
             loadAdminPlayerReports();
         }
 
+        // Staff only: players whose cards mean a suspension is due this season.
+        async function loadSuspensionFlags() {
+            const section = document.getElementById('suspensionFlagsSection');
+            const host = document.getElementById('suspensionFlagsList');
+            if (!section || !host) return;
+            const canSee = ['DEVELOPER', 'SUPER_ADMIN', 'STAFF'].includes(getRole());
+            section.classList.toggle('hidden', !canSee);
+            if (!canSee || !db) return;
+            host.innerHTML = '<p class="motm-empty">Loading…</p>';
+            try {
+                const { data, error } = await db.rpc('staff_suspension_flags');
+                if (error) throw error;
+                const due = (Array.isArray(data) ? data : []).filter(r => r.suspension_due);
+                host.innerHTML = due.length
+                    ? due.map(r => `<div class="motm-card"><div><strong>${esc(r.player_name)}</strong><div class="hint">${esc(r.team_name)} · yellow cards ${esc(r.yellow_cards)} · red cards ${esc(r.red_cards)}</div></div></div>`).join('')
+                    : '<p class="motm-empty">No players are due a suspension.</p>';
+            } catch (err) {
+                console.warn('Could not load suspension flags.', err);
+                host.innerHTML = '<p class="motm-empty">Suspension flags could not be loaded.</p>';
+            }
+        }
+
         function applyRoleUI() {
             if (typeof refreshPushPrompt === 'function') refreshPushPrompt();
             if (typeof refreshSuperAdminMatches === 'function') refreshSuperAdminMatches();
             if (typeof loadFinanceDashboard === 'function') loadFinanceDashboard();
+            loadSuspensionFlags();
             const role = getRole();
             const isDev = role === 'DEVELOPER';
             const isAdmin = role === 'SUPER_ADMIN';
