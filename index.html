@@ -1459,6 +1459,31 @@ th{font-weight:800}
         @media (prefers-reduced-motion: reduce) {
             .btn:hover:not(:disabled) { transform: none; }
         }
+
+        /* Administration menu: always solid, always readable, whatever the header colour is */
+        #adminMenuBtn.btn {
+            background: #FFFFFF !important;
+            color: #0E1B16 !important;
+            border-color: rgba(255,255,255,0.9) !important;
+        }
+        #adminMenuBtn.btn svg { color: #0E1B16; }
+        #adminMenuBtn.btn:hover { background: #EEF5F0 !important; }
+        #adminDropdownContent.dropdown-content,
+        .dropdown-menu-container .dropdown-content {
+            background: #FFFFFF !important;
+            color: #0E1B16 !important;
+            opacity: 1 !important;
+        }
+        #adminDropdownContent .menu-item,
+        #adminDropdownContent button,
+        #adminDropdownContent a {
+            color: #0E1B16 !important;
+            opacity: 1 !important;
+            text-shadow: none !important;
+        }
+        #adminDropdownContent .menu-item:hover { background: #EEF5F0 !important; }
+        #adminDropdownContent .session-info { color: #53645B !important; }
+        #adminDropdownContent .session-info strong { color: #0E1B16 !important; }
     </style>
 </head>
 <body>
