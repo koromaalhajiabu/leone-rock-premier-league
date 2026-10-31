@@ -1531,6 +1531,36 @@ th{font-weight:800}
             line-height: 1.4 !important;
         }
         #adminDropdownContent.dropdown-content.show-dropdown { display: block !important; visibility: visible !important; opacity: 1 !important; }
+
+        /* Header row: league name on the left, Administration button on the right, on every phone width */
+        .topbar-inner {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+        .brand { min-width: 0; flex: 1 1 auto; }
+        .brand-name {
+            color: #FFFFFF !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            line-height: 1.15 !important;
+            font-size: 15px !important;
+        }
+        .topbar-actions {
+            margin-left: auto !important;
+            flex: 0 0 auto !important;
+            width: auto !important;
+            justify-content: flex-end !important;
+        }
+        .topbar-actions .btn { min-height: 40px; }
+        @media (max-width: 480px) {
+            .brand-logo { width: 36px !important; height: 36px !important; }
+            .brand-name { font-size: 14px !important; }
+            #adminMenuBtn.btn { padding: 8px 12px !important; font-size: 13px !important; }
+        }
         .section-toolbar span,
         .section-toolbar strong,
         .section-title,
