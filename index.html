@@ -1532,6 +1532,18 @@ th{font-weight:800}
         }
         #adminDropdownContent.dropdown-content.show-dropdown { display: block !important; visibility: visible !important; opacity: 1 !important; }
 
+        /* Flag band under the header: green, white and blue, matching the footer */
+        .topbar { position: sticky; }
+        .topbar::after {
+            content: "";
+            position: absolute;
+            left: 0; right: 0; bottom: -4px;
+            height: 4px;
+            background: linear-gradient(90deg, #1EB53A 0 33.33%, #FFFFFF 33.33% 66.66%, #0072C6 66.66% 100%);
+            pointer-events: none;
+            z-index: 51;
+        }
+
         /* Header row: league name on the left, Administration button on the right, on every phone width */
         .topbar-inner {
             display: flex !important;
