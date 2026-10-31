@@ -36,3 +36,12 @@ jobs:
           cp android/app/build/outputs/apk/debug/app-debug.apk slfa-league.apk
           gh release view apk-latest >/dev/null 2>&1 || gh release create apk-latest --title "SLFA League app (Android)" --notes "Install this APK on an Android phone to get the SLFA League app." --target "$GITHUB_SHA"
           gh release upload apk-latest slfa-league.apk --clobber
+
+      - name: Save APK to the repository for the league website
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk slfa-league.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add slfa-league.apk
+          git commit -m "Update the Android app file" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
