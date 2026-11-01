@@ -2062,7 +2062,7 @@ th{font-weight:800}
             <div class="card-meta"><span class="badge badge-warning">Developer / Super Admin</span></div>
           </div>
           <div id="roleAccessReviewContent" class="accordion-content">
-            <p class="section-hint">Only the General Overseer or Super Admin should approve or reject referee and league-staff requests. Club Admin applications remain in the separate club approval queue.</p>
+            <p class="section-hint">Only the Technical Director or Super Admin should approve or reject referee and league-staff requests. Club Admin applications remain in the separate club approval queue.</p>
             <button type="button" class="btn btn-outline btn-sm" onclick="loadRoleAccessRequests()">Refresh access requests</button>
             <div id="roleAccessRequestsList" style="margin-top:12px"><p class="section-hint">Sign in with an authorized account and refresh to load requests.</p></div>
           </div>
@@ -2127,8 +2127,8 @@ th{font-weight:800}
         </section>
 
         <section id="developerPanelFinder" class="form-panel hidden" style="margin:0 0 18px;border:1px solid var(--line);border-radius:14px;padding:16px">
-          <h3>General Overseer — Panel Directory</h3>
-          <p class="section-hint">Private panel directory. Only the General Overseer should access these controls; database permissions remain the security boundary.</p>
+          <h3>Technical Director — Panel Directory</h3>
+          <p class="section-hint">Private panel directory. Only the Technical Director should access these controls; database permissions remain the security boundary.</p>
           <label class="field" style="display:block"><span>Search panel names and descriptions</span><input id="developerPanelSearch" type="search" placeholder="Search clubs, fixtures, players, finance, staff, awards…" oninput="searchDeveloperPanels(this.value)" autocomplete="off"></label>
           <div id="developerPanelSearchResults" class="verification-grid" style="margin-top:12px"><p class="section-hint">Enter a search term to find panels.</p></div>
           <div class="verification-actions"><button type="button" class="btn btn-outline btn-sm" onclick="downloadDeveloperPanelIndex()">Download panel directory (CSV)</button></div>
@@ -2153,7 +2153,7 @@ th{font-weight:800}
         </section>
         <section id="generalOverseerCommandCentre" class="accordion-card hidden" style="--accent: var(--gold);border:1px solid var(--gold-soft);">
             <div class="accordion-header" style="cursor:default">
-                <div><h2>General Overseer Command Centre</h2><p>Private platform governance and system oversight</p></div>
+                <div><h2>Technical Director Command Centre</h2><p>Private platform governance and system oversight</p></div>
                 <div class="card-meta"><span class="badge badge-warning">Restricted access</span></div>
             </div>
             <div class="accordion-content">
@@ -3080,7 +3080,7 @@ th{font-weight:800}
         let dbState = null;
 
         const ROLE_LABELS = {
-            DEVELOPER: 'General Overseer',
+            DEVELOPER: 'Technical Director',
             SUPER_ADMIN: 'Super Admin',
             CLUB_ADMIN: 'Club Manager',
             REFEREE: 'Match Official',
@@ -3125,7 +3125,7 @@ th{font-weight:800}
         let lastViewUserId = null;
 
         const WORKSPACE_NAMES = {
-            DEVELOPER: 'General Overseer Command Centre',
+            DEVELOPER: 'Technical Director Command Centre',
             SUPER_ADMIN: 'Super Admin panel',
             CLUB_ADMIN: 'Club manager panel',
             REFEREE: 'Referee panel',
@@ -3807,7 +3807,7 @@ th{font-weight:800}
             show('verificationSubmitArea', !isDev);
             if (isDev) { const fm = document.getElementById('verificationFormMessage'); if (fm) fm.textContent = 'Developer oversight is read-only here. The Super Admin is responsible for reviewing and deciding submissions.'; }
             if (working && (isDev || isAdmin || role === 'CLUB_ADMIN')) loadLeagueVerificationRequests();
-            // Hard role separation: these portals must never appear in the General Overseer workspace.
+            // Hard role separation: these portals must never appear in the Technical Director workspace.
             show('clubAdminPanelContainer', working && role === 'CLUB_ADMIN');
             show('refereePanelContainer', working && role === 'REFEREE');
             if (working && (role === 'CLUB_ADMIN' || role === 'SUPER_ADMIN')) loadTransferPanel();
@@ -4109,7 +4109,7 @@ th{font-weight:800}
             const host = document.getElementById('roleAccessRequestsList');
             if (!host) return;
             if (!currentUser || !['DEVELOPER','SUPER_ADMIN'].includes(realRole())) {
-                host.innerHTML = '<p class="section-hint">Only the General Overseer or Super Admin can review access requests.</p>';
+                host.innerHTML = '<p class="section-hint">Only the Technical Director or Super Admin can review access requests.</p>';
                 return;
             }
             host.innerHTML = '<p class="section-hint">Loading access requests…</p>';
@@ -4144,7 +4144,7 @@ th{font-weight:800}
 
         async function reviewRoleAccessRequest(requestId, decision) {
             if (!currentUser || !['DEVELOPER','SUPER_ADMIN'].includes(realRole())) {
-                alert('Only the General Overseer or Super Admin can review access requests.');
+                alert('Only the Technical Director or Super Admin can review access requests.');
                 return;
             }
             const verb = decision === 'approved' ? 'approve' : 'reject';
@@ -7387,7 +7387,7 @@ th{font-weight:800}
           if (realRole() !== 'DEVELOPER') { alert('Developer access is required.'); return; }
           const el = document.getElementById(id);
           const roleRestrictedPanels = ['awardBackupPanel', 'clubAdminPanelContainer', 'refereePanelContainer'];
-          if (roleRestrictedPanels.includes(id)) { alert('This panel is not part of the General Overseer workspace. Sign in with the appropriate authorized role to access it.'); return; }
+          if (roleRestrictedPanels.includes(id)) { alert('This panel is not part of the Technical Director workspace. Sign in with the appropriate authorized role to access it.'); return; }
           if (!el) { alert('That panel is not present in this page build yet.'); return; }
           if (id === 'publicArea') {
             setView('public', true);
