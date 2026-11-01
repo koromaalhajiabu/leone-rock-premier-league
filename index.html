@@ -2436,6 +2436,20 @@ th{font-weight:800}
                 </div>
             </div>
         </section>
+        <section id="squadApprovalPanel" class="accordion-card hidden" style="--accent: var(--amber); margin-top:22px;">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="squadApprovalContent" onclick="toggleAccordion('squadApprovalContent', this)" onkeydown="accordionKey(event, 'squadApprovalContent', this)">
+                <div>
+                    <h2>Squad registrations to approve</h2>
+                    <p>A player cannot play until the Super Admin approves their squad registration.</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="squadApprovalContent" class="accordion-content">
+                <div id="squadApprovalList"><p class="muted-cell">Loading…</p></div>
+            </div>
+        </section>
         <section id="systemPausePanel" class="accordion-card hidden" style="--accent: var(--amber); margin-top:22px;">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="systemPauseContent" onclick="toggleAccordion('systemPauseContent', this)" onkeydown="accordionKey(event, 'systemPauseContent', this)">
                 <div>
@@ -3797,6 +3811,8 @@ th{font-weight:800}
                 : 'Only submit the final score after the match has ended. The Super Admin approves it, and only then does it appear publicly and in the league table.';
             show('matchAuditSection', working && (role === 'SUPER_ADMIN' || role === 'DEVELOPER'));
             show('systemPausePanel', working && role === 'SUPER_ADMIN');
+            show('squadApprovalPanel', working && role === 'SUPER_ADMIN');
+            if (working && role === 'SUPER_ADMIN') loadSquadApprovals();
             if (working && role === 'SUPER_ADMIN') loadSystemPause();
             show('disputeAdminSection', working && role === 'SUPER_ADMIN');
             if (working && role === 'SUPER_ADMIN') loadAdminDisputes();
@@ -6424,6 +6440,27 @@ th{font-weight:800}
             if (subs.length > 7) { msg.textContent = 'You can pick at most 7 substitutes (you have ' + subs.length + ').'; return; }
             const { error } = await db.rpc('submit_team_sheet', { p_match_id: Number(matchId), p_starting: starters, p_subs: subs });
             msg.textContent = error ? ('Could not submit: ' + error.message) : 'Team sheet submitted.';
+        }
+
+        async function loadSquadApprovals() {
+            const box = document.getElementById('squadApprovalList');
+            if (!box) return;
+            const [pending, clubs] = await Promise.all([
+                db.from('club_squad').select('id, player_name, position, club_id').eq('registration_status', 'Pending').order('player_name'),
+                db.from('league_clubs').select('id, club_name')
+            ]);
+            if (pending.error) { box.innerHTML = '<p class="muted-cell">Could not load: ' + esc(friendlyError(pending.error)) + '</p>'; return; }
+            const clubName = {};
+            (clubs.data || []).forEach(c => { clubName[c.id] = c.club_name; });
+            if (!pending.data || pending.data.length === 0) { box.innerHTML = '<p class="muted-cell">No registrations are waiting for approval.</p>'; return; }
+            box.innerHTML = '<table><thead><tr><th>Player</th><th>Position</th><th>Club</th><th></th></tr></thead><tbody>' + pending.data.map(p =>
+                `<tr><td>${esc(p.player_name)}</td><td>${esc(p.position || '')}</td><td>${esc(clubName[p.club_id] || '')}</td><td><button type="button" class="btn btn-outline btn-sm text-success" onclick="decideSquadRegistration(${Number(p.id)}, 'Approved')">Approve</button> <button type="button" class="btn btn-outline btn-sm text-danger" onclick="decideSquadRegistration(${Number(p.id)}, 'Rejected')">Reject</button></td></tr>`).join('') + '</tbody></table>';
+        }
+
+        async function decideSquadRegistration(id, decision) {
+            const { error } = await db.rpc('approve_squad_registration', { p_squad_id: id, p_decision: decision });
+            if (error) alert('Could not save the decision: ' + error.message);
+            loadSquadApprovals();
         }
 
         async function fetchMasterUserDirectory() {
