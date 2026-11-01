@@ -2618,15 +2618,6 @@ th{font-weight:800}
                     </div>
                 </div>
 
-                <div class="form-panel" id="devLockPanel" style="margin-bottom:24px;">
-                    <h3>Developer lock</h3>
-                    <p class="muted-cell" style="margin:6px 0 12px;">While locked, the Developer cannot change roles, suspend or restore accounts, or remove accounts. Other staff are not affected. Unlock it to make changes again.</p>
-                    <p id="devLockStatus" class="muted-cell" style="margin:0 0 12px;">Checking lock status…</p>
-                    <div class="form-actions" style="margin-top:0;">
-                        <button type="button" id="devLockBtn" onclick="toggleDeveloperLock()" class="btn btn-outline" data-locked="0">Lock</button>
-                    </div>
-                </div>
-
                 <div class="form-panel" id="cleanupPanel" style="margin-bottom:24px;">
                     <h3>Clean up unassigned accounts</h3>
                     <p class="muted-cell" style="margin:6px 0 12px;">Lists accounts still waiting for a role after 14 days, with no pending or approved role request. Review the list before removing anyone. Removals are recorded.</p>
@@ -6316,41 +6307,9 @@ th{font-weight:800}
         // ------------------------------------------------------------------
         let userCache = [];
 
-        async function loadDeveloperLock() {
-            const el = document.getElementById('devLockStatus');
-            const btn = document.getElementById('devLockBtn');
-            if (!el || !btn) return;
-            try {
-                const { data, error } = await db.from('developer_lock').select('locked, reason, changed_at').eq('id', 1).single();
-                if (error) throw error;
-                el.textContent = data.locked
-                    ? 'Locked since ' + new Date(data.changed_at).toLocaleString() + '. Reason: ' + (data.reason || '')
-                    : 'Not locked.';
-                btn.textContent = data.locked ? 'Unlock' : 'Lock';
-                btn.dataset.locked = data.locked ? '1' : '0';
-            } catch (err) {
-                el.textContent = 'Could not load lock status: ' + (err.message || err);
-            }
-        }
-
-        async function toggleDeveloperLock() {
-            const btn = document.getElementById('devLockBtn');
-            const locking = btn.dataset.locked !== '1';
-            let reason = '';
-            if (locking) {
-                reason = prompt('Why are you locking role and account changes? The reason is shown in the lock status (at least 5 characters):');
-                if (reason === null) return;
-                if (reason.trim().length < 5) { alert('Give a reason of at least 5 characters.'); return; }
-            }
-            const { error } = await db.rpc('set_developer_lock', { p_locked: locking, p_reason: reason.trim() });
-            if (error) alert('Could not change the lock: ' + error.message);
-            loadDeveloperLock();
-        }
-
         async function fetchMasterUserDirectory() {
             const tbody = document.getElementById('masterUserTableBody');
             if (!tbody) return;
-            loadDeveloperLock();
             try {
                 const { data, error } = await db.from('user_profiles').select('*').order('created_at', { ascending: false });
                 if (error) throw error;
