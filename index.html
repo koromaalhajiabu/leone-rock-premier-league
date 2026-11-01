@@ -6404,7 +6404,14 @@ th{font-weight:800}
         }
 
         async function toggleAccountStatus(userId, newStatus) {
-            const { error } = await db.from('user_profiles').update({ status: newStatus }).eq('id', userId);
+            const suspending = newStatus === 'Suspended';
+            const reason = prompt(suspending
+                ? 'Why is this account being suspended? The reason is kept in the audit log (at least 5 characters):'
+                : 'Why is this account being restored? The reason is kept in the audit log (at least 5 characters):');
+            if (reason === null) return;
+            if (reason.trim().length < 5) { alert('Give a reason of at least 5 characters.'); return; }
+            if (suspending && !confirm('Suspend this account? The person will be signed out and cannot sign in until it is restored.')) return;
+            const { error } = await db.rpc('set_account_status', { p_user: userId, p_status: newStatus, p_reason: reason.trim() });
             if (error) alert("Could not change the status: " + error.message);
             fetchMasterUserDirectory();
         }
