@@ -5466,9 +5466,9 @@ th{font-weight:800}
                     photo_url: photoUrl,
                     created_by: currentUser.id,
                     club_id: assignedClubId
-                }]).select('id');
+                }]).select('id, registration_status');
                 if (error) {
-                    if (error.code === '23505') throw new Error('A player with this NIN is already registered.');
+                    if (error.code === '23505') throw new Error('This NIN is already on an active squad.');
                     throw error;
                 }
                 if (medicalHasData(medical) && inserted && inserted[0]) {
@@ -5482,7 +5482,10 @@ th{font-weight:800}
                     if (mErr) throw mErr;
                 }
                 clearMedical('med');
-                alert("Player registered.");
+                const pending = inserted && inserted[0] && inserted[0].registration_status === 'Pending';
+                alert(pending
+                    ? "Player submitted for league registration. He is not registered with the league yet and cannot play until the Super Admin approves him and his medical consent is confirmed."
+                    : "Player registered.");
                 document.getElementById('clubPlayerName').value = '';
                 document.getElementById('clubPlayerNIN').value = '';
                 document.getElementById('clubPlayerPosition').value = '';
