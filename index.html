@@ -2330,6 +2330,16 @@ th{font-weight:800}
                     </div>
                     <p class="hint" id="transferMessage"></p>
                 </div>
+                <h3 class="section-title" style="margin-top:22px;">Team sheet for a match</h3>
+                <p class="hint">Choose the match, then mark each squad player as Starting (11 players), Sub (up to 7) or leave them out. Referees and the Super Admin will see the sheet.</p>
+                <div class="form-panel" style="margin-top:10px;">
+                    <label class="field"><span>Match</span><select id="teamSheetMatch" onchange="loadTeamSheetForMatch()"><option value="">Loading matches…</option></select></label>
+                    <div id="teamSheetPlayers" style="margin-top:10px;"></div>
+                    <div class="form-actions">
+                        <button type="button" onclick="submitTeamSheet()" class="btn btn-primary">Submit team sheet</button>
+                    </div>
+                    <p class="hint" id="teamSheetMessage"></p>
+                </div>
                 <h3 class="section-title" style="margin-top:22px;">Transfers and loans for your club</h3>
                 <p class="hint">Release or accept requests here. Requests that need your club's answer are shown with the buttons.</p>
                 <p class="hint hidden" id="clubTransferAlert" style="font-weight:600;color:var(--amber);margin-top:10px;"></p>
@@ -3796,6 +3806,7 @@ th{font-weight:800}
             if (role === 'PLAYER') { loadReportClubOptions(); loadMyPlayerReports(); }
             if (role === 'SUPER_ADMIN') loadAdminMedicalRecords();
             if (role === 'CLUB_ADMIN') loadClubPlayerReports();
+            if (working && role === 'CLUB_ADMIN') loadTeamSheetForm();
             if (role === 'SUPER_ADMIN' || role === 'DEVELOPER') loadAdminPlayerReports();
             show('themeSettingsPanel', isDev);
             loadSavedSystemTheme(); // re-apply after the role is known: Developer's saved theme only
@@ -6362,6 +6373,57 @@ th{font-weight:800}
             const { error } = await db.rpc('set_system_pause', { p_paused: pausing, p_reason: reason.trim() });
             if (error) alert('Could not change the pause: ' + error.message);
             loadSystemPause();
+        }
+
+        let teamSheetSquad = [];
+
+        async function loadTeamSheetForm() {
+            const sel = document.getElementById('teamSheetMatch');
+            const myClub = currentProfile && currentProfile.club_id;
+            if (!sel || !myClub) return;
+            const [matches, squad] = await Promise.all([
+                db.from('matches').select('id, home_team, away_team, match_date, home_club_id, away_club_id').or(`home_club_id.eq.${myClub},away_club_id.eq.${myClub}`).order('match_date', { ascending: false }).limit(30),
+                db.from('club_squad').select('id, player_name, status').eq('club_id', myClub).order('player_name')
+            ]);
+            if (matches.error || squad.error) {
+                document.getElementById('teamSheetMessage').textContent = 'Could not load the team sheet form: ' + friendlyError((matches.error || squad.error));
+                return;
+            }
+            teamSheetSquad = (squad.data || []).filter(p => (p.status || 'Active') === 'Active');
+            sel.innerHTML = '<option value="">Choose a match</option>' + (matches.data || []).map(m =>
+                `<option value="${esc(m.id)}">${esc(m.home_team)} v ${esc(m.away_team)} · ${esc(new Date(m.match_date).toLocaleDateString())}</option>`).join('');
+            document.getElementById('teamSheetPlayers').innerHTML = '';
+        }
+
+        async function loadTeamSheetForMatch() {
+            const matchId = document.getElementById('teamSheetMatch').value;
+            const box = document.getElementById('teamSheetPlayers');
+            const msg = document.getElementById('teamSheetMessage');
+            msg.textContent = '';
+            if (!matchId) { box.innerHTML = ''; return; }
+            const myClub = currentProfile.club_id;
+            const { data: sheet } = await db.from('match_team_sheets').select('starting_player_ids, substitute_player_ids').eq('match_id', matchId).eq('club_id', myClub).maybeSingle();
+            const starting = new Set((sheet && sheet.starting_player_ids) || []);
+            const subs = new Set((sheet && sheet.substitute_player_ids) || []);
+            if (teamSheetSquad.length === 0) { box.innerHTML = '<p class="hint">Your squad has no active players yet. Add players first.</p>'; return; }
+            box.innerHTML = '<table><thead><tr><th>Player</th><th>Role</th></tr></thead><tbody>' + teamSheetSquad.map(p => {
+                const role = starting.has(Number(p.id)) ? 'start' : subs.has(Number(p.id)) ? 'sub' : 'out';
+                return `<tr><td>${esc(p.player_name)}</td><td><select class="ts-role" data-id="${esc(p.id)}"><option value="out"${role === 'out' ? ' selected' : ''}>Not in the squad</option><option value="start"${role === 'start' ? ' selected' : ''}>Starting</option><option value="sub"${role === 'sub' ? ' selected' : ''}>Substitute</option></select></td></tr>`;
+            }).join('') + '</tbody></table>';
+            if (sheet) msg.textContent = 'A team sheet is already submitted for this match. Submitting again replaces it.';
+        }
+
+        async function submitTeamSheet() {
+            const matchId = document.getElementById('teamSheetMatch').value;
+            const msg = document.getElementById('teamSheetMessage');
+            if (!matchId) { msg.textContent = 'Choose a match first.'; return; }
+            const picks = Array.from(document.querySelectorAll('.ts-role'));
+            const starters = picks.filter(s => s.value === 'start').map(s => Number(s.dataset.id));
+            const subs = picks.filter(s => s.value === 'sub').map(s => Number(s.dataset.id));
+            if (starters.length !== 11) { msg.textContent = 'Pick exactly 11 starting players (you have ' + starters.length + ').'; return; }
+            if (subs.length > 7) { msg.textContent = 'You can pick at most 7 substitutes (you have ' + subs.length + ').'; return; }
+            const { error } = await db.rpc('submit_team_sheet', { p_match_id: Number(matchId), p_starting: starters, p_subs: subs });
+            msg.textContent = error ? ('Could not submit: ' + error.message) : 'Team sheet submitted.';
         }
 
         async function fetchMasterUserDirectory() {

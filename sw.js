@@ -1,7 +1,7 @@
 // SLFA app shell service worker.
 // Caches only the page shell and icons so the app opens quickly and offline.
 // Live data (Supabase, photos, news) is never cached here: it always goes to the network.
-const CACHE = 'slfa-shell-v12';
+const CACHE = 'slfa-shell-v14';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
