@@ -2426,6 +2426,24 @@ th{font-weight:800}
                 </div>
             </div>
         </section>
+        <section id="systemPausePanel" class="accordion-card hidden" style="--accent: var(--amber); margin-top:22px;">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="true" aria-controls="systemPauseContent" onclick="toggleAccordion('systemPauseContent', this)" onkeydown="accordionKey(event, 'systemPauseContent', this)">
+                <div>
+                    <h2>League pause (disputes)</h2>
+                    <p>While paused, nobody can change match results, match events, Man of the Match or referee assignments. Disputes can still be raised.</p>
+                </div>
+                <div class="card-meta">
+                    <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+            <div id="systemPauseContent" class="accordion-content">
+                <p id="systemPauseStatus" class="muted-cell" style="margin:0 0 12px;">Checking status…</p>
+                <div class="form-actions" style="margin-top:0;">
+                    <button type="button" id="systemPauseBtn" onclick="toggleSystemPause()" class="btn btn-danger" data-paused="0">Pause the league</button>
+                </div>
+            </div>
+        </section>
+        <div id="systemPauseBanner" class="hidden" role="status" style="background:#FFF4D6; color:#6B4E00; border:1px solid #E8C35A; border-radius:12px; padding:10px 14px; margin:12px 16px; font-weight:600;"></div>
         <section id="disputeAdminSection" class="accordion-card hidden" style="--accent: var(--amber); margin-top:22px;">
             <div style="padding:16px">
                 <h2>Match disputes</h2>
@@ -3768,6 +3786,8 @@ th{font-weight:800}
                 ? 'As Super Admin, the result you submit is published straight away and counts in the league table. Give a reason; it is kept in the audit trail.'
                 : 'Only submit the final score after the match has ended. The Super Admin approves it, and only then does it appear publicly and in the league table.';
             show('matchAuditSection', working && (role === 'SUPER_ADMIN' || role === 'DEVELOPER'));
+            show('systemPausePanel', working && role === 'SUPER_ADMIN');
+            if (working && role === 'SUPER_ADMIN') loadSystemPause();
             show('disputeAdminSection', working && role === 'SUPER_ADMIN');
             if (working && role === 'SUPER_ADMIN') loadAdminDisputes();
             show('disputeClubSection', working && role === 'CLUB_ADMIN');
@@ -6306,6 +6326,43 @@ th{font-weight:800}
         // USER ACCOUNTS (roles live in the database; only a Developer can change them)
         // ------------------------------------------------------------------
         let userCache = [];
+
+        async function loadSystemPause() {
+            const status = document.getElementById('systemPauseStatus');
+            const btn = document.getElementById('systemPauseBtn');
+            const banner = document.getElementById('systemPauseBanner');
+            try {
+                const { data, error } = await db.from('system_pause').select('paused, reason, changed_at').eq('id', 1).single();
+                if (error) throw error;
+                if (banner) {
+                    banner.textContent = data.paused ? 'The league is paused for a dispute. Results and match changes are on hold.' : '';
+                    banner.classList.toggle('hidden', !data.paused);
+                }
+                if (status) status.textContent = data.paused
+                    ? 'Paused since ' + new Date(data.changed_at).toLocaleString() + '. Reason: ' + (data.reason || '')
+                    : 'The league is running normally.';
+                if (btn) {
+                    btn.textContent = data.paused ? 'Resume the league' : 'Pause the league';
+                    btn.dataset.paused = data.paused ? '1' : '0';
+                }
+            } catch (err) {
+                if (status) status.textContent = 'Could not load pause status: ' + (err.message || err);
+            }
+        }
+
+        async function toggleSystemPause() {
+            const btn = document.getElementById('systemPauseBtn');
+            const pausing = btn.dataset.paused !== '1';
+            const reason = prompt(pausing
+                ? 'Why is the league being paused? The reason is shown to everyone and kept in the log (at least 5 characters):'
+                : 'Why is the league being resumed? The reason is kept in the log (at least 5 characters):');
+            if (reason === null) return;
+            if (reason.trim().length < 5) { alert('Give a reason of at least 5 characters.'); return; }
+            if (pausing && !confirm('Pause the league? Nobody can change match results or events until you resume it.')) return;
+            const { error } = await db.rpc('set_system_pause', { p_paused: pausing, p_reason: reason.trim() });
+            if (error) alert('Could not change the pause: ' + error.message);
+            loadSystemPause();
+        }
 
         async function fetchMasterUserDirectory() {
             const tbody = document.getElementById('masterUserTableBody');
