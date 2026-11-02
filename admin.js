@@ -1,5 +1,5 @@
 // Administration tools, shown after sign-in and based on the signed-in role.
-// Super Admin: fixtures, results, news approval. Media Officer: news posts. Club admins: squads (next).
+// Super Admin: fixtures, results, news and player approval. Media Officer: news posts. Club Managers: squads.
 (function () {
   var db = window.slfaDb;
   function $(id) { return document.getElementById(id); }
@@ -18,7 +18,7 @@
   function currentUser() {
     return db.auth.getUser().then(function (u) {
       if (!u.data || !u.data.user) return null;
-      return db.from('user_profiles').select('id, system_role, status, full_name, email').eq('id', u.data.user.id).maybeSingle()
+      return db.from('user_profiles').select('id, system_role, status, full_name, email, club_id').eq('id', u.data.user.id).maybeSingle()
         .then(function (r) { return r.data && String(r.data.status).toLowerCase() === 'active' ? r.data : null; });
     });
   }
@@ -31,7 +31,7 @@
       if (role === 'MEDIA_OFFICER') return mediaOfficer(p);
       if (role === 'REFEREE') return referee(p);
       if (role === 'DEVELOPER') return developer(p);
-      if (role === 'CLUB_ADMIN') { box().innerHTML = '<h2 class="rt">Club squad</h2><p class="muted">Squad entry for clubs will be added next.</p>'; return; }
+      if (role === 'CLUB_ADMIN') return clubManager(p);
       box().innerHTML = '';
     });
   }
@@ -63,6 +63,7 @@
       '<div class="btns"><button class="primary" id="asSave">Assign</button></div>' +
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Player registrations awaiting approval</h2><div id="squadReview" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
     $('fxSave').addEventListener('click', function () {
@@ -87,6 +88,7 @@
     });
 
     loadReview();
+    loadSquadReview();
     wireLive();
     loadAssignOptions();
     loadPendingResults();
@@ -235,7 +237,85 @@
     });
   }
 
+  // ---------- CLUB MANAGER: squad ----------
+  function clubManager(p) {
+    if (!p.club_id) {
+      box().innerHTML = '<h2 class="rt">Club squad</h2><p class="muted">Your account is not linked to a club yet. The Technical Director needs to assign your club.</p>';
+      return;
+    }
+    box().innerHTML =
+      '<h2 class="rt">Club squad</h2><div id="clubName" class="muted">Loading club…</div>' +
+      '<h2 class="rt">Add a player</h2>' +
+      input('spName', 'Full name') + input('spNin', 'National ID number') + input('spDob', 'Date of birth', 'date') +
+      '<label for="spPos">Position</label><select id="spPos"><option value="GK">Goalkeeper</option><option value="DF">Defender</option><option value="MF">Midfielder</option><option value="FW">Forward</option></select>' +
+      '<div class="btns"><button class="primary" id="spSave">Add player</button></div>' +
+      '<h2 class="rt">Your players</h2><div id="squadList" class="muted">Loading…</div>' +
+      '<div class="status" id="roleMsg"></div>';
+    db.from('league_clubs').select('club_name').eq('id', p.club_id).maybeSingle().then(function (r) {
+      $('clubName').innerHTML = '<strong>' + esc(r.data ? r.data.club_name : 'Your club') + '</strong>';
+    });
+    $('spSave').addEventListener('click', function () { addPlayer(p); });
+    loadSquad(p);
+  }
+  function addPlayer(p) {
+    var name = $('spName').value.trim(), nin = $('spNin').value.trim(), dob = $('spDob').value, pos = $('spPos').value;
+    if (!name || !nin || !dob) { msg('Enter the name, ID number and date of birth.'); return; }
+    db.auth.getUser().then(function (u) {
+      return db.from('club_squad').insert({ player_name: name, player_nin: nin, date_of_birth: dob, position: pos,
+        status: 'Active', registration_status: 'Pending', club_id: p.club_id, created_by: u.data.user.id });
+    }).then(function (r) {
+      if (r.error) { msg(r.error.message); return; }
+      msg('Player added. The Super Admin will approve the registration.');
+      ['spName', 'spNin', 'spDob'].forEach(function (x) { $(x).value = ''; });
+      loadSquad(p);
+    });
+  }
+  function loadSquad(p) {
+    db.from('club_squad').select('id, player_name, position, status, registration_status').eq('club_id', p.club_id).order('player_name')
+      .then(function (r) {
+        var rows = r.data || [];
+        $('squadList').innerHTML = rows.length ? rows.map(function (x) {
+          var on = String(x.status) === 'Active';
+          return '<div class="post"><strong>' + esc(x.player_name) + '</strong> <span class="muted">' + esc(x.position) + '</span>' +
+            '<div class="muted">' + esc(x.registration_status) + ' · ' + (on ? 'Active' : 'Inactive') + '</div>' +
+            '<div class="btns"><button class="small" data-toggle="' + esc(x.id) + '" data-next="' + (on ? 'Inactive' : 'Active') + '">' + (on ? 'Mark inactive' : 'Mark active') + '</button></div></div>';
+        }).join('') : 'No players yet.';
+        document.querySelectorAll('[data-toggle]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            db.from('club_squad').update({ status: b.dataset.next }).eq('id', b.dataset.toggle).then(function (res) {
+              msg(res.error ? res.error.message : 'Updated.'); loadSquad(p);
+            });
+          });
+        });
+      });
+  }
+
+  // ---------- SUPER ADMIN: player registrations ----------
+  function loadSquadReview() {
+    db.from('club_squad').select('id, player_name, player_nin, position, club_id, date_of_birth').eq('registration_status', 'Pending').order('created_at', { ascending: true })
+      .then(function (r) {
+        var rows = r.data || [];
+        if (!rows.length) { $('squadReview').innerHTML = 'No players waiting.'; return; }
+        db.from('league_clubs').select('id, club_name').then(function (c) {
+          var names = {}; (c.data || []).forEach(function (k) { names[k.id] = k.club_name; });
+          $('squadReview').innerHTML = rows.map(function (x) {
+            return '<div class="post"><strong>' + esc(x.player_name) + '</strong> <span class="muted">' + esc(x.position) + '</span>' +
+              '<div class="muted">' + esc(names[x.club_id] || 'Unknown club') + ' · ID ' + esc(x.player_nin) + ' · born ' + esc(x.date_of_birth) + '</div>' +
+              '<div class="btns"><button class="primary" data-sq="' + esc(x.id) + '" data-to="Approved">Approve</button><button class="secondary" data-sq="' + esc(x.id) + '" data-to="Rejected">Reject</button></div></div>';
+          }).join('');
+          document.querySelectorAll('[data-sq]').forEach(function (b) {
+            b.addEventListener('click', function () {
+              db.from('club_squad').update({ registration_status: b.dataset.to }).eq('id', b.dataset.sq).then(function (res) {
+                msg(res.error ? res.error.message : (b.dataset.to === 'Approved' ? 'Player approved.' : 'Player rejected.')); loadSquadReview();
+              });
+            });
+          });
+        });
+      });
+  }
+
   // ---------- TECHNICAL DIRECTOR: assign roles ----------
+  var clubsCache = [];
   var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['FINANCE_OFFICER','Finance Officer'],['STAFF','Staff (read-only)'],['SUPER_ADMIN','Super Admin']];
   function developer(p) {
     box().innerHTML =
@@ -270,8 +350,18 @@
     });
   }
 
+  function clubPicker(u) {
+    var opts = '<option value="">No club</option>' + clubsCache.map(function (c) {
+      return '<option value="' + esc(c.id) + '"' + (c.id === u.club_id ? ' selected' : '') + '>' + esc(c.club_name) + '</option>';
+    }).join('');
+    return '<label>Club</label><select data-club-for="' + esc(u.id) + '">' + opts + '</select>' +
+      '<div class="btns"><button class="small" data-club-apply="' + esc(u.id) + '">Apply club</button></div>';
+  }
   function loadAccountsDev(p) {
-    db.from('user_profiles').select('id, full_name, email, system_role, status').order('email').limit(300).then(function (r) {
+    db.from('league_clubs').select('id, club_name').order('club_name').then(function (c) {
+      clubsCache = c.data || [];
+      return db.from('user_profiles').select('id, full_name, email, system_role, status, club_id').order('email').limit(300);
+    }).then(function (r) {
       var rows = r.data || [];
       $('roleList').innerHTML = rows.length ? rows.map(function (u) {
         var isMe = u.id === p.id;
@@ -282,6 +372,7 @@
           '<div class="muted">' + esc(u.email) + ' · ' + esc(u.status) + '</div>' +
           (isDev ? '<div class="muted">Technical Director</div>' :
             '<select data-role-for="' + esc(u.id) + '">' + opts + '</select>' +
+            (String(u.system_role).toUpperCase() === 'CLUB_ADMIN' ? clubPicker(u) : '') +
             '<div class="btns"><button class="small" data-apply="' + esc(u.id) + '">Apply role</button>' +
             (isMe ? '' : '<button class="small ' + (active ? 'danger' : '') + '" data-status="' + esc(u.id) + '" data-next="' + (active ? 'Suspended' : 'Active') + '">' + (active ? 'Suspend' : 'Restore') + '</button>') +
             '</div>') +
@@ -296,6 +387,14 @@
           if (reason.trim().length < 5) { msg('Give a reason of at least 5 characters.'); return; }
           db.rpc('set_user_role', { p_user: id, p_role: role, p_reason: reason.trim() }).then(function (res) {
             msg(res.error ? res.error.message : 'Role saved and logged.'); loadAccountsDev(p); loadRoleLog();
+          });
+        });
+      });
+      document.querySelectorAll('[data-club-apply]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var id = b.dataset.clubApply, club = document.querySelector('[data-club-for="' + id + '"]').value || null;
+          db.rpc('set_user_club', { p_user: id, p_club: club }).then(function (res) {
+            msg(res.error ? res.error.message : 'Club saved.'); loadAccountsDev(p);
           });
         });
       });
@@ -485,6 +584,7 @@
   function refreshAdmin() {
     if ($('pendingResults')) loadPendingResults();
     if ($('reviewList')) loadReview();
+    if ($('squadReview')) loadSquadReview();
     if ($('myPosts')) loadMine();
     if ($('rfMatch') && $('rfMatch').value) loadRefMatch($('rfMatch').value);
     if ($('lvMatch') && $('lvMatch').value) loadLiveMatch($('lvMatch').value);
