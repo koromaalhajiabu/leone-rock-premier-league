@@ -1,68 +1,38 @@
-// SLFA app shell service worker.
-// Caches only the page shell and icons so the app opens quickly and offline.
-// Live data (Supabase, photos, news) is never cached here: it always goes to the network.
-const CACHE = 'slfa-shell-v16';
-const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+// SLFA League App service worker.
+// 1. Keeps the app shell available offline (pages, scripts, styles, images).
+// 2. Shows league alerts sent as push messages.
+// League data always comes from the network, so scores and news are never stale.
+const CACHE = 'slfa-app-v2';
+const SHELL = ['./', './index.html', './config.js', './public.js', './admin.js', './manifest.json',
+  './icon-192.png', './icon-512.png', './slfa-logo.png'];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+self.addEventListener('install', function (e) {
+  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
+});
+self.addEventListener('activate', function (e) {
+  e.waitUntil(caches.keys().then(function (keys) {
+    return Promise.all(keys.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
+  }).then(function () { return self.clients.claim(); }));
+});
+self.addEventListener('fetch', function (e) {
+  var req = e.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  e.respondWith(fetch(req).then(function (res) {
+    if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
+    return res;
+  }).catch(function () {
+    return caches.match(req).then(function (hit) { return hit || caches.match('./index.html'); });
+  }));
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+self.addEventListener('push', function (event) {
+  var data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { data = { title: 'SLFA League', body: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(data.title || 'SLFA League', {
+    body: data.body || '', icon: 'icon-192.png', badge: 'icon-192.png', data: { url: data.url || './' }
+  }));
 });
-
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
-  // Only handle files from this site. Leave Supabase, CDNs and other sites alone.
-  if (url.origin !== self.location.origin) return;
-
-  // Page: try the network first so updates appear, fall back to the cached copy when offline.
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put('./index.html', copy));
-        return res;
-      }).catch(() => caches.match('./index.html'))
-    );
-    return;
-  }
-
-  // Icons and manifest: cache first.
-  event.respondWith(caches.match(req).then((hit) => hit || fetch(req)));
-});
-
-// Show an alert pushed from the league system.
-self.addEventListener('push', (event) => {
-  let data = { title: 'SLFA League', body: 'There is a new update.', url: './index.html' };
-  try { data = { ...data, ...event.data.json() }; } catch (_e) { /* keep the default message */ }
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: 'icon-192.png',
-      badge: 'icon-192.png',
-      data: { url: data.url || './index.html' },
-    })
-  );
-});
-
-// Tapping an alert opens or focuses the app.
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', function (event) {
   event.notification.close();
-  const target = (event.notification.data && event.notification.data.url) || './index.html';
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-      for (const client of list) {
-        if ('focus' in client) return client.focus();
-      }
-      return self.clients.openWindow(target);
-    })
-  );
+  event.waitUntil(clients.openWindow(event.notification.data.url || './'));
 });
