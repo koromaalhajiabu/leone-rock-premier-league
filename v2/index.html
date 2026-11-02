@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>League App</title>
+<style>
+:root { --bg:#0b1f14; --card:#132d1f; --ink:#f3f7f4; --muted:#9bb5a4; --accent:#d4af37; }
+@media (prefers-color-scheme: light) { :root { --bg:#f4f7f5; --card:#ffffff; --ink:#0b1f14; --muted:#4b6b58; --accent:#9a7b12; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; padding-bottom:env(safe-area-inset-bottom); }
+header { padding:20px 16px 8px; }
+h1 { margin:0; font-size:22px; letter-spacing:.02em; }
+nav { display:flex; gap:8px; padding:8px 16px; overflow-x:auto; position:sticky; top:0; background:var(--bg); }
+nav button { flex:0 0 auto; border:1px solid var(--accent); background:transparent; color:var(--ink); padding:8px 14px; border-radius:999px; font-size:14px; cursor:pointer; }
+nav button[aria-selected="true"] { background:var(--accent); color:#0b1f14; }
+main { padding:8px 16px 40px; }
+.panel[hidden] { display:none; }
+.card { background:var(--card); border-radius:14px; padding:14px; margin:10px 0; }
+.muted { color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<header><h1>League</h1></header>
+<nav role="tablist" aria-label="Sections">
+  <button role="tab" aria-selected="true" data-panel="public">Public</button>
+  <button role="tab" aria-selected="false" data-panel="admin">League admin</button>
+  <button role="tab" aria-selected="false" data-panel="developer">Developer</button>
+</nav>
+<main>
+  <section id="public" class="panel" role="tabpanel">
+    <div class="card"><strong>Fixtures</strong><p class="muted">Coming soon. Live fixtures will appear here.</p></div>
+    <div class="card"><strong>Standings</strong><p class="muted">Coming soon.</p></div>
+  </section>
+  <section id="admin" class="panel" role="tabpanel" hidden>
+    <div class="card"><strong>League administrators</strong><p class="muted">Sign-in and inputs will be added here.</p></div>
+  </section>
+  <section id="developer" class="panel" role="tabpanel" hidden>
+    <div class="card"><strong>Developer</strong><p class="muted">Account freeze and suspension will be added here.</p></div>
+  </section>
+</main>
+<script>
+document.querySelectorAll('nav [data-panel]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('nav [data-panel]').forEach(function (b) { b.setAttribute('aria-selected', String(b === btn)); });
+    document.querySelectorAll('.panel').forEach(function (p) { p.hidden = p.id !== btn.dataset.panel; });
+  });
+});
+</script>
+</body>
+</html>
