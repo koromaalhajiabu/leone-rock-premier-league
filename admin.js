@@ -419,7 +419,7 @@
   }
 
   // ---------- TECHNICAL DIRECTOR: assign roles ----------
-  var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['FINANCE_OFFICER','Finance Officer'],['STAFF','Staff (read-only)'],['SUPER_ADMIN','Super Admin']];
+  var ROLE_OPTIONS = [['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['SUPER_ADMIN','Super Admin']];
   function developer(p) {
     box().innerHTML =
       '<h2 class="rt">League status</h2><div id="leagueState" class="muted">Checking…</div>' +
