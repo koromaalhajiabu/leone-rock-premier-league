@@ -69,6 +69,14 @@
       '<label for="spPos">Position</label><select id="spPos"><option value="GK">Goalkeeper</option><option value="DF">Defender</option><option value="MF">Midfielder</option><option value="FW">Forward</option></select>' +
       input('spJersey', 'Jersey number', 'number', 'min="1" max="99"') + input('spNat', 'Nationality') + input('spFifa', 'FIFA Connect ID (optional)') +
       '<div class="btns"><button class="primary" id="spSave">Register player</button></div>' +
+      '<h2 class="rt">Bulk import players (FIFA Connect export)</h2>' +
+      '<p class="muted">CSV columns, in order: club_name, player_name, player_nin, date_of_birth (YYYY-MM-DD), position (GK/DF/MF/FW), jersey_number, nationality, fifa_connect_id. First row must be that header. club_name must match a club already in this system exactly (case-insensitive).</p>' +
+      '<label for="biFile">CSV file</label><input type="file" id="biFile" accept=".csv,text/csv">' +
+      '<label for="biText">...or paste CSV text</label><textarea id="biText" rows="6" placeholder="club_name,player_name,player_nin,date_of_birth,position,jersey_number,nationality,fifa_connect_id"></textarea>' +
+      '<div class="btns"><button class="secondary" id="biPreview">Preview import</button></div>' +
+      '<div id="biPreview"></div>' +
+      '<div class="btns hidden" id="biConfirmWrap"><button class="primary" id="biConfirm">Confirm import</button></div>' +
+      '<div class="status" id="biMsg"></div>' +
       '<h2 class="rt">Player registrations awaiting approval</h2><div id="squadReview" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
@@ -97,6 +105,7 @@
     loadSquadReview();
     loadSquadClubOptions();
     $('spSave').addEventListener('click', function () { registerPlayer(); });
+    wireBulkImport();
     wireLive();
     loadAssignOptions();
     loadPendingResults();
@@ -271,6 +280,118 @@
       msg('Player registered.');
       ['spName', 'spNin', 'spDob', 'spJersey', 'spNat', 'spFifa'].forEach(function (x) { $(x).value = ''; });
     });
+  }
+
+  // ---------- SUPER ADMIN: bulk import players from a FIFA Connect CSV export ----------
+  var biRows = null; // validated, import-ready rows from the last preview
+  var VALID_POS = { GK: 1, DF: 1, MF: 1, FW: 1 };
+
+  function parseCsvLine(line) {
+    var out = [], cur = '', inQ = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (inQ) {
+        if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else { inQ = false; } }
+        else cur += c;
+      } else if (c === '"') { inQ = true; }
+      else if (c === ',') { out.push(cur); cur = ''; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out.map(function (s) { return s.trim(); });
+  }
+  function parseCsv(text) {
+    var lines = text.replace(/\r\n/g, '\n').split('\n').filter(function (l) { return l.trim() !== ''; });
+    if (!lines.length) return { header: [], rows: [] };
+    var header = parseCsvLine(lines[0]).map(function (h) { return h.toLowerCase(); });
+    var rows = lines.slice(1).map(function (l) {
+      var cells = parseCsvLine(l), obj = {};
+      header.forEach(function (h, i) { obj[h] = cells[i] !== undefined ? cells[i] : ''; });
+      return obj;
+    });
+    return { header: header, rows: rows };
+  }
+
+  function wireBulkImport() {
+    $('biFile').addEventListener('change', function () {
+      var f = $('biFile').files[0];
+      if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () { $('biText').value = String(reader.result || ''); };
+      reader.readAsText(f);
+    });
+    $('biPreview').addEventListener('click', buildBulkPreview);
+    $('biConfirm').addEventListener('click', runBulkImport);
+  }
+
+  function buildBulkPreview() {
+    var text = $('biText').value;
+    if (!text.trim()) { $('biMsg').textContent = 'Paste CSV text or choose a file first.'; return; }
+    var req = ['club_name', 'player_name', 'date_of_birth'];
+    var parsed = parseCsv(text);
+    var missingCols = req.filter(function (c) { return parsed.header.indexOf(c) === -1; });
+    if (missingCols.length) {
+      $('biMsg').textContent = 'Missing required column(s): ' + missingCols.join(', ') + '.';
+      $('biPreview').innerHTML = ''; $('biConfirmWrap').classList.add('hidden'); biRows = null;
+      return;
+    }
+    db.from('league_clubs').select('id, club_name').then(function (c) {
+      var byName = {};
+      (c.data || []).forEach(function (x) { byName[String(x.club_name).trim().toLowerCase()] = x.id; });
+      var ok = [], errors = [];
+      parsed.rows.forEach(function (r, idx) {
+        var rowNum = idx + 2; // account for header row, 1-indexed
+        var clubId = byName[String(r.club_name || '').trim().toLowerCase()];
+        var dob = r.date_of_birth || '';
+        var pos = String(r.position || '').trim().toUpperCase();
+        if (!r.player_name) { errors.push({ row: rowNum, reason: 'Missing player_name' }); return; }
+        if (!clubId) { errors.push({ row: rowNum, reason: 'club_name "' + r.club_name + '" does not match any club in the system' }); return; }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) { errors.push({ row: rowNum, reason: 'date_of_birth must be YYYY-MM-DD' }); return; }
+        if (pos && !VALID_POS[pos]) { errors.push({ row: rowNum, reason: 'position must be GK, DF, MF or FW' }); return; }
+        var jersey = r.jersey_number ? parseInt(r.jersey_number, 10) : null;
+        if (r.jersey_number && (isNaN(jersey) || jersey < 1 || jersey > 99)) { errors.push({ row: rowNum, reason: 'jersey_number must be 1-99' }); return; }
+        ok.push({
+          player_name: r.player_name, player_nin: r.player_nin || null, date_of_birth: dob,
+          position: pos || null, status: 'Active', registration_status: 'Approved', club_id: clubId,
+          jersey_number: jersey, nationality: r.nationality || null, fifa_connect_id: r.fifa_connect_id || null,
+          _row: rowNum, _club: r.club_name
+        });
+      });
+      biRows = ok;
+      var html = '<div class="muted">' + ok.length + ' row(s) ready to import' + (errors.length ? ', ' + errors.length + ' row(s) with problems (will be skipped)' : '') + '.</div>';
+      if (errors.length) {
+        html += errors.slice(0, 25).map(function (e) { return '<div class="muted">Row ' + e.row + ': ' + esc(e.reason) + '</div>'; }).join('');
+        if (errors.length > 25) html += '<div class="muted">…and ' + (errors.length - 25) + ' more.</div>';
+      }
+      $('biPreview').innerHTML = html;
+      $('biConfirm').textContent = 'Confirm import (' + ok.length + ' player' + (ok.length === 1 ? '' : 's') + ')';
+      $('biConfirmWrap').classList.toggle('hidden', ok.length === 0);
+      $('biMsg').textContent = '';
+    });
+  }
+
+  function runBulkImport() {
+    if (!biRows || !biRows.length) return;
+    $('biMsg').textContent = 'Importing…';
+    var chunks = [], size = 200;
+    var clean = biRows.map(function (r) {
+      return { player_name: r.player_name, player_nin: r.player_nin, date_of_birth: r.date_of_birth,
+        position: r.position, status: r.status, registration_status: r.registration_status,
+        club_id: r.club_id, jersey_number: r.jersey_number, nationality: r.nationality, fifa_connect_id: r.fifa_connect_id };
+    });
+    for (var i = 0; i < clean.length; i += size) chunks.push(clean.slice(i, i + size));
+    var imported = 0, failed = [];
+    (function next(i) {
+      if (i >= chunks.length) {
+        $('biMsg').textContent = imported + ' player(s) imported.' + (failed.length ? ' ' + failed.length + ' chunk(s) failed: ' + failed.join('; ') : '');
+        biRows = null; $('biConfirmWrap').classList.add('hidden'); $('biText').value = ''; $('biPreview').innerHTML = ''; $('biFile').value = '';
+        return;
+      }
+      db.from('club_squad').insert(chunks[i]).then(function (r) {
+        if (r.error) failed.push(r.error.message); else imported += chunks[i].length;
+        next(i + 1);
+      });
+    })(0);
   }
 
   // ---------- SUPER ADMIN: player registrations (legacy pending rows) ----------
