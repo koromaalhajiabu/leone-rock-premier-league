@@ -11,6 +11,11 @@
     if (!b) { b = document.createElement('div'); b.id = 'roleTools'; $('signedIn').insertBefore(b, $('signedIn').querySelector('.btns')); }
     return b;
   }
+  function devTabsBox() {
+    var t = $('devTabs');
+    if (!t) { t = document.createElement('div'); t.id = 'devTabs'; t.className = 'btns'; $('signedIn').insertBefore(t, $('signedIn').querySelector('.btns')); }
+    return t;
+  }
   function msg(text) { var m = $('roleMsg'); if (m) m.textContent = text; }
   function input(id, label, type, extra) {
     return '<label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + (type || 'text') + '" ' + (extra || '') + '>';
@@ -26,14 +31,33 @@
 
   function render() {
     currentUser().then(function (p) {
-      if (!p) { var old = $('roleTools'); if (old) old.remove(); return; }
+      if (!p) { var old = $('roleTools'); if (old) old.remove(); var oldTabs = $('devTabs'); if (oldTabs) oldTabs.remove(); return; }
       var role = String(p.system_role).toUpperCase();
+      if (role !== 'DEVELOPER') { var stray = $('devTabs'); if (stray) stray.remove(); }
       if (role === 'SUPER_ADMIN') return superAdmin(p);
       if (role === 'MEDIA_OFFICER') return mediaOfficer(p);
       if (role === 'REFEREE') return referee(p);
-      if (role === 'DEVELOPER') return developer(p);
+      if (role === 'DEVELOPER') return developerHub(p);
       box().innerHTML = '';
     });
+  }
+
+  // Developer is the ultimate account: it can switch into any other role's tools
+  // on top of its own account/league controls, without needing a separate sign-in.
+  var devTab = 'account';
+  function developerHub(p) {
+    var tabs = devTabsBox();
+    tabs.innerHTML = ['account','superadmin','referee','media'].map(function (key) {
+      var label = { account: 'Account & roles', superadmin: 'Super Admin tools', referee: 'Referee tools', media: 'Media Officer tools' }[key];
+      return '<button class="' + (devTab === key ? 'primary' : 'secondary') + '" data-devtab="' + key + '">' + label + '</button>';
+    }).join('');
+    tabs.querySelectorAll('[data-devtab]').forEach(function (b) {
+      b.addEventListener('click', function () { devTab = b.dataset.devtab; developerHub(p); });
+    });
+    if (devTab === 'superadmin') return superAdmin(p);
+    if (devTab === 'referee') return referee(p);
+    if (devTab === 'media') return mediaOfficer(p);
+    return developer(p);
   }
 
   // ---------- SUPER ADMIN ----------
@@ -509,9 +533,10 @@
   // ---------- REFEREE ----------
   var refEvents = [];
   function referee(p) {
+    var isDev = String(p.system_role).toUpperCase() === 'DEVELOPER';
     box().innerHTML =
-      '<h2 class="rt">My matches</h2>' +
-      '<label for="rfMatch">Match</label><select id="rfMatch"><option value="">Loading your matches…</option></select>' +
+      '<h2 class="rt">' + (isDev ? 'All matches' : 'My matches') + '</h2>' +
+      '<label for="rfMatch">Match</label><select id="rfMatch"><option value="">Loading matches…</option></select>' +
       '<div class="scores"><span id="rfScore" class="score-big">0 – 0</span></div>' +
       '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and submit score</button></div>' +
       '<h2 class="rt">Events so far</h2><div id="rfEvents" class="muted">No events yet.</div>' +
@@ -524,11 +549,14 @@
       '</div>' +
       '<div class="status" id="roleMsg"></div>';
 
-    db.auth.getUser().then(function (u) {
-      return db.from('match_referee_assignments').select('match_id').eq('referee_user_id', u.data.user.id).eq('assignment_status', 'ACTIVE').eq('official_role', 'MAIN');
-    }).then(function (a) {
-      var ids = (a.data || []).map(function (x) { return x.match_id; });
-      if (!ids.length) { $('rfMatch').innerHTML = '<option value="">No matches assigned to you yet</option>'; return; }
+    (isDev
+      ? db.from('matches').select('id, home_team, away_team, match_status, match_date').order('match_date', { ascending: true }).then(function (r) { return { data: (r.data || []).map(function (m) { return m.id; }), matches: r.data }; })
+      : db.auth.getUser().then(function (u) {
+          return db.from('match_referee_assignments').select('match_id').eq('referee_user_id', u.data.user.id).eq('assignment_status', 'ACTIVE').eq('official_role', 'MAIN');
+        })
+    ).then(function (a) {
+      var ids = (a.data || []).map(function (x) { return isDev ? x : x.match_id; });
+      if (!ids.length) { $('rfMatch').innerHTML = '<option value="">' + (isDev ? 'No matches yet' : 'No matches assigned to you yet') + '</option>'; return; }
       return db.from('matches').select('id, home_team, away_team, match_status, match_date').in('id', ids).order('match_date', { ascending: true })
         .then(function (r) {
           $('rfMatch').innerHTML = '<option value="">Choose a match…</option>' + (r.data || []).map(function (m) {
