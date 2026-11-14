@@ -1,5 +1,6 @@
 // Administration tools, shown after sign-in and based on the signed-in role.
-// Super Admin: fixtures, results, news and player approval. Media Officer: news posts. Club Managers: squads.
+// Super Admin: fixtures, results, news, player registration and approvals. Media Officer: news posts.
+// There is no Club Manager role — player data is sourced from FIFA Connect and entered by the Super Admin.
 (function () {
   var db = window.slfaDb;
   function $(id) { return document.getElementById(id); }
@@ -31,7 +32,6 @@
       if (role === 'MEDIA_OFFICER') return mediaOfficer(p);
       if (role === 'REFEREE') return referee(p);
       if (role === 'DEVELOPER') return developer(p);
-      if (role === 'CLUB_ADMIN') return clubManager(p);
       box().innerHTML = '';
     });
   }
@@ -63,6 +63,12 @@
       '<div class="btns"><button class="primary" id="asSave">Assign</button></div>' +
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Register a player</h2>' +
+      '<label for="spClub">Club</label><select id="spClub"><option value="">Loading clubs…</option></select>' +
+      input('spName', 'Full name') + input('spNin', 'National ID number') + input('spDob', 'Date of birth', 'date') +
+      '<label for="spPos">Position</label><select id="spPos"><option value="GK">Goalkeeper</option><option value="DF">Defender</option><option value="MF">Midfielder</option><option value="FW">Forward</option></select>' +
+      input('spJersey', 'Jersey number', 'number', 'min="1" max="99"') + input('spNat', 'Nationality') + input('spFifa', 'FIFA Connect ID (optional)') +
+      '<div class="btns"><button class="primary" id="spSave">Register player</button></div>' +
       '<h2 class="rt">Player registrations awaiting approval</h2><div id="squadReview" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
@@ -89,6 +95,8 @@
 
     loadReview();
     loadSquadReview();
+    loadSquadClubOptions();
+    $('spSave').addEventListener('click', function () { registerPlayer(); });
     wireLive();
     loadAssignOptions();
     loadPendingResults();
@@ -237,60 +245,35 @@
     });
   }
 
-  // ---------- CLUB MANAGER: squad ----------
-  function clubManager(p) {
-    if (!p.club_id) {
-      box().innerHTML = '<h2 class="rt">Club squad</h2><p class="muted">Your account is not linked to a club yet. The Technical Director needs to assign your club.</p>';
-      return;
-    }
-    box().innerHTML =
-      '<h2 class="rt">Club squad</h2><div id="clubName" class="muted">Loading club…</div>' +
-      '<h2 class="rt">Add a player</h2>' +
-      input('spName', 'Full name') + input('spNin', 'National ID number') + input('spDob', 'Date of birth', 'date') +
-      '<label for="spPos">Position</label><select id="spPos"><option value="GK">Goalkeeper</option><option value="DF">Defender</option><option value="MF">Midfielder</option><option value="FW">Forward</option></select>' +
-      '<div class="btns"><button class="primary" id="spSave">Add player</button></div>' +
-      '<h2 class="rt">Your players</h2><div id="squadList" class="muted">Loading…</div>' +
-      '<div class="status" id="roleMsg"></div>';
-    db.from('league_clubs').select('club_name').eq('id', p.club_id).maybeSingle().then(function (r) {
-      $('clubName').innerHTML = '<strong>' + esc(r.data ? r.data.club_name : 'Your club') + '</strong>';
+  // ---------- SUPER ADMIN: register players directly ----------
+  // Club Manager accounts no longer exist — the Super Admin registers every player,
+  // sourced from the SLFA's FIFA Connect records.
+  function loadSquadClubOptions() {
+    db.from('league_clubs').select('id, club_name').order('club_name').then(function (c) {
+      var rows = c.data || [];
+      $('spClub').innerHTML = rows.length
+        ? rows.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.club_name) + '</option>'; }).join('')
+        : '<option value="">No clubs yet</option>';
     });
-    $('spSave').addEventListener('click', function () { addPlayer(p); });
-    loadSquad(p);
   }
-  function addPlayer(p) {
-    var name = $('spName').value.trim(), nin = $('spNin').value.trim(), dob = $('spDob').value, pos = $('spPos').value;
+  function registerPlayer() {
+    var club = $('spClub').value, name = $('spName').value.trim(), nin = $('spNin').value.trim(),
+      dob = $('spDob').value, pos = $('spPos').value, jersey = $('spJersey').value.trim(),
+      nat = $('spNat').value.trim(), fifa = $('spFifa').value.trim();
+    if (!club) { msg('Choose a club.'); return; }
     if (!name || !nin || !dob) { msg('Enter the name, ID number and date of birth.'); return; }
-    db.auth.getUser().then(function (u) {
-      return db.from('club_squad').insert({ player_name: name, player_nin: nin, date_of_birth: dob, position: pos,
-        status: 'Active', registration_status: 'Pending', club_id: p.club_id, created_by: u.data.user.id });
+    db.from('club_squad').insert({
+      player_name: name, player_nin: nin, date_of_birth: dob, position: pos,
+      status: 'Active', registration_status: 'Approved', club_id: club,
+      jersey_number: jersey ? Number(jersey) : null, nationality: nat || null, fifa_connect_id: fifa || null
     }).then(function (r) {
       if (r.error) { msg(r.error.message); return; }
-      msg('Player added. The Super Admin will approve the registration.');
-      ['spName', 'spNin', 'spDob'].forEach(function (x) { $(x).value = ''; });
-      loadSquad(p);
+      msg('Player registered.');
+      ['spName', 'spNin', 'spDob', 'spJersey', 'spNat', 'spFifa'].forEach(function (x) { $(x).value = ''; });
     });
   }
-  function loadSquad(p) {
-    db.from('club_squad').select('id, player_name, position, status, registration_status').eq('club_id', p.club_id).order('player_name')
-      .then(function (r) {
-        var rows = r.data || [];
-        $('squadList').innerHTML = rows.length ? rows.map(function (x) {
-          var on = String(x.status) === 'Active';
-          return '<div class="post"><strong>' + esc(x.player_name) + '</strong> <span class="muted">' + esc(x.position) + '</span>' +
-            '<div class="muted">' + esc(x.registration_status) + ' · ' + (on ? 'Active' : 'Inactive') + '</div>' +
-            '<div class="btns"><button class="small" data-toggle="' + esc(x.id) + '" data-next="' + (on ? 'Inactive' : 'Active') + '">' + (on ? 'Mark inactive' : 'Mark active') + '</button></div></div>';
-        }).join('') : 'No players yet.';
-        document.querySelectorAll('[data-toggle]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            db.from('club_squad').update({ status: b.dataset.next }).eq('id', b.dataset.toggle).then(function (res) {
-              msg(res.error ? res.error.message : 'Updated.'); loadSquad(p);
-            });
-          });
-        });
-      });
-  }
 
-  // ---------- SUPER ADMIN: player registrations ----------
+  // ---------- SUPER ADMIN: player registrations (legacy pending rows) ----------
   function loadSquadReview() {
     db.from('club_squad').select('id, player_name, player_nin, position, club_id, date_of_birth').eq('registration_status', 'Pending').order('created_at', { ascending: true })
       .then(function (r) {
@@ -315,8 +298,7 @@
   }
 
   // ---------- TECHNICAL DIRECTOR: assign roles ----------
-  var clubsCache = [];
-  var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['FINANCE_OFFICER','Finance Officer'],['STAFF','Staff (read-only)'],['SUPER_ADMIN','Super Admin']];
+  var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['FINANCE_OFFICER','Finance Officer'],['STAFF','Staff (read-only)'],['SUPER_ADMIN','Super Admin']];
   function developer(p) {
     box().innerHTML =
       '<h2 class="rt">League status</h2><div id="leagueState" class="muted">Checking…</div>' +
@@ -350,18 +332,8 @@
     });
   }
 
-  function clubPicker(u) {
-    var opts = '<option value="">No club</option>' + clubsCache.map(function (c) {
-      return '<option value="' + esc(c.id) + '"' + (c.id === u.club_id ? ' selected' : '') + '>' + esc(c.club_name) + '</option>';
-    }).join('');
-    return '<label>Club</label><select data-club-for="' + esc(u.id) + '">' + opts + '</select>' +
-      '<div class="btns"><button class="small" data-club-apply="' + esc(u.id) + '">Apply club</button></div>';
-  }
   function loadAccountsDev(p) {
-    db.from('league_clubs').select('id, club_name').order('club_name').then(function (c) {
-      clubsCache = c.data || [];
-      return db.from('user_profiles').select('id, full_name, email, system_role, status, club_id').order('email').limit(300);
-    }).then(function (r) {
+    db.from('user_profiles').select('id, full_name, email, system_role, status, club_id').order('email').limit(300).then(function (r) {
       var rows = r.data || [];
       $('roleList').innerHTML = rows.length ? rows.map(function (u) {
         var isMe = u.id === p.id;
@@ -372,7 +344,6 @@
           '<div class="muted">' + esc(u.email) + ' · ' + esc(u.status) + '</div>' +
           (isDev ? '<div class="muted">Technical Director</div>' :
             '<select data-role-for="' + esc(u.id) + '">' + opts + '</select>' +
-            (String(u.system_role).toUpperCase() === 'CLUB_ADMIN' ? clubPicker(u) : '') +
             '<div class="btns"><button class="small" data-apply="' + esc(u.id) + '">Apply role</button>' +
             (isMe ? '' : '<button class="small ' + (active ? 'danger' : '') + '" data-status="' + esc(u.id) + '" data-next="' + (active ? 'Suspended' : 'Active') + '">' + (active ? 'Suspend' : 'Restore') + '</button>') +
             '</div>') +
@@ -387,14 +358,6 @@
           if (reason.trim().length < 5) { msg('Give a reason of at least 5 characters.'); return; }
           db.rpc('set_user_role', { p_user: id, p_role: role, p_reason: reason.trim() }).then(function (res) {
             msg(res.error ? res.error.message : 'Role saved and logged.'); loadAccountsDev(p); loadRoleLog();
-          });
-        });
-      });
-      document.querySelectorAll('[data-club-apply]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          var id = b.dataset.clubApply, club = document.querySelector('[data-club-for="' + id + '"]').value || null;
-          db.rpc('set_user_club', { p_user: id, p_club: club }).then(function (res) {
-            msg(res.error ? res.error.message : 'Club saved.'); loadAccountsDev(p);
           });
         });
       });
