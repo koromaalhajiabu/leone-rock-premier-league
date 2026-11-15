@@ -14,6 +14,20 @@
   }
   function empty(msg) { return '<p class="muted empty">' + msg + '</p>'; }
 
+  // Favorite club: remembered on this device only, no account needed.
+  var FAV_KEY = 'slfa_favorite_clubs';
+  function getFavorites() {
+    try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function isFavorite(name) { return getFavorites().indexOf(name) !== -1; }
+  function toggleFavorite(name) {
+    var favs = getFavorites();
+    var i = favs.indexOf(name);
+    if (i === -1) { favs.push(name); } else { favs.splice(i, 1); }
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) {}
+    return isFavorite(name);
+  }
+
   // Tabs
   document.querySelectorAll('[data-tab]').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -40,9 +54,10 @@
   function matchCard(m) {
     var score = m.home_score == null ? '<span class="vs">v</span>' : '<span class="score">' + esc(m.home_score) + ' – ' + esc(m.away_score) + '</span>';
     var motm = m.motm_name ? '<div class="meta">Man of the Match: ' + esc(m.motm_name) + (m.motm_jersey_number ? ' (#' + esc(m.motm_jersey_number) + ')' : '') + '</div>' : '';
-    return '<article class="match" data-match="' + esc(m.id) + '" tabindex="0">' +
+    var homeFav = isFavorite(m.home_team), awayFav = isFavorite(m.away_team);
+    return '<article class="match' + (homeFav || awayFav ? ' fav-row' : '') + '" data-match="' + esc(m.id) + '" tabindex="0">' +
       '<div class="meta">' + esc(fmt(m.match_date)) + (m.venue ? ' · ' + esc(m.venue) : '') + '</div>' +
-      '<div class="teams"><span>' + esc(m.home_team) + '</span>' + score + '<span>' + esc(m.away_team) + '</span></div>' +
+      '<div class="teams"><span' + (homeFav ? ' class="fav"' : '') + '>' + esc(m.home_team) + '</span>' + score + '<span' + (awayFav ? ' class="fav"' : '') + '>' + esc(m.away_team) + '</span></div>' +
       motm + '<div class="detail" hidden></div></article>';
   }
 
@@ -85,7 +100,8 @@
       .then(function (res) {
         if (res.error || !(res.data || []).length) { $('tableBody').innerHTML = '<tr><td colspan="9">' + (res.error ? 'The table is not available right now.' : 'The table will appear after the first results.') + '</td></tr>'; return; }
         $('tableBody').innerHTML = res.data.map(function (r) {
-          return '<tr><td>' + esc(r.pos) + '</td><td class="club">' + esc(r.club) + '</td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
+          var fav = isFavorite(r.club);
+          return '<tr' + (fav ? ' class="fav-row"' : '') + '><td>' + esc(r.pos) + '</td><td class="club' + (fav ? ' fav' : '') + '">' + esc(r.club) + '</td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
         }).join('');
       });
   }
@@ -96,9 +112,24 @@
       .then(function (res) {
         if (res.error || !(res.data || []).length) { $('teamGrid').innerHTML = empty('Teams will appear here once they are added.'); return; }
         $('teamGrid').innerHTML = res.data.map(function (c) {
-          return '<div class="team">' + badge(c.logo_url, c.club_name) + '<span>' + esc(c.club_name) + '</span></div>';
+          var fav = isFavorite(c.club_name);
+          return '<div class="team' + (fav ? ' favorited' : '') + '" data-club="' + esc(c.club_name) + '">' + badge(c.logo_url, c.club_name) +
+            '<span>' + esc(c.club_name) + '</span>' +
+            '<button class="fav-star' + (fav ? ' on' : '') + '" aria-label="Favorite ' + esc(c.club_name) + '" data-fav="' + esc(c.club_name) + '">' + (fav ? '★' : '☆') + '</button></div>';
         }).join('');
+        wireFavorites();
       });
+  }
+  function wireFavorites() {
+    document.querySelectorAll('[data-fav]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var on = toggleFavorite(btn.dataset.fav);
+        btn.classList.toggle('on', on);
+        btn.textContent = on ? '★' : '☆';
+        btn.closest('.team').classList.toggle('favorited', on);
+        loadTable(); loadMatches();
+      });
+    });
   }
 
   // Players: top scorers, assists, clean sheets

@@ -87,6 +87,13 @@ button.danger { border-color:var(--danger); color:var(--danger); }
 .badge { width:30px; height:30px; border-radius:50%; object-fit:cover; flex:0 0 30px; }
 .badge.ph { display:inline-flex; align-items:center; justify-content:center; background:rgba(30,181,58,.12); color:var(--accent); font-weight:700; font-size:13px; border:1px solid var(--line); }
 .team { display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid rgba(128,128,128,.14); font-size:15px; }
+.team span:not(.badge) { flex:1; }
+.fav-star { background:none; border:0; padding:4px; cursor:pointer; font-size:19px; line-height:1; color:var(--muted); opacity:.55; }
+.fav-star.on { color:#f4b400; opacity:1; }
+.team.favorited { border-color:rgba(244,180,0,.5); }
+.club.fav::before, .teams span.fav::before { content:"★ "; color:#f4b400; }
+.fav-row { background:rgba(244,180,0,.08); }
+tr.fav-row td.club { font-weight:600; }
 #teamGrid { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
 .row { display:flex; align-items:center; gap:10px; }
 .rank { width:22px; color:var(--muted); font-size:12px; }
