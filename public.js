@@ -99,9 +99,13 @@
     db.from('league_standings').select('pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true })
       .then(function (res) {
         if (res.error || !(res.data || []).length) { $('tableBody').innerHTML = '<tr><td colspan="9">' + (res.error ? 'The table is not available right now.' : 'The table will appear after the first results.') + '</td></tr>'; return; }
+        var RELEGATION_SPOTS = 4;
+        var total = res.data.length;
         $('tableBody').innerHTML = res.data.map(function (r) {
           var fav = isFavorite(r.club);
-          return '<tr' + (fav ? ' class="fav-row"' : '') + '><td>' + esc(r.pos) + '</td><td class="club' + (fav ? ' fav' : '') + '">' + esc(r.club) + '</td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
+          var rel = total - r.pos < RELEGATION_SPOTS;
+          var cls = [fav ? 'fav-row' : '', rel ? 'rel-row' : ''].filter(Boolean).join(' ');
+          return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + (rel ? '<span class="rel-dot" title="Relegation zone"></span>' : '') + esc(r.pos) + '</td><td class="club' + (fav ? ' fav' : '') + '">' + esc(r.club) + '</td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
         }).join('');
       });
   }
