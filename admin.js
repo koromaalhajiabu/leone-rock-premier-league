@@ -463,8 +463,8 @@
     db.from('system_pause').select('paused, reason, changed_at').eq('id', 1).maybeSingle().then(function (r) {
       var st = r.data || { paused: false };
       $('leagueState').innerHTML = st.paused
-        ? '<strong style="color:#ff8a80">Frozen.</strong> The league is paused. Results and fixtures cannot change.' + (st.reason ? '<br><small>Reason: ' + esc(st.reason) + '</small>' : '')
-        : '<strong style="color:#7ee6a0">Live.</strong> The league is running normally.';
+        ? '<strong style="color:var(--danger)">Frozen.</strong> The league is paused. Results and fixtures cannot change.' + (st.reason ? '<br><small>Reason: ' + esc(st.reason) + '</small>' : '')
+        : '<strong style="color:var(--accent)">Live.</strong> The league is running normally.';
     });
   }
   function setPause(pause) {
