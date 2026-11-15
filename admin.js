@@ -17,6 +17,22 @@
     return t;
   }
   function msg(text) { var m = $('roleMsg'); if (m) m.textContent = text; }
+  // Starting goalkeeper picker: lists a club's registered goalkeepers for the
+  // kickoff GK selects, used to calculate clean sheets automatically.
+  function loadGkOptions(teamName, selectId) {
+    var sel = $(selectId); if (!sel) return;
+    if (!teamName) { sel.innerHTML = '<option value="">No team</option>'; return; }
+    db.from('league_clubs').select('id').ilike('club_name', teamName).maybeSingle().then(function (c) {
+      if (!c.data) { sel.innerHTML = '<option value="">Club not found</option>'; return; }
+      return db.from('club_squad').select('player_name').eq('club_id', c.data.id).eq('position', 'GK').eq('status', 'Active').order('player_name')
+        .then(function (r) {
+          var rows = r.data || [];
+          sel.innerHTML = '<option value="">No goalkeeper selected</option>' + rows.map(function (x) {
+            return '<option value="' + esc(x.player_name) + '">' + esc(x.player_name) + '</option>'; }).join('');
+          if (!rows.length) sel.innerHTML = '<option value="">No goalkeeper registered for ' + esc(teamName) + '</option>';
+        });
+    });
+  }
   function input(id, label, type, extra) {
     return '<label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + (type || 'text') + '" ' + (extra || '') + '>';
   }
@@ -73,6 +89,8 @@
       '<div class="btns"><button class="primary" id="resSave">Record result</button></div>' +
       '<h2 class="rt">Live match</h2>' +
       '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
+      '<label for="lvGkHome">Home goalkeeper (kickoff)</label><select id="lvGkHome"><option value="">Choose a match first</option></select>' +
+      '<label for="lvGkAway">Away goalkeeper (kickoff)</label><select id="lvGkAway"><option value="">Choose a match first</option></select>' +
       '<div class="btns"><button class="secondary" id="lvStart">Start match</button><button class="primary" id="lvEnd">End match</button></div>' +
       '<div id="lvPanel" class="hidden">' +
         '<label for="lvTeam">Team</label><select id="lvTeam"></select>' +
@@ -184,7 +202,9 @@
     $('lvMatch').addEventListener('change', function () { liveMatch = null; loadLiveMatch(this.value); });
     $('lvStart').addEventListener('click', function () {
       var id = $('lvMatch').value; if (!id) { msg('Choose a match.'); return; }
-      db.from('matches').update({ match_status: 'LIVE' }).eq('id', id).then(function (r) {
+      db.rpc('set_match_goalkeepers', { p_match_id: Number(id), p_home_gk: $('lvGkHome').value, p_away_gk: $('lvGkAway').value }).then(function () {
+        return db.from('matches').update({ match_status: 'LIVE' }).eq('id', id);
+      }).then(function (r) {
         msg(r.error ? r.error.message : 'Match is live.'); loadLiveMatch(id); loadLiveOptions();
       });
     });
@@ -238,6 +258,9 @@
       if (!liveMatch) return;
       $('lvTeam').innerHTML = '<option>' + esc(liveMatch.home_team) + '</option><option>' + esc(liveMatch.away_team) + '</option>';
       $('lvPanel').classList.toggle('hidden', liveMatch.match_status !== 'LIVE');
+      if (liveMatch.match_status !== 'LIVE' && liveMatch.match_status !== 'FT' && liveMatch.match_status !== 'FINISHED') {
+        loadGkOptions(liveMatch.home_team, 'lvGkHome'); loadGkOptions(liveMatch.away_team, 'lvGkAway');
+      }
       db.from('match_events').select('event_type, team_name, player_name, minute').eq('match_id', String(id)).order('minute', { ascending: true })
         .then(function (e) { liveEvents = e.data || []; });
     });
@@ -537,6 +560,8 @@
     box().innerHTML =
       '<h2 class="rt">' + (isDev ? 'All matches' : 'My matches') + '</h2>' +
       '<label for="rfMatch">Match</label><select id="rfMatch"><option value="">Loading matches…</option></select>' +
+      '<label for="rfGkHome">Home goalkeeper (kickoff)</label><select id="rfGkHome"><option value="">Choose a match first</option></select>' +
+      '<label for="rfGkAway">Away goalkeeper (kickoff)</label><select id="rfGkAway"><option value="">Choose a match first</option></select>' +
       '<div class="scores"><span id="rfScore" class="score-big">0 – 0</span></div>' +
       '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and submit score</button></div>' +
       '<h2 class="rt">Events so far</h2><div id="rfEvents" class="muted">No events yet.</div>' +
@@ -567,7 +592,9 @@
     $('rfMatch').addEventListener('change', function () { loadRefMatch(this.value); });
     $('rfStart').addEventListener('click', function () {
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
-      db.from('matches').update({ match_status: 'LIVE' }).eq('id', id).then(function (r) {
+      db.rpc('set_match_goalkeepers', { p_match_id: Number(id), p_home_gk: $('rfGkHome').value, p_away_gk: $('rfGkAway').value }).then(function () {
+        return db.from('matches').update({ match_status: 'LIVE' }).eq('id', id);
+      }).then(function (r) {
         msg(r.error ? r.error.message : 'Match is live.'); loadRefMatch(id); });
     });
     $('rfEnd').addEventListener('click', function () {
@@ -607,6 +634,9 @@
       var m = r.data; if (!m) return;
       $('rfTeam').innerHTML = '<option>' + esc(m.home_team) + '</option><option>' + esc(m.away_team) + '</option>';
       $('rfPanel').classList.toggle('hidden', m.match_status !== 'LIVE');
+      if (m.match_status !== 'LIVE' && m.match_status !== 'FT' && m.match_status !== 'FINISHED') {
+        loadGkOptions(m.home_team, 'rfGkHome'); loadGkOptions(m.away_team, 'rfGkAway');
+      }
       db.from('match_events').select('id, event_type, team_name, player_name, player_off_name, minute').eq('match_id', String(id)).order('minute', { ascending: true }).then(function (e) {
         refEvents = e.data || [];
         $('rfScore').textContent = goalsFor(m.home_team) + ' – ' + goalsFor(m.away_team);
