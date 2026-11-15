@@ -155,7 +155,7 @@
       });
     db.from('clean_sheets').select('goalkeeper, club, clean_sheets, photo_url').order('clean_sheets', { ascending: false }).limit(10)
       .then(function (res) {
-        $('cleanSheets').innerHTML = list((res.data || []).map(function (r) { return { name: r.goalkeeper, club: r.club, photo_url: r.photo_url, sheets: r.clean_sheets }; }), 'clean sheets', 'sheets');
+        $('cleanSheets').innerHTML = list((res.data || []).map(function (r) { return { name: r.goalkeeper, club: r.club, photo_url: r.photo_url, sheets: r.clean_sheets }; }), 'Golden Glove standings', 'sheets');
       });
   }
 
