@@ -601,13 +601,10 @@
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
       db.from('matches').select('id, home_team, away_team').eq('id', id).maybeSingle().then(function (r) {
         var m = r.data; var hg = goalsFor(m.home_team), ag = goalsFor(m.away_team);
-        if (!confirm('Submit ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' for the Super Admin to approve?')) return;
-        return db.auth.getUser().then(function (u) {
-          return db.from('match_results').insert([{ match_id: String(id), home_team: m.home_team, away_team: m.away_team, home_goals: hg, away_goals: ag, status: 'PENDING', recorded_by: u.data.user.id }]);
-        }).then(function (res) {
+        if (!confirm('Submit the final score: ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + '? This publishes it immediately as the official result.')) return;
+        db.rpc('referee_submit_match_result', { p_match_id: Number(id), p_home_goals: hg, p_away_goals: ag }).then(function (res) {
           if (res.error) { msg(res.error.message); return; }
-          return db.from('matches').update({ match_status: 'FINISHED' }).eq('id', id).then(function () {
-            msg('Score submitted for approval.'); loadRefMatch(id); });
+          msg('Final score published. The table and stats have updated.'); loadRefMatch(id);
         });
       });
     });
